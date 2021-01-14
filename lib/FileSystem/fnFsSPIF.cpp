@@ -1,6 +1,11 @@
-#include <esp_vfs.h>
-#include "esp_spiffs.h"
+// #include <esp_vfs.h>
+// #include "esp_spiffs.h"
 #include "errno.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <bsd/string.h>
 
 #include "fnFsSPIF.h"
 #include "../../include/debug.h"
@@ -115,14 +120,14 @@ bool FileSystemSPIFFS::rename(const char* pathFrom, const char* pathTo)
 uint64_t FileSystemSPIFFS::total_bytes()
 {
     size_t total = 0, used = 0;
-	esp_spiffs_info(NULL, &total, &used);
+	// esp_spiffs_info(NULL, &total, &used);
     return (uint64_t)total;
 }
 
 uint64_t FileSystemSPIFFS::used_bytes()
 {
     size_t total = 0, used = 0;
-	esp_spiffs_info(NULL, &total, &used);
+	// esp_spiffs_info(NULL, &total, &used);
     return (uint64_t)used;
 }
 
@@ -132,25 +137,26 @@ bool FileSystemSPIFFS::start()
         return true;
 
     // Set our basepath
-    strlcpy(_basepath, "/spiffs", sizeof(_basepath));
+    // strlcpy(_basepath, "/spiffs", sizeof(_basepath));
+    strlcpy(_basepath, ".", sizeof(_basepath));
 
-    esp_vfs_spiffs_conf_t conf = {
-      .base_path = _basepath,
-      .partition_label = NULL,
-      .max_files = 10, // from SPIFFS.h
-      .format_if_mount_failed = false
-    };
+    // esp_vfs_spiffs_conf_t conf = {
+    //   .base_path = _basepath,
+    //   .partition_label = NULL,
+    //   .max_files = 10, // from SPIFFS.h
+    //   .format_if_mount_failed = false
+    // };
     
-    esp_err_t e = esp_vfs_spiffs_register(&conf);
+    // esp_err_t e = esp_vfs_spiffs_register(&conf);
 
-    if (e != ESP_OK)
-    {
-        #ifdef DEBUG
-        Debug_printf("Failed to mount SPIFFS partition, err = %d\n", e);
-        #endif
-        _started = false;
-    }
-    else
+    // if (e != ESP_OK)
+    // {
+    //     #ifdef DEBUG
+    //     Debug_printf("Failed to mount SPIFFS partition, err = %d\n", e);
+    //     #endif
+    //     _started = false;
+    // }
+    // else
     {
         _started = true;
     #ifdef DEBUG        

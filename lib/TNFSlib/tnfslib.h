@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <string>
 
-#include <lwip/netdb.h>
+// #include <lwip/netdb.h>
 
 #include "tnfslibMountInfo.h"
 

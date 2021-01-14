@@ -1,8 +1,14 @@
 /* Modified version of ESP-Arduino fnTcpClient.cpp/h */
 
-#include <lwip/sockets.h>
-#include <lwip/netdb.h>
+// #include <lwip/sockets.h>
+// #include <lwip/netdb.h>
 #include <errno.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <netinet/tcp.h>
 
 #include "../../include/debug.h"
 
@@ -30,7 +36,8 @@ private:
             return 0;
         }
         int count;
-        int res = lwip_ioctl(_fd, FIONREAD, &count);
+        // int res = lwip_ioctl(_fd, FIONREAD, &count);
+        int res = ioctl(_fd, FIONREAD, &count);
         if (res < 0)
         {
             _failed = true;
@@ -49,7 +56,7 @@ private:
             _buffer = (uint8_t *)malloc(_size);
             if (!_buffer)
             {
-                Debug_printf("Not enough memory to allocate buffer");
+                Debug_printf("Not enough memory to allocate buffer\n");
                 _failed = true;
                 return 0;
             }
@@ -187,7 +194,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
     {
-        Debug_printf("socket: %d", errno);
+        Debug_printf("socket: %d\n", errno);
         return 0;
     }
     // Add O_NONBLOCK to our socket file descriptor
@@ -201,10 +208,11 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     serveraddr.sin_port = htons(port);
 
     // Connect to the server
-    int res = lwip_connect(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
+    // int res = lwip_connect(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
+    int res = ::connect(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
     if (res < 0 && errno != EINPROGRESS)
     {
-        Debug_printf("connect on fd %d, errno: %d, \"%s\"", sockfd, errno, strerror(errno));
+        Debug_printf("connect on fd %d, errno: %d, \"%s\"\n", sockfd, errno, strerror(errno));
         close(sockfd);
         return 0;
     }
@@ -223,14 +231,14 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     // Error result
     if (res < 0)
     {
-        Debug_printf("select on fd %d, errno: %d, \"%s\"", sockfd, errno, strerror(errno));
+        Debug_printf("select on fd %d, errno: %d, \"%s\"\n", sockfd, errno, strerror(errno));
         close(sockfd);
         return 0;
     }
     // Timeout reached
     else if (res == 0)
     {
-        Debug_printf("select returned due to timeout %d ms for fd %d", timeout, sockfd);
+        Debug_printf("select returned due to timeout %d ms for fd %d\n", timeout, sockfd);
         close(sockfd);
         return 0;
     }
@@ -244,14 +252,14 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         if (res < 0)
         {
             // Failed to retrieve SO_ERROR
-            Debug_printf("getsockopt on fd %d, errno: %d, \"%s\"", sockfd, errno, strerror(errno));
+            Debug_printf("getsockopt on fd %d, errno: %d, \"%s\"\n", sockfd, errno, strerror(errno));
             close(sockfd);
             return 0;
         }
         // Retrieved SO_ERROR and found that we have an error condition
         if (sockerr != 0)
         {
-            Debug_printf("socket error on fd %d, errno: %d, \"%s\"", sockfd, sockerr, strerror(sockerr));
+            Debug_printf("socket error on fd %d, errno: %d, \"%s\"\n", sockfd, sockerr, strerror(sockerr));
             close(sockfd);
             return 0;
         }
@@ -290,7 +298,7 @@ int fnTcpClient::setSocketOption(int option, char *value, size_t len)
     int res = setsockopt(fd(), SOL_SOCKET, option, value, len);
     if (res < 0)
     {
-        Debug_printf("%X : %d", option, errno);
+        Debug_printf("%X : %d\n", option, errno);
     }
 
     return res;
@@ -302,7 +310,7 @@ int fnTcpClient::setOption(int option, int *value)
     int res = setsockopt(fd(), IPPROTO_TCP, option, (char *)value, sizeof(int));
     if (res < 0)
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"", fd(), errno, strerror(errno));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
     }
 
     return res;
@@ -311,11 +319,12 @@ int fnTcpClient::setOption(int option, int *value)
 // Get TCP option
 int fnTcpClient::getOption(int option, int *value)
 {
-    size_t size = sizeof(int);
+    // size_t size = sizeof(int);
+    socklen_t size = sizeof(int);
     int res = getsockopt(fd(), IPPROTO_TCP, option, (char *)value, &size);
     if (res < 0)
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"", fd(), errno, strerror(errno));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
     }
 
     return res;
@@ -367,7 +376,8 @@ size_t fnTcpClient::write(const uint8_t *buf, size_t size)
         // (Otherwise we timed-out and should retry the loop)
         if (FD_ISSET(socketFileDescriptor, &fdset))
         {
-            res = send(socketFileDescriptor, (void *)buf, bytesRemaining, MSG_DONTWAIT);
+            // res = send(socketFileDescriptor, (void *)buf, bytesRemaining, MSG_DONTWAIT);
+            res = send(socketFileDescriptor, (void *)buf, bytesRemaining, MSG_DONTWAIT | MSG_NOSIGNAL); // don't shoot me
             // We succeeded sending some bytes
             if (res > 0)
             {
@@ -388,7 +398,7 @@ size_t fnTcpClient::write(const uint8_t *buf, size_t size)
             // We got an error
             else if (res < 0)
             {
-                Debug_printf("fail on fd %d, errno: %d, \"%s\"", fd(), errno, strerror(errno));
+                Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
                 // Give up if this wasn't just a try again error
                 if (errno != EAGAIN)
                 {
@@ -431,7 +441,7 @@ int fnTcpClient::read(uint8_t *buf, size_t size)
     res = _rxBuffer->read(buf, size);
     if (_rxBuffer->failed())
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"", fd(), errno, strerror(errno));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
         stop();
     }
     return res;
@@ -472,7 +482,7 @@ int fnTcpClient::peek()
     int res = _rxBuffer->peek();
     if (_rxBuffer->failed())
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"", fd(), errno, strerror(errno));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
         stop();
     }
     return res;
@@ -487,7 +497,7 @@ int fnTcpClient::available()
     int res = _rxBuffer->available();
     if (_rxBuffer->failed())
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"", fd(), errno, strerror(errno));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
         stop();
     }
     return res;
@@ -511,7 +521,7 @@ void fnTcpClient::flush()
         res = recv(fd(), buf, toRead, MSG_DONTWAIT);
         if (res < 0)
         {
-            Debug_printf("fail on fd %d, errno: %d, \"%s\"", fd(), errno, strerror(errno));
+            Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
             stop();
             break;
         }

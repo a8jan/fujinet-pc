@@ -1,11 +1,11 @@
 
 #include <string.h>
-#include <lwip/netdb.h>
+// #include <lwip/netdb.h>
 
 #include "../../include/atascii.h"
 #include "modem.h"
 #include "../hardware/fnUART.h"
-#include "fnWiFi.h"
+// #include "fnWiFi.h"
 #include "fnFsSPIF.h"
 #include "fnSystem.h"
 #include "../utils/utils.h"
@@ -522,7 +522,8 @@ void sioModem::sio_stream()
       RESPONSE
       Payload: 9 bytes to configure POKEY baud rate ($D200-$D208)
     */
-    char response[] = {0x28, 0xA0, 0x00, 0xA0, 0x28, 0xA0, 0x00, 0xA0, 0x78}; // 19200
+    // char response[] = {0x28, 0xA0, 0x00, 0xA0, 0x28, 0xA0, 0x00, 0xA0, 0x78}; // 19200
+    char response[] = {'\x28', '\xA0', '\x00', '\xA0', '\x28', '\xA0', '\x00', '\xA0', '\x78'}; // 19200
 
     switch (modemBaud)
     {
@@ -753,60 +754,60 @@ void sioModem::at_cmd_println(std::string s, bool addEol)
     fnUartSIO.flush();
 }
 
-void sioModem::at_handle_wificonnect()
-{
-    int keyIndex = cmd.find(',');
-    std::string ssid, key;
-    if (keyIndex != std::string::npos)
-    {
-        ssid = cmd.substr(13, keyIndex - 13 + 1);
-        //key = cmd.substring(keyIndex + 1, cmd.length());
-        key = cmd.substr(keyIndex + 1);
-    }
-    else
-    {
-        //ssid = cmd.substring(6, cmd.length());
-        ssid = cmd.substr(6);
-        key = "";
-    }
+// void sioModem::at_handle_wificonnect()
+// {
+//     int keyIndex = cmd.find(',');
+//     std::string ssid, key;
+//     if (keyIndex != std::string::npos)
+//     {
+//         ssid = cmd.substr(13, keyIndex - 13 + 1);
+//         //key = cmd.substring(keyIndex + 1, cmd.length());
+//         key = cmd.substr(keyIndex + 1);
+//     }
+//     else
+//     {
+//         //ssid = cmd.substring(6, cmd.length());
+//         ssid = cmd.substr(6);
+//         key = "";
+//     }
 
-    at_cmd_println(HELPWIFICONNECTING, false);
-    at_cmd_println(ssid, false);
-    at_cmd_println("/", false);
-    at_cmd_println(key);
+//     at_cmd_println(HELPWIFICONNECTING, false);
+//     at_cmd_println(ssid, false);
+//     at_cmd_println("/", false);
+//     at_cmd_println(key);
 
-    fnWiFi.connect(ssid.c_str(), key.c_str());
+//     fnWiFi.connect(ssid.c_str(), key.c_str());
 
-    int retries = 0;
-    while ((!fnWiFi.connected()) && retries < 20)
-    {
-        fnSystem.delay(1000);
-        retries++;
-        at_cmd_println(".", false);
-    }
-    if (retries >= 20)
-    {
-        if (numericResultCode == true)
-        {
-            at_cmd_resultCode(RESULT_CODE_ERROR);
-        }
-        else
-        {
-            at_cmd_println("ERROR");
-        }
-    }
-    else
-    {
-        if (numericResultCode == true)
-        {
-            at_cmd_resultCode(RESULT_CODE_OK);
-        }
-        else
-        {
-            at_cmd_println("OK");
-        }
-    }
-}
+//     int retries = 0;
+//     while ((!fnWiFi.connected()) && retries < 20)
+//     {
+//         fnSystem.delay(1000);
+//         retries++;
+//         at_cmd_println(".", false);
+//     }
+//     if (retries >= 20)
+//     {
+//         if (numericResultCode == true)
+//         {
+//             at_cmd_resultCode(RESULT_CODE_ERROR);
+//         }
+//         else
+//         {
+//             at_cmd_println("ERROR");
+//         }
+//     }
+//     else
+//     {
+//         if (numericResultCode == true)
+//         {
+//             at_cmd_resultCode(RESULT_CODE_OK);
+//         }
+//         else
+//         {
+//             at_cmd_println("OK");
+//         }
+//     }
+// }
 
 void sioModem::at_handle_port()
 {
@@ -945,55 +946,55 @@ void sioModem::at_handle_help()
         at_cmd_println("OK");
 }
 
-void sioModem::at_handle_wifilist()
-{
-    at_cmd_println();
-    at_cmd_println(HELPSCAN1);
+// void sioModem::at_handle_wifilist()
+// {
+//     at_cmd_println();
+//     at_cmd_println(HELPSCAN1);
 
-    int n = fnWiFi.scan_networks();
+//     int n = fnWiFi.scan_networks();
 
-    at_cmd_println();
+//     at_cmd_println();
 
-    if (n == 0)
-    {
-        at_cmd_println(HELPSCAN2);
-    }
-    else
-    {
-        at_cmd_println(n, false);
-        at_cmd_println(HELPSCAN3);
-        at_cmd_println();
+//     if (n == 0)
+//     {
+//         at_cmd_println(HELPSCAN2);
+//     }
+//     else
+//     {
+//         at_cmd_println(n, false);
+//         at_cmd_println(HELPSCAN3);
+//         at_cmd_println();
 
-        char ssid[32];
-        char bssid[18];
-        uint8_t rssi;
-        uint8_t channel;
-        uint8_t encryption;
+//         char ssid[32];
+//         char bssid[18];
+//         uint8_t rssi;
+//         uint8_t channel;
+//         uint8_t encryption;
 
-        for (int i = 0; i < n; ++i)
-        {
-            // Print SSID and RSSI for each network found
-            fnWiFi.get_scan_result(i, ssid, &rssi, &channel, bssid, &encryption);
-            at_cmd_println(i + 1, false);
-            at_cmd_println(": ", false);
-            at_cmd_println(ssid, false);
-            at_cmd_println(" [", false);
-            at_cmd_println(channel, false);
-            at_cmd_println("/", false);
-            at_cmd_println(rssi, false);
-            at_cmd_println("]");
-            at_cmd_println("    ", false);
-            at_cmd_println(bssid, false);
-            at_cmd_println(encryption == WIFI_AUTH_OPEN ? HELPSCAN4 : HELPSCAN5);
-        }
-    }
-    at_cmd_println();
+//         for (int i = 0; i < n; ++i)
+//         {
+//             // Print SSID and RSSI for each network found
+//             fnWiFi.get_scan_result(i, ssid, &rssi, &channel, bssid, &encryption);
+//             at_cmd_println(i + 1, false);
+//             at_cmd_println(": ", false);
+//             at_cmd_println(ssid, false);
+//             at_cmd_println(" [", false);
+//             at_cmd_println(channel, false);
+//             at_cmd_println("/", false);
+//             at_cmd_println(rssi, false);
+//             at_cmd_println("]");
+//             at_cmd_println("    ", false);
+//             at_cmd_println(bssid, false);
+//             at_cmd_println(encryption == WIFI_AUTH_OPEN ? HELPSCAN4 : HELPSCAN5);
+//         }
+//     }
+//     at_cmd_println();
 
-    if (numericResultCode == true)
-        at_cmd_resultCode(RESULT_CODE_OK);
-    else
-        at_cmd_println("OK");
-}
+//     if (numericResultCode == true)
+//         at_cmd_resultCode(RESULT_CODE_OK);
+//     else
+//         at_cmd_println("OK");
+// }
 
 void sioModem::at_handle_answer()
 {
@@ -1238,10 +1239,10 @@ void sioModem::modemCommand()
         at_handle_dial();
         break;
     case AT_WIFILIST:
-        at_handle_wifilist();
+        // at_handle_wifilist();
         break;
     case AT_WIFICONNECT:
-        at_handle_wificonnect();
+        // at_handle_wificonnect();
         break;
     // Change telnet mode
     case AT_NET0:
@@ -1263,10 +1264,11 @@ void sioModem::modemCommand()
         break;
     // See my IP address
     case AT_IP:
-        if (fnWiFi.connected())
-            at_cmd_println(fnSystem.Net.get_ip4_address_str());
-        else
-            at_cmd_println(HELPNOWIFI);
+        // if (fnWiFi.connected())
+        //     at_cmd_println(fnSystem.Net.get_ip4_address_str());
+            at_cmd_println("1.2.3.4");
+        // else
+        //     at_cmd_println(HELPNOWIFI);
         if (numericResultCode == true)
             at_cmd_resultCode(RESULT_CODE_OK);
         else
@@ -1391,9 +1393,13 @@ void sioModem::modemCommand()
 
 /*
   Handle incoming & outgoing data for modem
+  
+  return value: == 0 nothing was done, < 0 error, > 0 TX/RX data
 */
-void sioModem::sio_handle_modem()
+int sioModem::sio_handle_modem()
 {
+    int rc = 0;
+    
     /**** AT command mode ****/
     if (cmdMode == true)
     {
@@ -1403,7 +1409,7 @@ void sioModem::sio_handle_modem()
             cmd = "ATA";
             modemCommand();
             answerHack = false;
-            return;
+            return 1;
         }
 
         // In command mode but new unanswered incoming connection on server listen socket
@@ -1431,9 +1437,16 @@ void sioModem::sio_handle_modem()
         //if (SIO_UART.available() /*|| blockWritePending == true */ )
         if (fnUartSIO.available())
         {
+            rc = 1;
             // get char from Atari SIO
             //char chr = SIO_UART.read();
-            char chr = fnUartSIO.read();
+            int intchr = fnUartSIO.read();
+            if (intchr < 0)
+            {
+                // read error or timeout
+                return -1;
+            }
+            unsigned char chr = intchr;
 
             // Return, enter, new line, carriage return.. anything goes to end the command
             if ((chr == ASCII_LF) || (chr == ASCII_CR) || (chr == ATASCII_EOL))
@@ -1512,6 +1525,7 @@ void sioModem::sio_handle_modem()
         // send from Atari to Fujinet
         if (sioBytesAvail && tcpClient.connected())
         {
+            rc = 1;
             // In telnet in worst case we have to escape every uint8_t
             // so leave half of the buffer always free
             //int max_buf_size;
@@ -1550,8 +1564,9 @@ void sioModem::sio_handle_modem()
                 telnet_send(telnet, (const char *)txBuf, sioBytesRead);
             }
             else
+            {
                 tcpClient.write(&txBuf[0], sioBytesRead);
-
+            }
             // And send it off to the sniffer, if enabled.
             modemSniffer->dumpOutput(&txBuf[0], sioBytesRead);
             _lasttime = fnSystem.millis();
@@ -1564,6 +1579,7 @@ void sioModem::sio_handle_modem()
         // check to see how many bytes are avail to read
         while ((bytesAvail = tcpClient.available()) > 0)
         {
+            rc = 1;
             // read as many as our buffer size will take (RECVBUFSIZE)
             unsigned int bytesRead =
                 tcpClient.read(buf, (bytesAvail > RECVBUFSIZE) ? RECVBUFSIZE : bytesAvail);
@@ -1600,6 +1616,7 @@ void sioModem::sio_handle_modem()
     // Go to command mode if TCP disconnected and not in command mode
     if (!tcpClient.connected() && (cmdMode == false) && (DTR == 0))
     {
+        rc = 1;
         tcpClient.flush();
         tcpClient.stop();
         cmdMode = true;
@@ -1612,12 +1629,13 @@ void sioModem::sio_handle_modem()
         CRX = false;
         if (listenPort > 0)
         {
-            // tcpServer.stop();
-            // tcpServer.begin(listenPort);
+            tcpServer.stop();
+            tcpServer.begin(listenPort);
         }
     }
     else if ((!tcpClient.connected()) && (cmdMode == false))
     {
+        rc = 1;
         cmdMode = true;
         telnet_free(telnet);
         telnet = telnet_init(telopts, _telnet_event_handler, 0, this);
@@ -1630,10 +1648,11 @@ void sioModem::sio_handle_modem()
         CRX = false;
         if (listenPort > 0)
         {
-            // tcpServer.stop();
-            // tcpServer.begin(listenPort);
+            tcpServer.stop();
+            tcpServer.begin(listenPort);
         }
     }
+    return rc;
 }
 
 void sioModem::shutdown()

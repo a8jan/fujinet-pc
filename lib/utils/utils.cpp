@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstring>
 #include <sstream>
+#include <bsd/string.h>
 
 #include "utils.h"
 #include "../../include/debug.h"
@@ -236,11 +237,11 @@ std::string util_long_entry(std::string filename, size_t fileSize)
     returned_entry.replace(0, filename.length(), filename);
 
     if (fileSize > 1048576)
-        sprintf(tmp, "%2dM", (fileSize >> 20));
+        sprintf(tmp, "%2dM", (int)(fileSize >> 20));
     else if (fileSize > 1024)
-        sprintf(tmp, "%4dK", (fileSize >> 10));
+        sprintf(tmp, "%4dK", (int)(fileSize >> 10));
     else
-        sprintf(tmp, "%4d", fileSize);
+        sprintf(tmp, "%4d", (int)fileSize);
 
     stylized_filesize = tmp;
 
@@ -424,9 +425,9 @@ void util_dump_bytes(uint8_t *buff, uint32_t buff_size)
     {
         for (int k = 0; (k + j) < buff_size && k < bytes_per_line; k++)
             Debug_printf("%02X ", buff[k + j]);
-        Debug_println();
+        Debug_println("");
     }
-    Debug_println();
+    Debug_println("");
 }
 
 vector<string> util_tokenize(string s, char c)
@@ -482,10 +483,14 @@ void util_sam_say(const char *p,
     char pitchs[4], speeds[4], mouths[4],throats[4]; // itoa temp vars
 
     // Convert to strings.
-    itoa(pitch,pitchs,10);
-    itoa(speed,speeds,10);
-    itoa(mouth,mouths,10);
-    itoa(throat,throats,10);
+    // itoa(pitch,pitchs,10);
+    // itoa(speed,speeds,10);
+    // itoa(mouth,mouths,10);
+    // itoa(throat,throats,10);
+    sprintf(pitchs, "%d", pitch);
+    sprintf(speeds, "%d", speed);
+    sprintf(mouths, "%d", mouth);
+    sprintf(throats, "%d", throat);
 
     memset(a, 0, sizeof(a));
     a[n++] = (char *)("sam"); // argv[0] for compatibility
@@ -510,5 +515,5 @@ void util_sam_say(const char *p,
 
     // Append the phrase to say.
     a[n++] = (char *)p;
-    sam(n, a);
+//    sam(n, a);
 }

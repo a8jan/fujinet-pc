@@ -4,8 +4,8 @@
 
 #include "../../include/debug.h"
 #include "sio.h"
-#include "network.h"
-#include "cassette.h"
+// #include "network.h"
+// #include "cassette.h"
 
 #include "fujiHost.h"
 #include "fujiDisk.h"
@@ -48,7 +48,7 @@ private:
 
     fujiDisk _fnDisks[MAX_DISK_DEVICES];
 
-    sioCassette _cassetteDev;
+    // sioCassette _cassetteDev;
 
     int _current_open_directory_slot = -1;
 
@@ -104,9 +104,9 @@ public:
     bool boot_config = true;
     sioDisk *bootdisk();
 
-    sioNetwork *network();
+    // sioNetwork *network();
 
-    sioCassette *cassette() { return &_cassetteDev; };
+    // sioCassette *cassette() { return &_cassetteDev; };
     void debug_tape();
 
     void setup(sioBus *siobus);

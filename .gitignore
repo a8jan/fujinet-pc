@@ -7,6 +7,9 @@
 # PlatformIO build directory
 **/.pio
 
+# CMake build directory for fujinet-open
+build/
+
 # PlatformIO project settings
 platformio.ini
 

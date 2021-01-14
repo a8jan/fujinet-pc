@@ -138,6 +138,7 @@ void DiskType::unmount()
 
 disktype_t DiskType::discover_disktype(const char *filename)
 {
+    Debug_printf("DiskType::discover_disktype \"%s\"\n", filename);
     int l = strlen(filename);
     if(l > 4 && filename[l - 4] == '.')
     {

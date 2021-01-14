@@ -1,8 +1,15 @@
 /* Modified version of ESP-Arduino fnTcpServer.cpp/h */
 
-#include <lwip/sockets.h>
-#include <lwip/netdb.h>
+// #include <lwip/sockets.h>
+// #include <lwip/netdb.h>
 #include <errno.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
 
 #include "../../include/debug.h"
 
@@ -67,11 +74,11 @@ bool fnTcpServer::hasClient()
 
     struct sockaddr_in _client;
     int cs = sizeof(struct sockaddr_in);
-    _accepted_sockfd = lwip_accept(_sockfd, (struct sockaddr *)&_client, (socklen_t *)&cs);
+    _accepted_sockfd = ::accept(_sockfd, (struct sockaddr *)&_client, (socklen_t *)&cs);
 
     if (_accepted_sockfd >= 0)
     {
-        Debug_printf("TcpServer accepted connection from %s\n", inet_ntoa(_client.sin_addr.s_addr));
+        Debug_printf("TcpServer accepted connection from %s\n", inet_ntoa(_client.sin_addr));
         return true;
     }
 
@@ -98,17 +105,17 @@ fnTcpClient fnTcpServer::available()
     {
         struct sockaddr_in _client;
         int cs = sizeof(struct sockaddr_in);
-        client_sock = lwip_accept(_sockfd, (struct sockaddr *)&_client, (socklen_t *)&cs);
+        client_sock = ::accept(_sockfd, (struct sockaddr *)&_client, (socklen_t *)&cs);
     }
 
     // If we have a client, turn on SO_KEEPALIVE and TCP_NODELAY and return new fnTcpClient
     if (client_sock >= 0)
     {
         int val = 1;
-        if (setsockopt(client_sock, SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val)) == ESP_OK)
+        if (setsockopt(client_sock, SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val)) == 0)
         {
             val = _noDelay;
-            if (setsockopt(client_sock, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val)) == ESP_OK)
+            if (setsockopt(client_sock, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val)) == 0)
                 return fnTcpClient(client_sock);
         }
     }
@@ -131,7 +138,7 @@ int fnTcpServer::setTimeout(uint32_t seconds)
 // Closes listening socket
 void fnTcpServer::stop()
 {
-    lwip_close(_sockfd);
+    close(_sockfd);
     _sockfd = -1;
     _listening = false;
 }

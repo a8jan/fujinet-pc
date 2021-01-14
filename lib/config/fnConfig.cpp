@@ -1,11 +1,12 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <bsd/string.h>
 
 #include "fnConfig.h"
 #include "../FileSystem/fnFsSPIF.h"
 #include "../FileSystem/fnFsSD.h"
-#include "../hardware/keys.h"
+// #include "../hardware/keys.h"
 #include "../utils/utils.h"
 #include "../../include/debug.h"
 
@@ -427,21 +428,21 @@ void fnConfig::save()
     std::string result = ss.str();
     size_t z = fwrite(result.c_str(), 1, result.length(), fout);
     (void)z; // Get around unused var
-    Debug_printf("fnConfig::save wrote %d bytes\n", z);
+    Debug_printf("fnConfig::save wrote %u bytes\n", (unsigned)z);
     fclose(fout);
 
     _dirty = false;
 
-    // Copy to SD if possible
-    if (fnSDFAT.running())
-    {
-        Debug_println("Attemptiong config copy to SD");
-        if (0 == fnSystem.copy_file(&fnSPIFFS, CONFIG_FILENAME, &fnSDFAT, CONFIG_FILENAME))
-        {
-            Debug_println("Failed to copy config to SD");
-            return;
-        }
-    }
+    // // Copy to SD if possible
+    // if (fnSDFAT.running())
+    // {
+    //     Debug_println("Attemptiong config copy to SD");
+    //     if (0 == fnSystem.copy_file(&fnSPIFFS, CONFIG_FILENAME, &fnSDFAT, CONFIG_FILENAME))
+    //     {
+    //         Debug_println("Failed to copy config to SD");
+    //         return;
+    //     }
+    // }
 }
 
 /* Load configuration data from SPIFFS. If no config file exists in SPIFFS,
@@ -451,20 +452,20 @@ void fnConfig::load()
 {
     Debug_println("fnConfig::load");
 
-    // Clear the config file if key is currently pressed
-    if (fnKeyManager.keyCurrentlyPressed(BUTTON_B))
-    {
-        Debug_println("fnConfig deleting configuration file and skipping SD check");
+//     // Clear the config file if key is currently pressed
+//     if (fnKeyManager.keyCurrentlyPressed(BUTTON_B))
+//     {
+//         Debug_println("fnConfig deleting configuration file and skipping SD check");
 
-        // Tell the keymanager to ignore this keypress
-        fnKeyManager.ignoreKeyPress(BUTTON_B);
+//         // Tell the keymanager to ignore this keypress
+//         fnKeyManager.ignoreKeyPress(BUTTON_B);
 
-        if (fnSPIFFS.exists(CONFIG_FILENAME))
-            fnSPIFFS.remove(CONFIG_FILENAME);
+//         if (fnSPIFFS.exists(CONFIG_FILENAME))
+//             fnSPIFFS.remove(CONFIG_FILENAME);
 
-        _dirty = true; // We have a new config, so we treat it as needing to be saved
-        return;
-    }
+//         _dirty = true; // We have a new config, so we treat it as needing to be saved
+//         return;
+//     }
 
     /*
 Original behavior: read from SPIFFS first and only read from SD if nothing found on SPIFFS.
@@ -492,15 +493,15 @@ Original behavior: read from SPIFFS first and only read from SD if nothing found
     /*
 New behavior: copy from SD first if available, then read SPIFFS.
 */
-    // See if we have a copy on SD (only copy from SD if we don't have a local copy)
-    if (fnSDFAT.running() && fnSDFAT.exists(CONFIG_FILENAME))
-    {
-        Debug_println("Found copy of config file on SD - copying that to SPIFFS");
-        if (0 == fnSystem.copy_file(&fnSDFAT, CONFIG_FILENAME, &fnSPIFFS, CONFIG_FILENAME))
-        {
-            Debug_println("Failed to copy config from SD");
-        }
-    }
+    // // See if we have a copy on SD (only copy from SD if we don't have a local copy)
+    // if (fnSDFAT.running() && fnSDFAT.exists(CONFIG_FILENAME))
+    // {
+    //     Debug_println("Found copy of config file on SD - copying that to SPIFFS");
+    //     if (0 == fnSystem.copy_file(&fnSDFAT, CONFIG_FILENAME, &fnSPIFFS, CONFIG_FILENAME))
+    //     {
+    //         Debug_println("Failed to copy config from SD");
+    //     }
+    // }
     // See if we have a file in SPIFFS (either originally or something copied from SD)
     if (false == fnSPIFFS.exists(CONFIG_FILENAME))
     {
@@ -512,6 +513,11 @@ New behavior: copy from SD first if available, then read SPIFFS.
     // Read INI file into buffer (for speed)
     // Then look for sections and handle each
     FILE *fin = fnSPIFFS.file_open(CONFIG_FILENAME);
+    if (fin == nullptr)
+    {
+        Debug_printf("Failed to open config file\n");
+        return;
+    }
     char *inibuffer = (char *)malloc(CONFIG_FILEBUFFSIZE);
     if (inibuffer == nullptr)
     {
@@ -593,7 +599,8 @@ void fnConfig::_read_section_general(std::stringstream &ss)
             else if (strcasecmp(name.c_str(), "hsioindex") == 0)
             {
                 int index = atoi(value.c_str());
-                if (index >= 0 && index < 10)
+                // if (index >= 0 && index < 10)
+                if (index >= 0 && index <= 40) // jk: TODO fix high speed
                     _general.hsio_index = index;
             }
             else if (strcasecmp(name.c_str(), "timezone") == 0)

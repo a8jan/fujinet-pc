@@ -2,6 +2,10 @@
 #define _FN_FS_
 
 #include <dirent.h>
+#include <stdint.h>
+#include <time.h>
+#include <stdio.h>
+
 #include "../../include/debug.h"
 
 #ifndef FILE_READ

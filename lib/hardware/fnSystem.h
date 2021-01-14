@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <string>
 
-#include <driver/gpio.h>
+// #include <driver/gpio.h>
 
 #include "../FileSystem/fnFS.h"
 
@@ -78,10 +78,10 @@ public:
 #define DIGI_LOW 0x00
 #define DIGI_HIGH 0x01
 
-    void set_pin_mode(uint8_t pin, gpio_mode_t mode, pull_updown_t pull_mode = PULL_NONE);
+    // void set_pin_mode(uint8_t pin, gpio_mode_t mode, pull_updown_t pull_mode = PULL_NONE);
 
     int digital_read(uint8_t pin);
-    void digital_write(uint8_t pin, uint8_t val);
+    // void digital_write(uint8_t pin, uint8_t val);
 
     void reboot();
     uint32_t get_cpu_frequency();
@@ -98,8 +98,8 @@ public:
 
     const char *get_uptime_str();
     const char *get_current_time_str();
-    void update_timezone(const char *timezone);
-    void update_hostname(const char *hostname);
+    // void update_timezone(const char *timezone);
+    // void update_hostname(const char *hostname);
 
     const char *get_fujinet_version(bool shortVersionOnly = false);
 

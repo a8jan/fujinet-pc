@@ -1,23 +1,19 @@
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
 
-// __PLATFORMIO_BUILD_DEBUG__ is set when build_type is set to debug in platformio.ini
-#ifdef __PLATFORMIO_BUILD_DEBUG__
+#ifdef __OPEN_BUILD_DEBUG__
 #define DEBUG
-#endif
 
-#include "../lib/hardware/fnUART.h"
-
+#include <cstdio>
 /*
   Debugging Macros
 */
-#ifdef DEBUG
-    // Use FujiNet debug serial output
-    #define Debug_print(...) fnUartDebug.print( __VA_ARGS__ )
-    #define Debug_printf(...) fnUartDebug.printf( __VA_ARGS__ )
-    #define Debug_println(...) fnUartDebug.println( __VA_ARGS__ )
+    // Use standard printf
+    #define Debug_print(...) printf( "%s", __VA_ARGS__ )
+    #define Debug_printf(...) printf( __VA_ARGS__ )
+    #define Debug_println(...) printf( "%s\n", __VA_ARGS__ )
 
-    #define HEAP_CHECK(x) Debug_printf("HEAP CHECK %s " x "\n", heap_caps_check_integrity_all(true) ? "PASSED":"FAILED")
+    #define HEAP_CHECK(x) Debug_printf("HEAP CHECK %s " x "\n", true ? "PASSED":"FAILED")
 #endif
 
 #ifndef DEBUG

@@ -170,13 +170,13 @@ private:
 
     uint8_t _atx_drive_model = ATX_DRIVE_MODEL_810;
 
-    portMUX_TYPE __atx_timerMux = portMUX_INITIALIZER_UNLOCKED;
+    // portMUX_TYPE __atx_timerMux = portMUX_INITIALIZER_UNLOCKED;
 
     uint64_t __atx_position_time;
     uint16_t __atx_current_angular_pos = 0;
     uint32_t _atx_total_rotations = 0;
 
-    esp_timer_handle_t _atx_timer = nullptr;
+    // esp_timer_handle_t _atx_timer = nullptr;
 
     std::vector<AtxTrack> _tracks;
 

@@ -1,3 +1,6 @@
+#include <bsd/string.h>
+#include <arpa/inet.h>
+
 #include "fnFsTNFS.h"
 #include "../TNFSlib/tnfslib.h"
 #include "../tcpip/fnDNS.h"
@@ -56,7 +59,9 @@ bool FileSystemTNFS::start(const char *host, uint16_t port, const char * mountpa
     else
         _mountinfo.password[0] = '\0';
 
-    Debug_printf("TNFS mount %s[%s]:%hu\n", _mountinfo.hostname, inet_ntoa(_mountinfo.host_ip), _mountinfo.port);
+    // struct in_addr vs in_addr_t
+    // Debug_printf("TNFS mount %s[%s]:%hu\n", _mountinfo.hostname, inet_ntoa(_mountinfo.host_ip), _mountinfo.port);
+    Debug_printf("TNFS mount %s[%s]:%hu\n", _mountinfo.hostname, inet_ntoa(in_addr({.s_addr = _mountinfo.host_ip})), _mountinfo.port);
 
     int r = tnfs_mount(&_mountinfo);
     if (r != TNFS_RESULT_SUCCESS)

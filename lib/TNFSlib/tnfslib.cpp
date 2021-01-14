@@ -1,5 +1,7 @@
 #include <memory>
 #include <string.h>
+#include <bsd/string.h>
+#include <sys/stat.h>
 
 #include "tnfslib.h"
 #include "../tcpip/fnUDP.h"
@@ -237,9 +239,9 @@ void _tnfs_cache_dump(const char *title, uint8_t *cache, uint32_t cache_size)
     {
         for (int k = 0; (k + j) < cache_size && k < bytes_per_line; k++)
             Debug_printf("%02X ", cache[k + j]);
-        Debug_println();
+        Debug_println("");
     }
-    Debug_println();
+    Debug_println("");
 }
 #endif    
 
@@ -597,7 +599,8 @@ int tnfs_lseek(tnfsMountInfo *m_info, int16_t file_handle, int32_t position, uin
             if(pFileInf->file_position != response_pos)
             {
                 Debug_print("CALCULATED AND RESPONSE POS DON'T MATCH!\n");
-                vTaskDelay(5000 / portTICK_PERIOD_MS);
+                // vTaskDelay(5000 / portTICK_PERIOD_MS);
+                fnSystem.delay(5000);
             }
         }
         return packet.payload[0];
@@ -1252,7 +1255,8 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
                             Debug_printf("Server asked us to TRY AGAIN after %ums\n", backoffms);
                             if (backoffms > TNFS_MAX_BACKOFF_DELAY)
                                 backoffms = TNFS_MAX_BACKOFF_DELAY;
-                            vTaskDelay(backoffms / portTICK_PERIOD_MS);
+                            // vTaskDelay(backoffms / portTICK_PERIOD_MS);
+                            fnSystem.delay(backoffms);
                         }
                     }
                 }
@@ -1264,7 +1268,8 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
         }
 
         // Make sure we wait before retrying
-        vTaskDelay(m_info->min_retry_ms / portTICK_PERIOD_MS);
+        // vTaskDelay(m_info->min_retry_ms / portTICK_PERIOD_MS);
+        fnSystem.delay(m_info->min_retry_ms);
         retry++;
     }
 

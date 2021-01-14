@@ -1,14 +1,15 @@
 #include "sio.h"
 #include "modem.h"
 #include "fuji.h"
-#include "led.h"
-#include "network.h"
+// #include "led.h"
+// #include "network.h"
 #include "fnSystem.h"
 #include "fnConfig.h"
-#include "fnDNS.h"
+// #include "fnDNS.h"
 #include "utils.h"
-#include "midimaze.h"
-#include "cassette.h"
+// #include "midimaze.h"
+// #include "cassette.h"
+#include "../hardware/fnUART.h"
 #include "../../include/debug.h"
 
 // Helper functions outside the class defintions
@@ -164,14 +165,16 @@ void sioBus::_sio_process_cmd()
         // Debug_println("Timeout waiting for data after CMD pin asserted");
         return;
     }
-    // Turn on the SIO indicator LED
-    fnLedManager.set(eLed::LED_SIO, true);
+    // // Turn on the SIO indicator LED
+    // fnLedManager.set(eLed::LED_SIO, true);
 
     Debug_printf("\nCF: %02x %02x %02x %02x %02x\n",
                  tempFrame.device, tempFrame.comnd, tempFrame.aux1, tempFrame.aux2, tempFrame.cksum);
     // Wait for CMD line to raise again
-    while (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
-        fnSystem.yield();
+    // while (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
+    //     fnSystem.yield();
+    while (fnUartSIO.is_command())
+        fnSystem.delay_microseconds(500);
 
     uint8_t ck = sio_checksum((uint8_t *)&tempFrame.commanddata, sizeof(tempFrame.commanddata)); // Calculate Checksum
     if (ck == tempFrame.checksum)
@@ -236,27 +239,27 @@ void sioBus::_sio_process_cmd()
             toggleBaudrate();
         }
     }
-    fnLedManager.set(eLed::LED_SIO, false);
+    // fnLedManager.set(eLed::LED_SIO, false);
 }
 
 // Look to see if we have any waiting messages and process them accordingly
 void sioBus::_sio_process_queue()
 {
     sio_message_t msg;
-    if (xQueueReceive(qSioMessages, &msg, 0) == pdTRUE)
-    {
-        switch (msg.message_id)
-        {
-        case SIOMSG_DISKSWAP:
-            if (_fujiDev != nullptr)
-                _fujiDev->image_rotate();
-            break;
-        case SIOMSG_DEBUG_TAPE:
-            if (_fujiDev != nullptr)
-                _fujiDev->debug_tape();
-            break;
-        }
-    }
+    // if (xQueueReceive(qSioMessages, &msg, 0) == pdTRUE)
+    // {
+    //     switch (msg.message_id)
+    //     {
+    //     case SIOMSG_DISKSWAP:
+    //         if (_fujiDev != nullptr)
+    //             _fujiDev->image_rotate();
+    //         break;
+    //     case SIOMSG_DEBUG_TAPE:
+    //         if (_fujiDev != nullptr)
+    //             _fujiDev->debug_tape();
+    //         break;
+    //     }
+    // }
 }
 
 /*
@@ -269,56 +272,60 @@ void sioBus::_sio_process_queue()
  */
 void sioBus::service()
 {
+    bool idle = true;
+
     // Check for any messages in our queue (this should always happen, even if any other special
     // modes disrupt normal SIO handling - should probably make a separate task for this)
     _sio_process_queue();
 
-    // Handle MIDIMaze if enabled and do not process SIO commands
-    if (_midiDev != nullptr && _midiDev->midimazeActive)
-    {
-        _midiDev->sio_handle_midimaze();
-        return; // break!
-    }
+    // // Handle MIDIMaze if enabled and do not process SIO commands
+    // if (_midiDev != nullptr && _midiDev->midimazeActive)
+    // {
+    //     _midiDev->sio_handle_midimaze();
+    //     return; // break!
+    // }
 
-    // check if cassette is mounted first
-    if (_fujiDev->cassette()->is_mounted())
-    { // the test which tape activation mode
-        if (_fujiDev->cassette()->has_pulldown())
-        {                                                    // motor line mode
-            if (fnSystem.digital_read(PIN_MTR) == DIGI_HIGH) // TODO: use cassette helper function for consistency?
-            {
-                if (_fujiDev->cassette()->is_active() == false) // keep this logic because motor line mode
-                {
-                    Debug_println("MOTOR ON: activating cassette");
-                    _fujiDev->cassette()->sio_enable_cassette();
-                }
-            }
-            else // check if need to stop tape
-            {
-                if (_fujiDev->cassette()->is_active() == true)
-                {
-                    Debug_println("MOTOR OFF: de-activating cassette");
-                    _fujiDev->cassette()->sio_disable_cassette();
-                }
-            }
-        }
+    // // check if cassette is mounted first
+    // if (_fujiDev->cassette()->is_mounted())
+    // { // the test which tape activation mode
+    //     if (_fujiDev->cassette()->has_pulldown())
+    //     {                                                    // motor line mode
+    //         if (fnSystem.digital_read(PIN_MTR) == DIGI_HIGH) // TODO: use cassette helper function for consistency?
+    //         {
+    //             if (_fujiDev->cassette()->is_active() == false) // keep this logic because motor line mode
+    //             {
+    //                 Debug_println("MOTOR ON: activating cassette");
+    //                 _fujiDev->cassette()->sio_enable_cassette();
+    //             }
+    //         }
+    //         else // check if need to stop tape
+    //         {
+    //             if (_fujiDev->cassette()->is_active() == true)
+    //             {
+    //                 Debug_println("MOTOR OFF: de-activating cassette");
+    //                 _fujiDev->cassette()->sio_disable_cassette();
+    //             }
+    //         }
+    //     }
 
-        if (_fujiDev->cassette()->is_active() == true) // handle cassette data traffic
-        {
-            _fujiDev->cassette()->sio_handle_cassette(); //
-            return;                                      // break!
-        }
-    }
+    //     if (_fujiDev->cassette()->is_active() == true) // handle cassette data traffic
+    //     {
+    //         _fujiDev->cassette()->sio_handle_cassette(); // 
+    //         return;                                      // break! 
+    //     }
+    // }
 
     // Go process a command frame if the SIO CMD line is asserted
-    if (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
+    //if (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
+    if (fnUartSIO.is_command())
     {
         _sio_process_cmd();
+        idle = false;
     }
     // Go check if the modem needs to read data if it's active
     else if (_modemDev != nullptr && _modemDev->modemActive)
     {
-        _modemDev->sio_handle_modem();
+        idle = (_modemDev->sio_handle_modem() <= 0);
     }
     else
     // Neither CMD nor active modem, so throw out any stray input data
@@ -326,12 +333,16 @@ void sioBus::service()
         fnUartSIO.flush_input();
     }
 
-    // Handle interrupts from network protocols
-    for (int i = 0; i < 8; i++)
-    {
-        if (_netDev[i] != nullptr)
-            _netDev[i]->sio_assert_interrupts();
-    }
+    // // Handle interrupts from network protocols
+    // for (int i = 0; i < 8; i++)
+    // {
+    //     if (_netDev[i] != nullptr)
+    //         _netDev[i]->sio_assert_interrupts();
+    // }
+
+   if (idle)
+       // fnSystem.yield();
+       fnSystem.delay_microseconds(500);
 }
 
 // Setup SIO bus
@@ -342,27 +353,27 @@ void sioBus::setup()
     // Set up UART
     fnUartSIO.begin(_sioBaud);
 
-    // INT PIN
-    fnSystem.set_pin_mode(PIN_INT, gpio_mode_t::GPIO_MODE_OUTPUT_OD, SystemManager::pull_updown_t::PULL_UP);
-    fnSystem.digital_write(PIN_INT, DIGI_HIGH);
-    // PROC PIN
-    fnSystem.set_pin_mode(PIN_PROC, gpio_mode_t::GPIO_MODE_OUTPUT_OD, SystemManager::pull_updown_t::PULL_UP);
-    fnSystem.digital_write(PIN_PROC, DIGI_HIGH);
-    // MTR PIN
-    //fnSystem.set_pin_mode(PIN_MTR, PINMODE_INPUT | PINMODE_PULLDOWN); // There's no PULLUP/PULLDOWN on pins 34-39
-    fnSystem.set_pin_mode(PIN_MTR, gpio_mode_t::GPIO_MODE_INPUT);
-    // CMD PIN
-    //fnSystem.set_pin_mode(PIN_CMD, PINMODE_INPUT | PINMODE_PULLUP); // There's no PULLUP/PULLDOWN on pins 34-39
-    fnSystem.set_pin_mode(PIN_CMD, gpio_mode_t::GPIO_MODE_INPUT);
-    // CKI PIN
-    //fnSystem.set_pin_mode(PIN_CKI, PINMODE_OUTPUT);
-    fnSystem.set_pin_mode(PIN_CKI, gpio_mode_t::GPIO_MODE_OUTPUT_OD);
-    fnSystem.digital_write(PIN_CKI, DIGI_LOW);
-    // CKO PIN
-    fnSystem.set_pin_mode(PIN_CKO, gpio_mode_t::GPIO_MODE_INPUT);
+    // // INT PIN
+    // fnSystem.set_pin_mode(PIN_INT, gpio_mode_t::GPIO_MODE_OUTPUT_OD, SystemManager::pull_updown_t::PULL_UP);
+    // fnSystem.digital_write(PIN_INT, DIGI_HIGH);
+    // // PROC PIN
+    // fnSystem.set_pin_mode(PIN_PROC, gpio_mode_t::GPIO_MODE_OUTPUT_OD, SystemManager::pull_updown_t::PULL_UP);
+    // fnSystem.digital_write(PIN_PROC, DIGI_HIGH);
+    // // MTR PIN
+    // //fnSystem.set_pin_mode(PIN_MTR, PINMODE_INPUT | PINMODE_PULLDOWN); // There's no PULLUP/PULLDOWN on pins 34-39
+    // fnSystem.set_pin_mode(PIN_MTR, gpio_mode_t::GPIO_MODE_INPUT);
+    // // CMD PIN
+    // //fnSystem.set_pin_mode(PIN_CMD, PINMODE_INPUT | PINMODE_PULLUP); // There's no PULLUP/PULLDOWN on pins 34-39
+    // fnSystem.set_pin_mode(PIN_CMD, gpio_mode_t::GPIO_MODE_INPUT);
+    // // CKI PIN
+    // //fnSystem.set_pin_mode(PIN_CKI, PINMODE_OUTPUT);
+    // fnSystem.set_pin_mode(PIN_CKI, gpio_mode_t::GPIO_MODE_OUTPUT_OD);
+    // fnSystem.digital_write(PIN_CKI, DIGI_LOW);
+    // // CKO PIN
+    // fnSystem.set_pin_mode(PIN_CKO, gpio_mode_t::GPIO_MODE_INPUT);
 
-    // Create a message queue
-    qSioMessages = xQueueCreate(4, sizeof(sio_message_t));
+    // // Create a message queue
+    // qSioMessages = xQueueCreate(4, sizeof(sio_message_t));
 
     // Set the initial HSIO index
     // First see if Config has read a value
@@ -386,14 +397,14 @@ void sioBus::addDevice(sioDevice *pDevice, int device_id)
     {
         _modemDev = (sioModem *)pDevice;
     }
-    else if (device_id >= SIO_DEVICEID_FN_NETWORK && device_id <= SIO_DEVICEID_FN_NETWORK_LAST)
-    {
-        _netDev[device_id - SIO_DEVICEID_FN_NETWORK] = (sioNetwork *)pDevice;
-    }
-    else if (device_id == SIO_DEVICEID_MIDI)
-    {
-        _midiDev = (sioMIDIMaze *)pDevice;
-    }
+    // else if (device_id >= SIO_DEVICEID_FN_NETWORK && device_id <= SIO_DEVICEID_FN_NETWORK_LAST)
+    // {
+    //     _netDev[device_id - SIO_DEVICEID_FN_NETWORK] = (sioNetwork *)pDevice;
+    // }
+    // else if (device_id == SIO_DEVICEID_MIDI)
+    // {
+    //     _midiDev = (sioMIDIMaze *)pDevice;
+    // }
 
     pDevice->_devnum = device_id;
 
@@ -479,6 +490,7 @@ int sioBus::setHighSpeedIndex(int hsio_index)
 {
     int temp = _sioBaudHigh;
     _sioBaudHigh = (SIO_ATARI_PAL_FREQUENCY * 10) / (10 * (2 * (hsio_index + 7)) + 3);
+    //_sioBaudHigh = (int)(1781610.0 / (2*(hsio_index+7)));
     _sioHighSpeedIndex = hsio_index;
 
     int alt = SIO_ATARI_PAL_FREQUENCY / (2 * hsio_index + 14);
@@ -500,26 +512,26 @@ int sioBus::getHighSpeedBaud()
 void sioBus::setMIDIHost(const char *hostname)
 {
 
-    if (hostname != nullptr && hostname[0] != '\0')
-    {
-        // Try to resolve the hostname and store that so we don't have to keep looking it up
-        _midiDev->midimaze_host_ip = get_ip4_addr_by_name(hostname);
+    // if (hostname != nullptr && hostname[0] != '\0')
+    // {
+    //     // Try to resolve the hostname and store that so we don't have to keep looking it up
+    //     _midiDev->midimaze_host_ip = get_ip4_addr_by_name(hostname);
 
-        if (_midiDev->midimaze_host_ip == IPADDR_NONE)
-        {
-            Debug_printf("Failed to resolve hostname \"%s\"\n", hostname);
-        }
-    }
-    else
-    {
-        _midiDev->midimaze_host_ip = IPADDR_NONE;
-    }
+    //     if (_midiDev->midimaze_host_ip == IPADDR_NONE)
+    //     {
+    //         Debug_printf("Failed to resolve hostname \"%s\"\n", hostname);
+    //     }
+    // }
+    // else
+    // {
+    //     _midiDev->midimaze_host_ip = IPADDR_NONE;
+    // }
 
-    // Restart MIDIMaze mode if needed
-    if (_midiDev->midimazeActive)
-        _midiDev->sio_disable_midimaze();
-    if (_midiDev->midimaze_host_ip != IPADDR_NONE)
-        _midiDev->sio_enable_midimaze();
+    // // Restart MIDIMaze mode if needed
+    // if (_midiDev->midimazeActive)
+    //     _midiDev->sio_disable_midimaze();
+    // if (_midiDev->midimaze_host_ip != IPADDR_NONE)
+    //     _midiDev->sio_enable_midimaze();
 }
 
 void sioBus::setUltraHigh(bool _enable, int _ultraHighBaud)
@@ -528,37 +540,38 @@ void sioBus::setUltraHigh(bool _enable, int _ultraHighBaud)
 
     if (_enable == true)
     {
-        // Setup PWM channel for CLOCK IN
-        ledc_channel_config_t ledc_channel_sio_ckin;
-        ledc_channel_sio_ckin.gpio_num = PIN_CKI;
-        ledc_channel_sio_ckin.speed_mode = LEDC_HIGH_SPEED_MODE;
-        ledc_channel_sio_ckin.channel = LEDC_CHANNEL_1;
-        ledc_channel_sio_ckin.intr_type = LEDC_INTR_DISABLE;
-        ledc_channel_sio_ckin.timer_sel = LEDC_TIMER_1;
-        ledc_channel_sio_ckin.duty = 1;
-        ledc_channel_sio_ckin.hpoint = 0;
+        // // Setup PWM channel for CLOCK IN
+        // ledc_channel_config_t ledc_channel_sio_ckin;
+        // ledc_channel_sio_ckin.gpio_num = PIN_CKI;
+        // ledc_channel_sio_ckin.speed_mode = LEDC_HIGH_SPEED_MODE;
+        // ledc_channel_sio_ckin.channel = LEDC_CHANNEL_1;
+        // ledc_channel_sio_ckin.intr_type = LEDC_INTR_DISABLE;
+        // ledc_channel_sio_ckin.timer_sel = LEDC_TIMER_1;
+        // ledc_channel_sio_ckin.duty = 1;
+        // ledc_channel_sio_ckin.hpoint = 0;
 
-        // Setup PWM timer for CLOCK IN
-        ledc_timer_config_t ledc_timer;
-        ledc_timer.clk_cfg = LEDC_AUTO_CLK;
-        ledc_timer.speed_mode = LEDC_HIGH_SPEED_MODE;
-        ledc_timer.duty_resolution = LEDC_TIMER_1_BIT;
-        ledc_timer.timer_num = LEDC_TIMER_1;
-        ledc_timer.freq_hz = _ultraHighBaud;
+        // // Setup PWM timer for CLOCK IN
+        // ledc_timer_config_t ledc_timer;
+        // ledc_timer.clk_cfg = LEDC_AUTO_CLK;
+        // ledc_timer.speed_mode = LEDC_HIGH_SPEED_MODE;
+        // ledc_timer.duty_resolution = LEDC_TIMER_1_BIT;
+        // ledc_timer.timer_num = LEDC_TIMER_1;
+        // ledc_timer.freq_hz = _ultraHighBaud;
 
         _sioBaudUltraHigh = _ultraHighBaud;
 
-        Debug_printf("Enabling SIO clock, rate: %lu\n", ledc_timer.freq_hz);
+        // Debug_printf("Enabling SIO clock, rate: %lu\n", ledc_timer.freq_hz);
+        Debug_printf("Enabling SIO clock, rate: %d\n", _ultraHighBaud);
 
-        // Enable PWM on CLOCK IN
-        ledc_channel_config(&ledc_channel_sio_ckin);
-        ledc_timer_config(&ledc_timer);
+        // // Enable PWM on CLOCK IN
+        // ledc_channel_config(&ledc_channel_sio_ckin);
+        // ledc_timer_config(&ledc_timer);
         fnUartSIO.set_baudrate(_sioBaudUltraHigh);
     }
     else
     {
         Debug_printf("Disabling SIO clock.\n");
-        ledc_stop(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_1, 0);
+        // ledc_stop(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_1, 0);
 
         _sioBaudUltraHigh = 0;
         fnUartSIO.set_baudrate(SIO_STANDARD_BAUDRATE);

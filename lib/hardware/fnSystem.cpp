@@ -1,17 +1,19 @@
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <esp_system.h>
-#include <esp_err.h>
-#include <esp_timer.h>
+// #include <freertos/FreeRTOS.h>
+// #include <freertos/task.h>
+// #include <esp_system.h>
+// #include <esp_err.h>
+// #include <esp_timer.h>
 #include <time.h>
-#include <driver/gpio.h>
-#include <driver/dac.h>
-#include <driver/adc.h>
-#include "soc/sens_reg.h"
-#include "soc/rtc.h"
-#include "esp_adc_cal.h"
+// #include <driver/gpio.h>
+// #include <driver/dac.h>
+// #include <driver/adc.h>
+// #include "soc/sens_reg.h"
+// #include "soc/rtc.h"
+// #include "esp_adc_cal.h"
 
 #include <cstring>
+#include <sys/time.h>
+#include <sched.h>
 
 #include "../../include/debug.h"
 #include "../../include/version.h"
@@ -19,7 +21,7 @@
 #include "fnSystem.h"
 #include "fnFsSD.h"
 #include "fnFsSPIF.h"
-#include "fnWiFi.h"
+// #include "fnWiFi.h"
 
 // Global object to manage System
 SystemManager fnSystem;
@@ -27,11 +29,13 @@ SystemManager fnSystem;
 // Returns current CPU frequency in MHz
 uint32_t SystemManager::get_cpu_frequency()
 {
-    rtc_cpu_freq_config_t cfg;
-    rtc_clk_cpu_freq_get_config(&cfg);
-    return cfg.freq_mhz;
+    // rtc_cpu_freq_config_t cfg;
+    // rtc_clk_cpu_freq_get_config(&cfg);
+    // return cfg.freq_mhz;
+    return 1;
 }
 
+/*
 // Set pin mode. No option to enable interrupts, although this is possible
 void SystemManager::set_pin_mode(uint8_t pin, gpio_mode_t mode, pull_updown_t pull_mode)
 {
@@ -103,19 +107,34 @@ int IRAM_ATTR SystemManager::digital_read(uint8_t pin)
     }
     return 0;
 }
-
-// from esp32-hal-misc.c
-unsigned long IRAM_ATTR SystemManager::micros()
+*/
+int SystemManager::digital_read(uint8_t pin)
 {
-    return (unsigned long)(esp_timer_get_time());
+    Debug_println("SystemManager::digital_read not implemented");
+    return 0;
 }
 
 // from esp32-hal-misc.c
-unsigned long IRAM_ATTR SystemManager::millis()
+// unsigned long IRAM_ATTR SystemManager::micros()
+unsigned long SystemManager::micros()
 {
-    return (unsigned long)(esp_timer_get_time() / 1000ULL);
+    // return (unsigned long)(esp_timer_get_time());
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return (unsigned long)(tv.tv_sec*1000000UL+tv.tv_usec);
 }
 
+// from esp32-hal-misc.c
+// unsigned long IRAM_ATTR SystemManager::millis()
+unsigned long SystemManager::millis()
+{
+    // return (unsigned long)(esp_timer_get_time() / 1000ULL);
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return (unsigned long)(tv.tv_sec*1000UL+tv.tv_usec/1000UL);
+}
+
+/*
 // from esp32-hal-misc.
 void SystemManager::delay(uint32_t ms)
 {
@@ -141,33 +160,61 @@ void IRAM_ATTR SystemManager::delay_microseconds(uint32_t us)
             NOP();
     }
 }
+*/
+
+void SystemManager::delay(uint32_t ms)
+{
+    struct timespec ts;
+    ts.tv_sec = ms / 1000;
+    ts.tv_nsec = (ms % 1000) * (1000 * 1000);
+    nanosleep(&ts, NULL);
+}
+
+void SystemManager::delay_microseconds(uint32_t us)
+{
+    struct timespec ts;
+    ts.tv_sec = us / (1000 * 1000);
+    ts.tv_nsec = (us % (1000 * 1000)) * 1000;
+    nanosleep(&ts, NULL);
+}
 
 // from esp32-hal-misc.
 void SystemManager::yield()
 {
-    vPortYield();
+    // vPortYield();
+    sched_yield();
 }
 
+/*
 // TODO: Close open files first
 void SystemManager::reboot()
 {
     esp_restart();
+}
+*/
+void SystemManager::reboot()
+{
+    Debug_println("SystemManager::reboot - exiting ...");
+    exit(0);
 }
 
 /* Size of available heap. Size of largest contiguous block may be smaller.
 */
 uint32_t SystemManager::get_free_heap_size()
 {
-    return esp_get_free_heap_size();
+    // return esp_get_free_heap_size();
+    return 0;
 }
 
 /* Microseconds since system boot-up
 */
 int64_t SystemManager::get_uptime()
 {
-    return esp_timer_get_time();
+    // return esp_timer_get_time();
+    return 0;
 }
 
+/*
 void SystemManager::update_timezone(const char *timezone)
 {
     if (timezone != nullptr && timezone[0] != '\0')
@@ -184,6 +231,7 @@ void SystemManager::update_hostname(const char *hostname)
         fnWiFi.set_hostname(hostname);
     }
 }
+*/
 
 const char *SystemManager::get_current_time_str()
 {
@@ -197,7 +245,8 @@ const char *SystemManager::get_current_time_str()
 
 const char *SystemManager::get_uptime_str()
 {
-    int64_t ms = esp_timer_get_time();
+    // int64_t ms = esp_timer_get_time();
+    int64_t ms = 0;
 
     long ml = ms / 1000;
     long s = ml / 1000;
@@ -214,7 +263,8 @@ const char *SystemManager::get_uptime_str()
 
 const char *SystemManager::get_sdk_version()
 {
-    return esp_get_idf_version();
+    // return esp_get_idf_version();
+    return "NOSDK";
 }
 
 const char *SystemManager::get_fujinet_version(bool shortVersionOnly)
@@ -227,54 +277,57 @@ const char *SystemManager::get_fujinet_version(bool shortVersionOnly)
 
 int SystemManager::get_cpu_rev()
 {
-    esp_chip_info_t chipinfo;
-    esp_chip_info(&chipinfo);
-    return chipinfo.revision;
+    // esp_chip_info_t chipinfo;
+    // esp_chip_info(&chipinfo);
+    // return chipinfo.revision;
+    return 0;
 }
 
 SystemManager::chipmodels SystemManager::get_cpu_model()
 {
-    esp_chip_info_t chipinfo;
-    esp_chip_info(&chipinfo);
+    // esp_chip_info_t chipinfo;
+    // esp_chip_info(&chipinfo);
 
-    switch (chipinfo.model)
-    {
-    case esp_chip_model_t::CHIP_ESP32:
-        return chipmodels::CHIP_ESP32;
-        break;
-    default:
-        return chipmodels::CHIP_UNKNOWN;
-        break;
-    }
+    // switch (chipinfo.model)
+    // {
+    // case esp_chip_model_t::CHIP_ESP32:
+    //     return chipmodels::CHIP_ESP32;
+    //     break;
+    // default:
+    //     return chipmodels::CHIP_UNKNOWN;
+    //     break;
+    // }
+    return chipmodels::CHIP_UNKNOWN;
 }
 
 int SystemManager::get_sio_voltage()
 {
-    // Configure ADC1_CH7
-    adc1_config_width(ADC_WIDTH_12Bit);
-    adc1_config_channel_atten(ADC1_CHANNEL_7, ADC_ATTEN_11db);
+    // // Configure ADC1_CH7
+    // adc1_config_width(ADC_WIDTH_12Bit);
+    // adc1_config_channel_atten(ADC1_CHANNEL_7, ADC_ATTEN_11db);
 
-    // Calculate ADC characteristics
-    esp_adc_cal_characteristics_t adc_chars;
-    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+    // // Calculate ADC characteristics
+    // esp_adc_cal_characteristics_t adc_chars;
+    // esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
 
-    int samples = 10;
-    uint32_t avgV = 0;
-    uint32_t vcc = 0;
+    // int samples = 10;
+    // uint32_t avgV = 0;
+    // uint32_t vcc = 0;
 
-    for (int i = 0; i < samples; i++)
-    {
-        esp_adc_cal_get_voltage(ADC_CHANNEL_7, &adc_chars, &vcc);
-        avgV += vcc;
-        //delayMicroseconds(5);
-    }
+    // for (int i = 0; i < samples; i++)
+    // {
+    //     esp_adc_cal_get_voltage(ADC_CHANNEL_7, &adc_chars, &vcc);
+    //     avgV += vcc;
+    //     //delayMicroseconds(5);
+    // }
 
-    avgV /= samples;
+    // avgV /= samples;
 
-    if (avgV < 501)
-        return 0;
-    else
-        return (avgV * 5900 / 3900); // SIOvoltage = Vadc*(R1+R2)/R2 (R1=2000, R2=3900)
+    // if (avgV < 501)
+    //     return 0;
+    // else
+    //     return (avgV * 5900 / 3900); // SIOvoltage = Vadc*(R1+R2)/R2 (R1=2000, R2=3900)
+    return 0;
 }
 
 /*
@@ -374,7 +427,7 @@ size_t SystemManager::copy_file(FileSystem *source_fs, const char *source_filena
     fclose(fin);
     free(buffer);
 
-    Debug_printf("copy_file copied %d bytes\n", result);
+    Debug_printf("copy_file copied %u bytes\n", (unsigned)result);
 
     return result;
 }
@@ -430,9 +483,10 @@ esp_err_t SystemManager::dac_output_voltage(dac_channel_t channel, uint8_t dac_v
 
 uint32_t SystemManager::get_psram_size()
 {
-    multi_heap_info_t info;
-    heap_caps_get_info(&info, MALLOC_CAP_SPIRAM);
-    return info.total_free_bytes + info.total_allocated_bytes;
+    // multi_heap_info_t info;
+    // heap_caps_get_info(&info, MALLOC_CAP_SPIRAM);
+    // return info.total_free_bytes + info.total_allocated_bytes;
+    return 0;
 }
 
 /*
@@ -452,7 +506,7 @@ int SystemManager::load_firmware(const char *filename, uint8_t **buffer)
     FILE *f = fnSPIFFS.file_open(filename);
     size_t file_size = FileSystem::filesize(f);
 
-    Debug_printf("load_firmware file size = %u\n", file_size);
+    Debug_printf("load_firmware file size = %u\n", (unsigned)file_size);
 
     if (buffer == NULL)
     {
@@ -478,7 +532,7 @@ int SystemManager::load_firmware(const char *filename, uint8_t **buffer)
             free(result);
             bytes_read = -1;
 
-            Debug_printf("load_firmware only read %u bytes out of %u - failing\n", bytes_read, file_size);
+            Debug_printf("load_firmware only read %u bytes out of %u - failing\n", (unsigned)bytes_read, (unsigned)file_size);
         }
     }
 
@@ -493,22 +547,22 @@ void SystemManager::debug_print_tasks()
 
     static const char *status[] = {"Running", "Ready", "Blocked", "Suspened", "Deleted"};
 
-    uint32_t n = uxTaskGetNumberOfTasks();
-    TaskStatus_t *pTasks = (TaskStatus_t *)malloc(sizeof(TaskStatus_t) * n);
-    n = uxTaskGetSystemState(pTasks, n, nullptr);
+    // uint32_t n = uxTaskGetNumberOfTasks();
+    // TaskStatus_t *pTasks = (TaskStatus_t *)malloc(sizeof(TaskStatus_t) * n);
+    // n = uxTaskGetSystemState(pTasks, n, nullptr);
 
-    for (int i = 0; i < n; i++)
-    {
-        Debug_printf("T%02d %p c%c (%2d,%2d) %4dh %10dr %8s: %s\n",
-                     i + 1,
-                     pTasks[i].xHandle,
-                     pTasks[i].xCoreID == tskNO_AFFINITY ? '_' : ('0' + pTasks[i].xCoreID),
-                     pTasks[i].uxBasePriority, pTasks[i].uxCurrentPriority,
-                     pTasks[i].usStackHighWaterMark,
-                     pTasks[i].ulRunTimeCounter,
-                     status[pTasks[i].eCurrentState],
-                     pTasks[i].pcTaskName);
-    }
+    // for (int i = 0; i < n; i++)
+    // {
+    //     Debug_printf("T%02d %p c%c (%2d,%2d) %4dh %10dr %8s: %s\n",
+    //                  i + 1,
+    //                  pTasks[i].xHandle,
+    //                  pTasks[i].xCoreID == tskNO_AFFINITY ? '_' : ('0' + pTasks[i].xCoreID),
+    //                  pTasks[i].uxBasePriority, pTasks[i].uxCurrentPriority,
+    //                  pTasks[i].usStackHighWaterMark,
+    //                  pTasks[i].ulRunTimeCounter,
+    //                  status[pTasks[i].eCurrentState],
+    //                  pTasks[i].pcTaskName);
+    // }
     Debug_printf("\nCPU MHz: %d\n", fnSystem.get_cpu_frequency());
 #endif
 }

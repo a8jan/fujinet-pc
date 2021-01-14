@@ -2,7 +2,8 @@
 */
 #ifndef _FN_UDP_
 #define _FN_UDP_
-#include <lwip/netdb.h>
+// #include <lwip/netdb.h>
+#include "fnDNS.h"
 
 #include "../utils/cbuf.h"
 

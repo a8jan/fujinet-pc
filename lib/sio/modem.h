@@ -9,7 +9,7 @@
 #include "sio.h"
 #include "../modem-sniffer/modem-sniffer.h"
 #include "libtelnet.h"
-#include "esp32sshclient.h"
+// #include "esp32sshclient.h"
 
 /* Keep strings under 40 characters, for the benefit of 40-column users! */
 #define HELPL01 "       FujiNet Virtual Modem 850"
@@ -161,7 +161,7 @@ private:
     bool use_telnet=false;          // Use telnet mode?
     bool do_echo;                   // telnet echo toggle.
     string term_type;               // telnet terminal type.
-    ESP32SSHCLIENT ssh;             // ssh instance.
+    // ESP32SSHCLIENT ssh;             // ssh instance.
 
     void sio_send_firmware(uint8_t loadcommand); // $21 and $26: Booter/Relocator download; Handler download
     void sio_poll_1();                           // $3F, '?', Type 1 Poll
@@ -193,8 +193,8 @@ private:
     // Command handlers
     void at_handle_answer();
     void at_handle_dial();
-    void at_handle_wifilist();
-    void at_handle_wificonnect();
+    // void at_handle_wifilist();
+    // void at_handle_wificonnect();
     void at_handle_help();
     void at_handle_get();
     void at_handle_port();
@@ -205,7 +205,7 @@ protected:
 public:
 
     bool modemActive = false; // If we are in modem mode or not
-    void sio_handle_modem();  // Handle incoming & outgoing data for modem
+    int sio_handle_modem();  // Handle incoming & outgoing data for modem
 
     sioModem(FileSystem *_fs, bool snifferEnable);
     virtual ~sioModem();

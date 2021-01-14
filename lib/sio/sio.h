@@ -110,8 +110,8 @@ uint8_t sio_checksum(uint8_t *buf, unsigned short len);
 class sioModem;   // declare here so can reference it, but define in modem.h
 class sioFuji;    // declare here so can reference it, but define in fuji.h
 class sioBus;     // declare early so can be friend
-class sioNetwork; // declare here so can reference it, but define in network.h
-class sioMIDIMaze;   // declare here so can reference it, but define in midimaze.h
+// class sioNetwork; // declare here so can reference it, but define in network.h
+// class sioMIDIMaze;   // declare here so can reference it, but define in midimaze.h
 
 class sioDevice
 {
@@ -246,8 +246,8 @@ private:
     sioDevice *_activeDev = nullptr;
     sioModem *_modemDev = nullptr;
     sioFuji *_fujiDev = nullptr;
-    sioNetwork *_netDev[8] = { nullptr };
-    sioMIDIMaze *_midiDev = nullptr;
+    // sioNetwork *_netDev[8] = { nullptr };
+    // sioMIDIMaze *_midiDev = nullptr;
 
     int _sioBaud = SIO_STANDARD_BAUDRATE;
     int _sioHighSpeedIndex = SIO_HISPEED_INDEX;
@@ -284,7 +284,7 @@ public:
     bool getUltraHighEnabled() { return useUltraHigh; }
     int getUltraHighBaudRate() { return _sioBaudUltraHigh; } 
 
-    QueueHandle_t qSioMessages = nullptr;
+    // QueueHandle_t qSioMessages = nullptr;
 };
 
 extern sioBus SIO;

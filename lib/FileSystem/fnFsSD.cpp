@@ -7,17 +7,21 @@
 #include <vector>
 #include <algorithm>
 
-#include <esp_vfs.h>
-#include "esp_vfs_fat.h"
+// #include <esp_vfs.h>
+// #include "esp_vfs_fat.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <bsd/string.h>
 
 #include "fnFsSD.h"
 #include "../utils/utils.h"
 #include "../../include/debug.h"
 
-#define SD_HOST_CS GPIO_NUM_5
-#define SD_HOST_MISO GPIO_NUM_19
-#define SD_HOST_MOSI GPIO_NUM_23
-#define SD_HOST_SCK GPIO_NUM_18
+// #define SD_HOST_CS GPIO_NUM_5
+// #define SD_HOST_MISO GPIO_NUM_19
+// #define SD_HOST_MOSI GPIO_NUM_23
+// #define SD_HOST_SCK GPIO_NUM_18
 
 // Our global SD interface
 FileSystemSDFAT fnSDFAT;
@@ -51,63 +55,70 @@ bool _fssd_fsdir_sort_time_descend(fsdir_entry &left, fsdir_entry &right)
 
 typedef bool (*sort_fn_t)(fsdir_entry &left, fsdir_entry &right);
 
-/*
-  Converts the FatFs ftime and fdate to a POSIX time_t value
-*/
-time_t _fssd_fatdatetime_to_epoch(WORD ftime, WORD fdate)
-{
-    // Convert date and time
+// /*
+//   Converts the FatFs ftime and fdate to a POSIX time_t value
+// */
+// time_t _fssd_fatdatetime_to_epoch(WORD ftime, WORD fdate)
+// {
+//     // Convert date and time
 
-    // 5 bits 4-0 = seconds / 2 (0-29)
-    #define TIMEBITS_SECOND 0x001FUL
-    // 6 bits 10-5 = minutes (0-59)
-    #define TIMEBITS_MINUTE 0x07E0UL
-    // 5 bits 15-11 = hour (0-23)
-    #define TIMEBITS_HOUR 0xF800UL
+//     // 5 bits 4-0 = seconds / 2 (0-29)
+//     #define TIMEBITS_SECOND 0x001FUL
+//     // 6 bits 10-5 = minutes (0-59)
+//     #define TIMEBITS_MINUTE 0x07E0UL
+//     // 5 bits 15-11 = hour (0-23)
+//     #define TIMEBITS_HOUR 0xF800UL
 
-    // 5 bits 4-0 = day (0-31)
-    #define DATEBITS_DAY 0x001FUL
-    // 4 bits 8-5 = month (1-12)
-    #define DATEBITS_MONTH 0x01E0UL
-    // 7 bits 15-9 = year from 1980 (0-127)
-    #define DATEBITS_YEAR 0xFE00UL
+//     // 5 bits 4-0 = day (0-31)
+//     #define DATEBITS_DAY 0x001FUL
+//     // 4 bits 8-5 = month (1-12)
+//     #define DATEBITS_MONTH 0x01E0UL
+//     // 7 bits 15-9 = year from 1980 (0-127)
+//     #define DATEBITS_YEAR 0xFE00UL
 
-    struct tm tmtime;
+//     struct tm tmtime;
 
-    tmtime.tm_sec = (ftime & TIMEBITS_SECOND) * 2;
-    tmtime.tm_min = (ftime & TIMEBITS_MINUTE) >> 5;
-    tmtime.tm_hour = (ftime & TIMEBITS_HOUR) >> 11;
+//     tmtime.tm_sec = (ftime & TIMEBITS_SECOND) * 2;
+//     tmtime.tm_min = (ftime & TIMEBITS_MINUTE) >> 5;
+//     tmtime.tm_hour = (ftime & TIMEBITS_HOUR) >> 11;
 
-    tmtime.tm_mday = (fdate & DATEBITS_DAY);
-    tmtime.tm_mon = ((fdate & DATEBITS_MONTH) >> 5) -1; // tm_mon = months 0-11
-    tmtime.tm_year = ((fdate & DATEBITS_YEAR) >> 9) + 80; //tm_year = years since 1900
+//     tmtime.tm_mday = (fdate & DATEBITS_DAY);
+//     tmtime.tm_mon = ((fdate & DATEBITS_MONTH) >> 5) -1; // tm_mon = months 0-11
+//     tmtime.tm_year = ((fdate & DATEBITS_YEAR) >> 9) + 80; //tm_year = years since 1900
 
-    tmtime.tm_isdst = 0;
+//     tmtime.tm_isdst = 0;
 
-    #ifdef DEBUG
-    /*
-        Debug_printf("FileSystemSDFAT direntry: \"%s\"\n", _direntry.filename);
-        Debug_printf("FileSystemSDFAT date (0x%04x): yr=%d, mn=%d, da=%d; time (0x%04x) hr=%d, mi=%d, se=%d\n", 
-            finfo.fdate,
-            tmtime.tm_year, tmtime.tm_mon, tmtime.tm_mday,
-            finfo.ftime,
-            tmtime.tm_hour, tmtime.tm_min, tmtime.tm_sec);
-    */
-    #endif
+//     #ifdef DEBUG
+//     /*
+//         Debug_printf("FileSystemSDFAT direntry: \"%s\"\n", _direntry.filename);
+//         Debug_printf("FileSystemSDFAT date (0x%04x): yr=%d, mn=%d, da=%d; time (0x%04x) hr=%d, mi=%d, se=%d\n", 
+//             finfo.fdate,
+//             tmtime.tm_year, tmtime.tm_mon, tmtime.tm_mday,
+//             finfo.ftime,
+//             tmtime.tm_hour, tmtime.tm_min, tmtime.tm_sec);
+//     */
+//     #endif
 
-    return mktime(&tmtime);
+//     return mktime(&tmtime);
 
-}
+// }
+
 
 bool FileSystemSDFAT::dir_open(const char * path, const char * pattern, uint16_t diropts)
 {
-    // TODO: Add pattern and sorting options
-    
+    Debug_printf("FileSystemSDFAT::dir_open \"%s\"\n", path);
+
     // Throw out any existing directory entry data
     _dir_entries.clear();
+    _dir_entry_current = 0;
 
-    FRESULT result = f_opendir(&_dir, path);
-    if(result != FR_OK)
+    char * fpath = _make_fullpath(path);
+    Debug_printf("FileSystemSDFAT::dir_open - opendir \"%s\"\n", fpath);
+    _dir = opendir(fpath);
+    free(fpath);
+
+
+    if(_dir == nullptr)
         return false;
 
     bool have_pattern = pattern != nullptr && pattern[0] != '\0';
@@ -117,27 +128,30 @@ bool FileSystemSDFAT::dir_open(const char * path, const char * pattern, uint16_t
     std::vector<fsdir_entry> store_directories;
     std::vector<fsdir_entry> store_files;
     fsdir_entry *entry;
-    FILINFO finfo;
+    struct dirent *d;
+    struct stat s;
 
-    while(f_readdir(&_dir, &finfo) == FR_OK)
+    while((d = readdir(_dir)) != nullptr)
     {
-        // An empty name indicates the end of the directory
-        if(finfo.fname[0] == '\0')
-            break;
+        // // An empty name indicates the end of the directory
+        // if(finfo.fname[0] == '\0')
+        //     break;
         // Ignore items starting with '.'
-        if(finfo.fname[0] == '.')
+        if(d->d_name[0] == '.')
             continue;
-        // Ignore items marked hidden or system
-        if(finfo.fattrib & AM_HID || finfo.fattrib & AM_SYS)
-            continue;
+        // // Ignore items marked hidden or system
+        // if(finfo.fattrib & AM_HID || finfo.fattrib & AM_SYS)
+        //     continue;
         // Ignore some special files we create on SD
-        if(strcmp(finfo.fname, "paper") == 0 
-        || strcmp(finfo.fname, "fnconfig.ini") == 0
-        || strcmp(finfo.fname, "rs232dump") == 0)
+        if(strcmp(d->d_name, "paper") == 0 
+        || strcmp(d->d_name, "fnconfig.ini") == 0
+        || strcmp(d->d_name, "rs232dump") == 0)
             continue;
+
+        // Debug_printf("Entry %s (%d)\n", d->d_name, d->d_type);
 
         // Determine which list to put this in
-        if(finfo.fattrib & AM_DIR)
+        if(d->d_type == DT_DIR || d->d_type == DT_LNK) // well, assume symlinks points to directories only
         {
             store_directories.push_back(fsdir_entry());
             entry = &store_directories.back();
@@ -146,7 +160,7 @@ bool FileSystemSDFAT::dir_open(const char * path, const char * pattern, uint16_t
         else
         {
             // Skip this entry if we have a search filter and it doesn't match it
-            if(have_pattern && util_wildcard_match(finfo.fname, pattern) == false)
+            if(have_pattern && util_wildcard_match(d->d_name, pattern) == false)
                 continue;
 
             store_files.push_back(fsdir_entry());
@@ -155,9 +169,14 @@ bool FileSystemSDFAT::dir_open(const char * path, const char * pattern, uint16_t
         }
 
         // Copy the data we want into the record
-        strlcpy(entry->filename, finfo.fname, sizeof(entry->filename));
-        entry->size = finfo.fsize;
-        entry->modified_time = _fssd_fatdatetime_to_epoch(finfo.ftime, finfo.fdate);
+        strlcpy(entry->filename, d->d_name, sizeof(entry->filename));
+        fpath = _make_fullpath(entry->filename);
+        if(stat(fpath, &s) == 0)
+        {
+            entry->size = s.st_size;
+            entry->modified_time = s.st_mtime;
+        }
+        free(fpath);
     }
 
     // Choose the appropriate sorting function
@@ -181,7 +200,7 @@ bool FileSystemSDFAT::dir_open(const char * path, const char * pattern, uint16_t
     _dir_entries.insert( _dir_entries.end(), store_files.begin(), store_files.end() );
 
     // Future operations will be performed on the cache
-    f_closedir(&_dir);
+    closedir(_dir);
 
     return true;
 }
@@ -239,20 +258,25 @@ FILE * FileSystemSDFAT::file_open(const char* path, const char* mode)
 
 bool FileSystemSDFAT::exists(const char* path)
 {
-    FRESULT result = f_stat(path, NULL);
+    char * fpath = _make_fullpath(path);
+    struct stat st;
+    int i = stat(fpath, &st);
 #ifdef DEBUG
-    //Debug_printf("sdFileSystem::exists returned %d on \"%s\"\n", result, path);
+    //Debug_printf("FileSystemSDFAT::exists returned %d on \"%s\" (%s)\n", i, path, fpath);
 #endif
-    return (result == FR_OK);
+    free(fpath);
+    return (i == 0);
 }
 
 bool FileSystemSDFAT::remove(const char* path)
 {
-    FRESULT result = f_unlink(path);
+    char * fpath = _make_fullpath(path);
+    int i = ::remove(fpath);
 #ifdef DEBUG
-    //Debug_printf("sdFileSystem::remove returned %d on \"%s\"\n", result, path);
+    Debug_printf("FileSystemSDFAT::remove returned %d on \"%s\" (%s)\n", i, path, fpath);
 #endif
-    return (result == FR_OK);
+    free(fpath);
+    return (i == 0);
 }
 
 /* Checks that path exists and creates if it doesn't including any parent directories
@@ -298,9 +322,16 @@ bool FileSystemSDFAT::create_path(const char *fullpath)
             */
             strlcpy(segment, fullpath, end - fullpath + (done ? 2 : 1));
             Debug_printf("Checking/creating directory: \"%s\"\n", segment);
-            if(0 != f_mkdir(segment))
+            // if(0 != f_mkdir(segment))
+            // {
+            //     Debug_printf("FAILED errno=%d\n", errno);
+            // }
+            if(0 != mkdir(segment, S_IRWXU))
             {
-                Debug_printf("FAILED errno=%d\n", errno);
+                if(errno != EEXIST)
+                {
+                    Debug_printf("FAILED errno=%d\n", errno);
+                }
             }
         }
 
@@ -312,11 +343,15 @@ bool FileSystemSDFAT::create_path(const char *fullpath)
 
 bool FileSystemSDFAT::rename(const char* pathFrom, const char* pathTo)
 {
-    FRESULT result = f_rename(pathFrom, pathTo);
+    char * spath = _make_fullpath(pathFrom);
+    char * dpath = _make_fullpath(pathTo);
+    int i = ::rename(spath, dpath);
 #ifdef DEBUG
-    Debug_printf("sdFileSystem::rename returned %d on \"%s\" -> \"%s\"\n", result, pathFrom, pathTo);
+    Debug_printf("FileSystemSDFAT::rename returned %d on \"%s\" -> \"%s\" (%s -> %s)\n", i, pathFrom, pathTo, spath, dpath);
 #endif
-    return (result == FR_OK);
+    free(spath);
+    free(dpath);
+    return (i == 0);
 }
 
 uint64_t FileSystemSDFAT::card_size()
@@ -326,29 +361,29 @@ uint64_t FileSystemSDFAT::card_size()
 
 uint64_t FileSystemSDFAT::total_bytes()
 {
-	FATFS* fsinfo;
-	DWORD fre_clust;
+	// FATFS* fsinfo;
+	// DWORD fre_clust;
     uint64_t size = 0ULL;
 
-	if (f_getfree("0:", &fre_clust, &fsinfo) == 0)
-    {
-        // cluster_size * num_clusters * sector_size
-        size = ((uint64_t)(fsinfo->csize)) * (fsinfo->n_fatent - 2) * (fsinfo->ssize);
-    }
+	// if (f_getfree("0:", &fre_clust, &fsinfo) == 0)
+    // {
+    //     // cluster_size * num_clusters * sector_size
+    //     size = ((uint64_t)(fsinfo->csize)) * (fsinfo->n_fatent - 2) * (fsinfo->ssize);
+    // }
 	return size;
 }
 
 uint64_t FileSystemSDFAT::used_bytes()
 {
-	FATFS* fsinfo;
-	DWORD fre_clust;
+	// FATFS* fsinfo;
+	// DWORD fre_clust;
     uint64_t size = 0ULL;
 
-	if(f_getfree("0:", &fre_clust, &fsinfo) == 0)
-    {
-        // cluster_size * (num_clusters - free_clusters) * sector_size
-	    size = ((uint64_t)(fsinfo->csize)) * ((fsinfo->n_fatent-2)-(fsinfo->free_clst)) * (fsinfo->ssize);
-    }
+	// if(f_getfree("0:", &fre_clust, &fsinfo) == 0)
+    // {
+    //     // cluster_size * (num_clusters - free_clusters) * sector_size
+	//     size = ((uint64_t)(fsinfo->csize)) * ((fsinfo->n_fatent-2)-(fsinfo->free_clst)) * (fsinfo->ssize);
+    // }
 	return size;
 }
 
@@ -363,15 +398,16 @@ const char * FileSystemSDFAT::partition_type()
         "EXFAT"
     };
 
-	FATFS* fsinfo;
-	DWORD fre_clust;
+	// FATFS* fsinfo;
+	// DWORD fre_clust;
 
-    BYTE i = 0;
- 	if(f_getfree("0:", &fre_clust, &fsinfo) == 0)
-    {
-        if(fsinfo->fs_type >= FS_FAT12 && fsinfo->fs_type <= FS_EXFAT)
-            i = fsinfo->fs_type;
-    }
+    // BYTE i = 0;
+    int i = 0;
+ 	// if(f_getfree("0:", &fre_clust, &fsinfo) == 0)
+    // {
+    //     if(fsinfo->fs_type >= FS_FAT12 && fsinfo->fs_type <= FS_EXFAT)
+    //         i = fsinfo->fs_type;
+    // }
     return names[i];
 }
 
@@ -381,38 +417,40 @@ bool FileSystemSDFAT::start()
         return true;
 
     // Set our basepath
-    strlcpy(_basepath, "/sd", sizeof(_basepath));
+    // strlcpy(_basepath, "/sd", sizeof(_basepath));
+    strlcpy(_basepath, "./sd", sizeof(_basepath));
 
-    // Set up a configuration to the SD host interface
-    sdmmc_host_t host_config = SDSPI_HOST_DEFAULT();
-    host_config.max_freq_khz = 4000000; // from Arduino SD.h
+    // // Set up a configuration to the SD host interface
+    // sdmmc_host_t host_config = SDSPI_HOST_DEFAULT();
+    // host_config.max_freq_khz = 4000000; // from Arduino SD.h
 
-    sdspi_slot_config_t slot_config = SDSPI_SLOT_CONFIG_DEFAULT();
-    slot_config.gpio_cs = SD_HOST_CS;
-    slot_config.gpio_miso = SD_HOST_MISO;
-    slot_config.gpio_mosi = SD_HOST_MOSI;
-    slot_config.gpio_sck = SD_HOST_SCK;
+    // sdspi_slot_config_t slot_config = SDSPI_SLOT_CONFIG_DEFAULT();
+    // slot_config.gpio_cs = SD_HOST_CS;
+    // slot_config.gpio_miso = SD_HOST_MISO;
+    // slot_config.gpio_mosi = SD_HOST_MOSI;
+    // slot_config.gpio_sck = SD_HOST_SCK;
 
-    // Fat FS configuration options
-    esp_vfs_fat_mount_config_t mount_config;
-    mount_config.format_if_mount_failed = false;
-    mount_config.max_files = 16;
+    // // Fat FS configuration options
+    // esp_vfs_fat_mount_config_t mount_config;
+    // mount_config.format_if_mount_failed = false;
+    // mount_config.max_files = 16;
 
-    // This is the information we'll be given in return
-    sdmmc_card_t *sdcard_info;
+    // // This is the information we'll be given in return
+    // sdmmc_card_t *sdcard_info;
 
-    esp_err_t e = esp_vfs_fat_sdmmc_mount(
-        _basepath,
-        &host_config,
-        &slot_config,
-        &mount_config,
-        &sdcard_info
-    );
+    // esp_err_t e = esp_vfs_fat_sdmmc_mount(
+    //     _basepath,
+    //     &host_config,
+    //     &slot_config,
+    //     &mount_config,
+    //     &sdcard_info
+    // );
 
-    if(e == ESP_OK)
+    // if(e == ESP_OK)
     {
         _started = true;
-        _card_capacity = (uint64_t)sdcard_info->csd.capacity * sdcard_info->csd.sector_size;
+        // _card_capacity = (uint64_t)sdcard_info->csd.capacity * sdcard_info->csd.sector_size;
+        _card_capacity = 0;
     #ifdef DEBUG
         Debug_println("SD mounted.");
     /*
@@ -427,14 +465,14 @@ bool FileSystemSDFAT::start()
     */
     #endif
     }
-    else 
-    {
-        _started = false;
-        _card_capacity = 0;
-    #ifdef DEBUG
-        Debug_printf("SD mount failed with code #%d, \"%s\"\n", e, esp_err_to_name(e));
-    #endif
-    }
+    // else 
+    // {
+    //     _started = false;
+    //     _card_capacity = 0;
+    // #ifdef DEBUG
+    //     Debug_printf("SD mount failed with code #%d, \"%s\"\n", e, esp_err_to_name(e));
+    // #endif
+    // }
 
     return _started;
 }

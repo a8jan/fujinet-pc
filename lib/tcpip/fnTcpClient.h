@@ -6,6 +6,7 @@
 
 #include <memory>
 //#include <lwip/sockets.h>
+#include <netinet/in.h>
 
 class fnTcpClientSocketHandle;
 class fnTcpClientRxBuffer;

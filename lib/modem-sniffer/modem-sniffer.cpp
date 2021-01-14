@@ -3,6 +3,8 @@
  * logs character streams from MODEM.
  */
 
+#include <string.h>
+
 #include "modem-sniffer.h"
 #include "../../include/debug.h"
 
@@ -50,7 +52,7 @@ void ModemSniffer::closeOutput()
         
         if (_file == nullptr)
         {
-            Debug_printf("Error opening sniffer output: %d\n", errno);
+            Debug_printf("Error opening sniffer output: %d - %s\n", errno, strerror(errno));
             return;
         }
 
@@ -70,7 +72,9 @@ FILE *ModemSniffer::closeOutputAndProvideReadHandle()
     closeOutput();
     FILE *result = activeFS->file_open(SNIFFER_OUTPUT_FILE); // read-only.
     if (result == nullptr)
-        Debug_printf("Error opening sniffer output: %d\n", errno);
+    {
+        Debug_printf("Error opening sniffer output: %d - %s\n", errno, strerror(errno));
+    }
 
     return result;
 }

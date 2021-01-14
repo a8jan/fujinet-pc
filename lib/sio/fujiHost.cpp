@@ -1,3 +1,5 @@
+#include <bsd/string.h>
+
 #include "fuji.h"
 
 #include "../FileSystem/fnFS.h"
@@ -312,20 +314,20 @@ int fujiHost::mount_tnfs()
     else
         set_type(HOSTTYPE_TNFS); // Only start fresh if not HOSTTYPE_TNFS
 
-    _fs = new FileSystemTNFS;
+    // _fs = new FileSystemTNFS;
 
-    if (_fs == nullptr)
+    // if (_fs == nullptr)
     {
         Debug_println("Couldn't create a new TNFSFS in fujiHost::mount_tnfs!");
     }
-    else
-    {
-        Debug_println("Calling TNFS::begin");
-        if (((FileSystemTNFS *)_fs)->start(_hostname))
-        {
-            return 0;
-        }
-    }
+    // else
+    // {
+    //     Debug_println("Calling TNFS::begin");
+    //     if (((FileSystemTNFS *)_fs)->start(_hostname))
+    //     {
+    //         return 0;
+    //     }
+    // }
 
     return -1;
 }

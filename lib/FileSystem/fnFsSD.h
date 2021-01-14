@@ -1,12 +1,14 @@
 #ifndef _FN_FSSD_
 #define _FN_FSSD_
 
-#include "esp_vfs_fat.h"
+// #include "esp_vfs_fat.h"
+#include <stdio.h>
 #include "fnFS.h"
+
 class FileSystemSDFAT : public FileSystem
 {
 private:
-    FF_DIR _dir;
+    DIR * _dir;
     uint64_t _card_capacity = 0;
 public:
     bool start();

@@ -1,5 +1,6 @@
 #include <memory.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "../../include/debug.h"
 #include "../utils/utils.h"
@@ -42,7 +43,7 @@ uint32_t DiskTypeATR::_sector_to_offset(uint16_t sectorNum)
 // Returns TRUE if an error condition occurred
 bool DiskTypeATR::read(uint16_t sectornum, uint16_t *readcount)
 {
-    Debug_print("ATR READ\n");
+    Debug_printf("ATR READ %d / %d\n", sectornum, _disk_num_sectors);
 
     *readcount = 0;
 
@@ -81,7 +82,7 @@ bool DiskTypeATR::read(uint16_t sectornum, uint16_t *readcount)
 // Returns TRUE if an error condition occurred
 bool DiskTypeATR::write(uint16_t sectornum, bool verify)
 {
-    Debug_printf("ATR WRITE\n", sectornum, _disk_num_sectors);
+    Debug_printf("ATR WRITE %d / %d\n", sectornum, _disk_num_sectors);
 
     // Return an error if we're trying to write beyond the end of the disk
     if(sectornum > _disk_num_sectors)

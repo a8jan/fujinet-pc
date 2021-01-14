@@ -1,13 +1,15 @@
 #include <cstdint>
-#include <driver/ledc.h>
+// #include <driver/ledc.h>
+#include <bsd/string.h>
 
 #include "fuji.h"
 #include "led.h"
-#include "fnWiFi.h"
+// #include "fnWiFi.h"
 #include "fnSystem.h"
 
 #include "../utils/utils.h"
 #include "../FileSystem/fnFsSPIF.h"
+#include "../FileSystem/fnFsSD.h"
 #include "../config/fnConfig.h"
 
 #define SIO_FUJICMD_RESET 0xFF
@@ -48,7 +50,7 @@
 sioFuji theFuji; // global fuji device object
 
 //sioDisk sioDiskDevs[MAX_HOSTS];
-sioNetwork sioNetDevs[MAX_NETWORK_DEVICES];
+// sioNetwork sioNetDevs[MAX_NETWORK_DEVICES];
 
 bool _validate_host_slot(uint8_t slot, const char *dmsg = nullptr);
 bool _validate_device_slot(uint8_t slot, const char *dmsg = nullptr);
@@ -167,7 +169,8 @@ void sioFuji::sio_net_scan_networks()
 
     char ret[4] = {0};
 
-    _countScannedSSIDs = fnWiFi.scan_networks();
+    // _countScannedSSIDs = fnWiFi.scan_networks();
+    _countScannedSSIDs = 1;
 
     ret[0] = _countScannedSSIDs;
 
@@ -188,7 +191,12 @@ void sioFuji::sio_net_scan_result()
 
     bool err = false;
     if (cmdFrame.aux1 < _countScannedSSIDs)
-        fnWiFi.get_scan_result(cmdFrame.aux1, detail.ssid, &detail.rssi);
+    {
+        // fnWiFi.get_scan_result(cmdFrame.aux1, detail.ssid, &detail.rssi);
+        memset(&detail, 0, sizeof(detail));
+        strlcpy(detail.ssid, "Dummy WiFi", sizeof(detail.ssid));
+        detail.rssi = 255;  // signal strength
+    }
     else
     {
         memset(&detail, 0, sizeof(detail));
@@ -250,7 +258,7 @@ void sioFuji::sio_net_set_ssid()
 
         Debug_printf("Connecting to net: %s password: %s\n", cfg.ssid, cfg.password);
 
-        fnWiFi.connect(cfg.ssid, cfg.password);
+        // fnWiFi.connect(cfg.ssid, cfg.password);
 
         // Only save these if we're asked to, otherwise assume it was a test for connectivity
         if (save)
@@ -269,7 +277,8 @@ void sioFuji::sio_net_get_wifi_status()
 {
     Debug_println("Fuji cmd: GET WIFI STATUS");
     // WL_CONNECTED = 3, WL_DISCONNECTED = 6
-    uint8_t wifiStatus = fnWiFi.connected() ? 3 : 6;
+    // uint8_t wifiStatus = fnWiFi.connected() ? 3 : 6;
+    uint8_t wifiStatus = 3;
     sio_to_computer(&wifiStatus, sizeof(wifiStatus), false);
 }
 
@@ -478,7 +487,7 @@ void sioFuji::sio_write_app_key()
 
     if (count != keylen)
     {
-        Debug_printf("Only wrote %u bytes of expected %hu, errno=%d\n", count, keylen, e);
+        Debug_printf("Only wrote %u bytes of expected %hu, errno=%d\n", (unsigned)count, keylen, e);
         sio_error();
     }
 
@@ -531,7 +540,7 @@ void sioFuji::sio_read_app_key()
     size_t count = fread(response.value, 1, sizeof(response.value), fIn);
 
     fclose(fIn);
-    Debug_printf("Read %d bytes from input file\n", count);
+    Debug_printf("Read %u bytes from input file\n", (unsigned)count);
 
     response.size = count;
 
@@ -541,29 +550,29 @@ void sioFuji::sio_read_app_key()
 // DEBUG TAPE
 void sioFuji::debug_tape()
 {
-    // if not mounted then disable cassette and do nothing
-    // if mounted then activate cassette
-    // if mounted and active, then deactivate
-    // no longer need to handle file open/close
-    if (_cassetteDev.is_mounted() == true)
-    {
-        if (_cassetteDev.is_active() == false)
-        {
-            Debug_println("::debug_tape ENABLE");
-            _cassetteDev.sio_enable_cassette();
-        }
-        else
-        {
-            Debug_println("::debug_tape DISABLE");
-            _cassetteDev.sio_disable_cassette();
-        }
-    }
-    else
-    {
-        Debug_println("::debug_tape NO CAS FILE MOUNTED");
-        Debug_println("::debug_tape DISABLE");
-        _cassetteDev.sio_disable_cassette();
-    }
+    // // if not mounted then disable cassette and do nothing
+    // // if mounted then activate cassette
+    // // if mounted and active, then deactivate
+    // // no longer need to handle file open/close
+    // if (_cassetteDev.is_mounted() == true)
+    // {
+    //     if (_cassetteDev.is_active() == false)
+    //     {
+    //         Debug_println("::debug_tape ENABLE");
+    //         _cassetteDev.sio_enable_cassette();
+    //     }
+    //     else
+    //     {
+    //         Debug_println("::debug_tape DISABLE");
+    //         _cassetteDev.sio_disable_cassette();
+    //     }
+    // }
+    // else
+    // {
+    //     Debug_println("::debug_tape NO CAS FILE MOUNTED");
+    //     Debug_println("::debug_tape DISABLE");
+    //     _cassetteDev.sio_disable_cassette();
+    // }
 }
 
 // Disk Image Unmount
@@ -577,12 +586,12 @@ void sioFuji::sio_disk_image_umount()
     if (deviceSlot < MAX_DISK_DEVICES)
     {
         _fnDisks[deviceSlot].disk_dev.unmount();
-        if (_fnDisks[deviceSlot].disk_type == DISKTYPE_CAS || _fnDisks[deviceSlot].disk_type == DISKTYPE_WAV)
-        {
-            // tell cassette it unmount
-            _cassetteDev.umount_cassette_file();
-            _cassetteDev.sio_disable_cassette();
-        }
+        // if (_fnDisks[deviceSlot].disk_type == DISKTYPE_CAS || _fnDisks[deviceSlot].disk_type == DISKTYPE_WAV)
+        // {
+        //     // tell cassette it unmount
+        //     _cassetteDev.umount_cassette_file();
+        //     _cassetteDev.sio_disable_cassette();
+        // }
         _fnDisks[deviceSlot].reset();
     }
     // Handle tape
@@ -878,20 +887,23 @@ void sioFuji::sio_get_adapter_config()
 
     strlcpy(cfg.fn_version, fnSystem.get_fujinet_version(true), sizeof(cfg.fn_version));
 
-    if (!fnWiFi.connected())
+    // if (!fnWiFi.connected())
+    // {
+    //     strlcpy(cfg.ssid, "NOT CONNECTED", sizeof(cfg.ssid));
+    // }
+    // else
     {
-        strlcpy(cfg.ssid, "NOT CONNECTED", sizeof(cfg.ssid));
-    }
-    else
-    {
-        strlcpy(cfg.hostname, fnSystem.Net.get_hostname().c_str(), sizeof(cfg.hostname));
-        strlcpy(cfg.ssid, fnWiFi.get_current_ssid().c_str(), sizeof(cfg.ssid));
-        fnWiFi.get_current_bssid(cfg.bssid);
-        fnSystem.Net.get_ip4_info(cfg.localIP, cfg.netmask, cfg.gateway);
-        fnSystem.Net.get_ip4_dns_info(cfg.dnsIP);
+        // strlcpy(cfg.hostname, fnSystem.Net.get_hostname().c_str(), sizeof(cfg.hostname));
+        // strlcpy(cfg.ssid, fnWiFi.get_current_ssid().c_str(), sizeof(cfg.ssid));
+        // fnWiFi.get_current_bssid(cfg.bssid);
+        // fnSystem.Net.get_ip4_info(cfg.localIP, cfg.netmask, cfg.gateway);
+        // fnSystem.Net.get_ip4_dns_info(cfg.dnsIP);
+
+        strlcpy(cfg.hostname, "Fujinet", sizeof(cfg.hostname));
+        strlcpy(cfg.ssid, "Dummy WiFi", sizeof(cfg.ssid));
     }
 
-    fnWiFi.get_mac(cfg.macAddress);
+    // fnWiFi.get_mac(cfg.macAddress);
 
     sio_to_computer((uint8_t *)&cfg, sizeof(cfg), false);
 }
@@ -1304,6 +1316,11 @@ void sioFuji::setup(sioBus *siobus)
     const char *boot_atr = "/autorun.atr";
 
     FILE *fBoot = fnSPIFFS.file_open(boot_atr);
+    if (fBoot == nullptr)
+    {
+        perror("Failed to open autorun.atr disk image");
+        exit(1);
+    }
 
     _populate_slots_from_config();
 
@@ -1319,12 +1336,12 @@ void sioFuji::setup(sioBus *siobus)
     for (int i = 0; i < MAX_DISK_DEVICES; i++)
         _sio_bus->addDevice(&_fnDisks[i].disk_dev, SIO_DEVICEID_DISK + i);
 
-    for (int i = 0; i < MAX_NETWORK_DEVICES; i++)
-        _sio_bus->addDevice(&sioNetDevs[i], SIO_DEVICEID_FN_NETWORK + i);
+    // for (int i = 0; i < MAX_NETWORK_DEVICES; i++)
+    //     _sio_bus->addDevice(&sioNetDevs[i], SIO_DEVICEID_FN_NETWORK + i);
 
-    _sio_bus->addDevice(&_cassetteDev, SIO_DEVICEID_CASSETTE);
-    cassette()->set_buttons(Config.get_cassette_buttons());
-    cassette()->set_pulldown(Config.get_cassette_pulldown());
+    // _sio_bus->addDevice(&_cassetteDev, SIO_DEVICEID_CASSETTE);
+    // cassette()->set_buttons(Config.get_cassette_buttons());
+    // cassette()->set_pulldown(Config.get_cassette_pulldown());
 
 }
 
