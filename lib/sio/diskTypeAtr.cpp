@@ -63,11 +63,11 @@ bool DiskTypeATR::read(uint16_t sectornum, uint16_t *readcount)
     if (sectornum != _disk_last_sector + 1)
     {
         uint32_t offset = _sector_to_offset(sectornum);
-        err = fseek(_disk_fileh, offset, SEEK_SET) != 0;
+        err = _disk_fileh->seek(offset, SEEK_SET) != 0;
     }
 
     if (err == false)
-        err = fread(_disk_sectorbuff, 1, sectorSize, _disk_fileh) != sectorSize;
+        err = _disk_fileh->read(_disk_sectorbuff, 1, sectorSize) != sectorSize;
 
     if (err == false)
         _disk_last_sector = sectornum;
@@ -100,7 +100,7 @@ bool DiskTypeATR::write(uint16_t sectornum, bool verify)
     int e;
     if (sectornum != _disk_last_sector + 1)
     {
-        e = fseek(_disk_fileh, offset, SEEK_SET);
+        e = _disk_fileh->seek(offset, SEEK_SET);
         if (e != 0)
         {
             Debug_printf("::write seek error %d\n", e);
@@ -108,15 +108,14 @@ bool DiskTypeATR::write(uint16_t sectornum, bool verify)
         }
     }
     // Write the data
-    e = fwrite(_disk_sectorbuff, 1, sectorSize, _disk_fileh);
+    e = _disk_fileh->write(_disk_sectorbuff, 1, sectorSize);
     if (e != sectorSize)
     {
         Debug_printf("::write error %d, %d\n", e, errno);
         return true;
     }
 
-    int ret = fflush(_disk_fileh);    // This doesn't seem to be connected to anything in ESP-IDF VF, so it may not do anything
-    ret = fsync(fileno(_disk_fileh)); // Since we might get reset at any moment, go ahead and sync the file (not clear if fflush does this)
+    int ret = _disk_fileh->flush();
     Debug_printf("ATR::write fsync:%d\n", ret);
 
     _disk_last_sector = sectornum;
@@ -174,7 +173,7 @@ bool DiskTypeATR::format(uint16_t *responsesize)
  
  07-0F have two possible interpretations but are no critical for our use
 */
-disktype_t DiskTypeATR::mount(FILE *f, uint32_t disksize)
+disktype_t DiskTypeATR::mount(FileHandler *f, uint32_t disksize)
 {
     Debug_print("ATR MOUNT\n");
 
@@ -186,12 +185,12 @@ disktype_t DiskTypeATR::mount(FILE *f, uint32_t disksize)
 
     // Get file and sector size from header
     int i;
-    if ((i = fseek(f, 0, SEEK_SET)) < 0)
+    if ((i = f->seek(0, SEEK_SET)) < 0)
     {
         Debug_printf("failed seeking to header on disk image (%d, %d)\n", i, errno);
         return _disktype;
     }
-    if ((i = fread(buf, 1, sizeof(buf), f)) != sizeof(buf))
+    if ((i = f->read(buf, 1, sizeof(buf))) != sizeof(buf))
     {
         Debug_printf("failed reading header bytes (%d, %d)\n", i, errno);
         return _disktype;
@@ -230,7 +229,7 @@ disktype_t DiskTypeATR::mount(FILE *f, uint32_t disksize)
 }
 
 // Returns FALSE on error
-bool DiskTypeATR::create(FILE *f, uint16_t sectorSize, uint16_t numSectors)
+bool DiskTypeATR::create(FileHandler *f, uint16_t sectorSize, uint16_t numSectors)
 {
     Debug_print("ATR CREATE\n");
 
@@ -277,14 +276,14 @@ bool DiskTypeATR::create(FILE *f, uint16_t sectorSize, uint16_t numSectors)
     Debug_printf("Write header to ATR: sec_size=%d, sectors=%d, paragraphs=%d, bytes=%d\n",
         sectorSize, numSectors, num_paragraphs, total_size);
 
-    uint32_t offset = fwrite(&atrHeader, 1, sizeof(atrHeader), f);
+    uint32_t offset = f->write(&atrHeader, 1, sizeof(atrHeader));
 
     // Write first three 128 uint8_t sectors
     uint8_t blank[256] = {0};
 
     for (int i = 0; i < 3; i++)
     {
-        size_t out = fwrite(blank, 1, 128, f);
+        size_t out = f->write(blank, 1, 128);
         if (out != 128)
         {
             Debug_printf("Error writing sector %hhu\n", i);
@@ -296,8 +295,8 @@ bool DiskTypeATR::create(FILE *f, uint16_t sectorSize, uint16_t numSectors)
 
     // Write the rest of the sectors via sparse seek to the last sector
     offset += (numSectors * sectorSize) - sectorSize;
-    fseek(f, offset, SEEK_SET);
-    size_t out = fwrite(blank, 1, sectorSize, f);
+    f->seek(offset, SEEK_SET);
+    size_t out = f->write(blank, 1, sectorSize);
 
     if (out != sectorSize)
     {

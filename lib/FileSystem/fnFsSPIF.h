@@ -18,6 +18,7 @@ public:
     virtual bool is_global() override { return true; };    
 
     FILE * file_open(const char* path, const char* mode = FILE_READ) override;
+    FileHandler * filehandler_open(const char* path, const char* mode = FILE_READ) override;
 
     bool exists(const char* path) override;
 

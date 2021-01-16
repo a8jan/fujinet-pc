@@ -207,7 +207,7 @@ public:
     virtual bool read(uint16_t sectornum, uint16_t *readcount) override;
     virtual bool format(uint16_t *respopnsesize) override;
 
-    virtual disktype_t mount(FILE *f, uint32_t disksize) override;
+    virtual disktype_t mount(FileHandler *f, uint32_t disksize) override;
 
     virtual void status(uint8_t statusbuff[4]) override;
 

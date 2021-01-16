@@ -2,6 +2,7 @@
 #define _DISKTYPE_
 
 #include <stdio.h>
+#include "fnFile.h"
 
 #define INVALID_SECTOR_VALUE 65536
 
@@ -43,7 +44,8 @@ enum disktype_t
 class DiskType
 {
 protected:
-    FILE *_disk_fileh = nullptr;
+    //FILE *_disk_fileh = nullptr;
+    FileHandler *_disk_fileh = nullptr;
     uint32_t _disk_image_size = 0;
     uint32_t _disk_num_sectors = 0;
     uint16_t _disk_sector_size = DISK_BYTES_PER_SECTOR_SINGLE;
@@ -72,7 +74,7 @@ public:
     disktype_t _disktype = DISKTYPE_UNKNOWN;
     bool _allow_hsio = true;
 
-    virtual disktype_t mount(FILE *f, uint32_t disksize) = 0;
+    virtual disktype_t mount(FileHandler *f, uint32_t disksize) = 0;
     virtual void unmount();
 
     // Returns TRUE if an error condition occurred

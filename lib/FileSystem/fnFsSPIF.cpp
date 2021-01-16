@@ -8,6 +8,7 @@
 #include <bsd/string.h>
 
 #include "fnFsSPIF.h"
+#include "fnFileLocal.h"
 #include "../../include/debug.h"
 
 #define SPIFFS_MAXPATH 512
@@ -79,6 +80,13 @@ FILE * FileSystemSPIFFS::file_open(const char* path, const char* mode)
     FILE * result = fopen(fpath, mode);
     free(fpath);
     return result;
+}
+
+FileHandler * FileSystemSPIFFS::filehandler_open(const char* path, const char* mode)
+{
+    Debug_printf("FileSystemSPIFFS::filehandler_open %s %s\n", path, mode);
+    FILE *fh = file_open(path, mode);
+    return (fh == nullptr) ? nullptr : new FileHandlerLocal(fh);
 }
 
 bool FileSystemSPIFFS::exists(const char* path)

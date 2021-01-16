@@ -15,6 +15,7 @@
 #include <bsd/string.h>
 
 #include "fnFsSD.h"
+#include "fnFileLocal.h"
 #include "../utils/utils.h"
 #include "../../include/debug.h"
 
@@ -255,6 +256,15 @@ FILE * FileSystemSDFAT::file_open(const char* path, const char* mode)
 #endif    
     return result;
 }
+
+
+FileHandler * FileSystemSDFAT::filehandler_open(const char* path, const char* mode)
+{
+    Debug_printf("FileSystemSDFAT::filehandler_open %s %s\n", path, mode);
+    FILE *fh = file_open(path, mode);
+    return (fh == nullptr) ? nullptr : new FileHandlerLocal(fh);
+}
+
 
 bool FileSystemSDFAT::exists(const char* path)
 {

@@ -376,8 +376,7 @@ size_t fnTcpClient::write(const uint8_t *buf, size_t size)
         // (Otherwise we timed-out and should retry the loop)
         if (FD_ISSET(socketFileDescriptor, &fdset))
         {
-            // res = send(socketFileDescriptor, (void *)buf, bytesRemaining, MSG_DONTWAIT);
-            res = send(socketFileDescriptor, (void *)buf, bytesRemaining, MSG_DONTWAIT | MSG_NOSIGNAL); // don't shoot me
+            res = send(socketFileDescriptor, (void *)buf, bytesRemaining, MSG_DONTWAIT | MSG_NOSIGNAL); // MSG_NOSIGNAL - don't shoot me
             // We succeeded sending some bytes
             if (res > 0)
             {

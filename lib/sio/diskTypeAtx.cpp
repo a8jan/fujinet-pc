@@ -805,7 +805,7 @@ bool DiskTypeATX::_load_atx_data(atx_header_t &atx_hdr)
 
  Since timing is important, we will load the entire image into memory.
  */
-disktype_t DiskTypeATX::mount(FILE *f, uint32_t disksize)
+disktype_t DiskTypeATX::mount(FileHandler *f, uint32_t disksize)
 {
     Debug_print("ATX MOUNT\n");
 

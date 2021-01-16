@@ -1229,6 +1229,7 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
             uint8_t current_sequence_num = pkt.sequence_num;
             do
             {
+                fnSystem.delay(200); // TODO remove
                 if (udp.parsePacket())
                 {
                     unsigned short l = udp.read(pkt.rawData, sizeof(pkt.rawData));
@@ -1336,7 +1337,7 @@ void _tnfs_debug_packet(const tnfsPacket &pkt, unsigned short payload_size, bool
     Debug_printf("\t[%02x%02x %02x %02x] ", pkt.session_idh, pkt.session_idl, pkt.sequence_num, pkt.command);
     for (int i = 0; i < payload_size; i++)
         Debug_printf("%02x ", pkt.payload[i]);
-    Debug_println();
+    Debug_println("");
 #endif
 }
 

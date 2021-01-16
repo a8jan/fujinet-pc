@@ -8,14 +8,17 @@
 cmake_minimum_required(VERSION 3.10)
 project(fujinet-open VERSION 0.1.0)
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D__OPEN_BUILD_DEBUG__")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D__OPEN_BUILD_DEBUG__ -DVERBOSE_TNFS")
 set(INCLUDE_DIRS include lib/config lib/FileSystem lib/utils lib/hardware lib/tcpip lib/telnet lib/sio)
 set(SOURCES src/main.cpp
     lib/config/fnConfig.h lib/config/fnConfig.cpp
     lib/FileSystem/fnFS.h lib/FileSystem/fnFS.cpp
     lib/FileSystem/fnFsSPIF.h lib/FileSystem/fnFsSPIF.cpp
     lib/FileSystem/fnFsSD.h lib/FileSystem/fnFsSD.cpp
-    # lib/FileSystem/fnFsTNFS.h lib/FileSystem/fnFsTNFS.cpp
+    lib/FileSystem/fnFsTNFS.h lib/FileSystem/fnFsTNFS.cpp
+    lib//FileSystem/fnFile.h lib//FileSystem/fnFile.cpp
+    lib//FileSystem/fnFileLocal.h lib//FileSystem/fnFileLocal.cpp
+    lib//FileSystem/fnFileTNFS.h lib//FileSystem/fnFileTNFS.cpp
     lib/utils/utils.h lib/utils/utils.cpp
     lib/utils/cbuf.h lib/utils/cbuf.cpp
     lib/hardware/fnUART.h lib/hardware/fnUART.cpp

@@ -191,7 +191,7 @@ void sioDisk::sio_write_percom_block()
    then we assume it's DISKTYPE_ATR.
    Return value is DISKTYPE_UNKNOWN in case of failure.
 */
-disktype_t sioDisk::mount(FILE *f, const char *filename, uint32_t disksize, disktype_t disk_type)
+disktype_t sioDisk::mount(FileHandler *f, const char *filename, uint32_t disksize, disktype_t disk_type)
 {
     // TAPE or CASSETTE: use this function to send file info to cassette device
     //  DiskType::discover_disktype(filename) can detect CAS and WAV files
@@ -249,7 +249,7 @@ void sioDisk::unmount()
 }
 
 // Create blank disk
-bool sioDisk::write_blank(FILE *f, uint16_t sectorSize, uint16_t numSectors)
+bool sioDisk::write_blank(FileHandler *f, uint16_t sectorSize, uint16_t numSectors)
 {
     Debug_print("disk CREATE NEW IMAGE\n");
 

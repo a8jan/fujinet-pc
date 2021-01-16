@@ -131,7 +131,7 @@ void DiskType::unmount()
 {
     if (_disk_fileh != nullptr)
     {
-        fclose(_disk_fileh);
+        _disk_fileh->close();
         _disk_fileh = nullptr;
     }
 }

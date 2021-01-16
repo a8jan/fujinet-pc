@@ -6,6 +6,7 @@
 #include <time.h>
 #include <stdio.h>
 
+#include "fnFile.h"
 #include "../../include/debug.h"
 
 #ifndef FILE_READ
@@ -62,6 +63,7 @@ public:
     static const char *type_to_string(fsType type);
 
     static long filesize(FILE *);
+    static long filesize(FileHandler *);
     static long filesize(const char *filepath);
 
     // Different FS implemenations may require different startup parameters,
@@ -69,6 +71,7 @@ public:
     //virtual bool start()=0;
 
     virtual FILE * file_open(const char* path, const char* mode = FILE_READ) = 0;
+    virtual FileHandler * filehandler_open(const char* path, const char* mode = FILE_READ) = 0;
 
     virtual bool exists(const char* path) = 0;
 

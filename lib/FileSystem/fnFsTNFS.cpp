@@ -2,11 +2,12 @@
 #include <arpa/inet.h>
 
 #include "fnFsTNFS.h"
+#include "fnFileTNFS.h"
 #include "../TNFSlib/tnfslib.h"
 #include "../tcpip/fnDNS.h"
 #include "../hardware/fnSystem.h"
 #include "../../include/debug.h"
-#include "fnFsTNFSvfs.h"
+// #include "fnFsTNFSvfs.h"
 
 FileSystemTNFS::FileSystemTNFS()
 {
@@ -17,8 +18,8 @@ FileSystemTNFS::~FileSystemTNFS()
 {
     if (_started)
         tnfs_umount(&_mountinfo);
-    if(_basepath[0] != '\0')
-        vfs_tnfs_unregister(_basepath);
+    // if(_basepath[0] != '\0')
+    //     vfs_tnfs_unregister(_basepath);
 }
 
 bool FileSystemTNFS::start(const char *host, uint16_t port, const char * mountpath, const char * userid, const char * password)
@@ -73,12 +74,12 @@ bool FileSystemTNFS::start(const char *host, uint16_t port, const char * mountpa
     }
     Debug_printf("TNFS mount successful. session: 0x%hx, version: 0x%04hx, min_retry: %hums\n", _mountinfo.session, _mountinfo.server_version, _mountinfo.min_retry_ms);
 
-    // Register a new VFS driver to handle this connection
-    if(vfs_tnfs_register(_mountinfo, _basepath, sizeof(_basepath)) != 0)
-    {
-        Debug_println("Failed to register VFS driver!");
-        return false;
-    }
+    // // Register a new VFS driver to handle this connection
+    // if(vfs_tnfs_register(_mountinfo, _basepath, sizeof(_basepath)) != 0)
+    // {
+    //     Debug_println("Failed to register VFS driver!");
+    //     return false;
+    // }
 
     _started = true;
 
@@ -128,6 +129,40 @@ FILE * FileSystemTNFS::file_open(const char* path, const char* mode)
     FILE * result = fopen(fpath, mode);
     free(fpath);
     return result;
+}
+
+FileHandler * FileSystemTNFS::filehandler_open(const char* path, const char* mode)
+{
+    if(!_started || path == nullptr)
+        return nullptr;
+
+    int16_t handle;
+    // Translate mode to open_mode
+    uint16_t open_mode = TNFS_OPENMODE_READ; // TODO
+    // if(flags == 0)
+    //     tflags = TNFS_OPENMODE_READ;
+    // else
+    // {
+    //     tflags |= (flags & O_WRONLY) ? TNFS_OPENMODE_WRITE : 0;
+    //     tflags |= (flags & O_CREAT) ? TNFS_OPENMODE_WRITE_CREATE : 0;
+    //     tflags |= (flags & O_TRUNC) ? TNFS_OPENMODE_WRITE_TRUNCATE : 0;
+    //     tflags |= (flags & O_APPEND) ? TNFS_OPENMODE_WRITE_APPEND : 0;
+    //     tflags |= (flags & O_RDWR) ? TNFS_OPENMODE_READWRITE : 0;
+    //     tflags |= (flags & O_EXCL) ? TNFS_OPENMODE_CREATE_EXCLUSIVE : 0;
+    // }
+    uint16_t create_perms = TNFS_CREATEPERM_S_IRUSR | TNFS_CREATEPERM_S_IWUSR | TNFS_CREATEPERM_S_IXUSR;
+
+    int result = tnfs_open(&_mountinfo, path, open_mode, create_perms, &handle);
+    if(result != TNFS_RESULT_SUCCESS)
+    {
+        #ifdef DEBUG
+        //Debug_printf("vfs_tnfs_open = %d\n", result);
+        #endif
+        errno = tnfs_code_to_errno(result);
+        return nullptr;
+    }
+    errno = 0;
+    return new FileHandlerTNFS(&_mountinfo, handle);
 }
 
 bool FileSystemTNFS::dir_open(const char * path, const char *pattern, uint16_t diropts)

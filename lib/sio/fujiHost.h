@@ -52,8 +52,8 @@ public:
 
     // File functions
     bool file_exists(const char *path);
-    FILE * file_open(const char *path, char *fullpath, int fullpathlen, const char *mode);
-    long file_size(FILE *filehandle);
+    FileHandler * filehandler_open(const char *path, char *fullpath, int fullpathlen, const char *mode);
+    long file_size(FileHandler *filehandle);
 
     // Directory functions
     bool dir_open(const char *path, const char *pattern, uint16_t options = 0);

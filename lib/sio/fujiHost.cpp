@@ -197,7 +197,7 @@ bool fujiHost::file_exists(const char *path)
     return _fs->exists(realpath);
 }
 
-long fujiHost::file_size(FILE *filehandle)
+long fujiHost::file_size(FileHandler *filehandle)
 {
     Debug_print("::get_filesize\n");
     if (_type == HOSTTYPE_UNINITIALIZED || _fs == nullptr)
@@ -209,7 +209,7 @@ long fujiHost::file_size(FILE *filehandle)
    if the combined prefix + path is longer than fullpathlen.
    Fullpath may be the same buffer as path.
 */
-FILE * fujiHost::file_open(const char *path, char *fullpath, int fullpathlen, const char *mode)
+FileHandler * fujiHost::filehandler_open(const char *path, char *fullpath, int fullpathlen, const char *mode)
 {
     if (_type == HOSTTYPE_UNINITIALIZED || _fs == nullptr)
         return nullptr;
@@ -229,7 +229,7 @@ FILE * fujiHost::file_open(const char *path, char *fullpath, int fullpathlen, co
     }
     Debug_printf("fujiHost #%d opening file path \"%s\"\n", slotid, fullpath);
 
-    return _fs->file_open(fullpath, mode);
+    return _fs->filehandler_open(fullpath, mode);
 }
 
 /* Returns pointer to current hostname and, if provided, fills buffer with that string
@@ -314,20 +314,20 @@ int fujiHost::mount_tnfs()
     else
         set_type(HOSTTYPE_TNFS); // Only start fresh if not HOSTTYPE_TNFS
 
-    // _fs = new FileSystemTNFS;
+    _fs = new FileSystemTNFS;
 
-    // if (_fs == nullptr)
+    if (_fs == nullptr)
     {
         Debug_println("Couldn't create a new TNFSFS in fujiHost::mount_tnfs!");
     }
-    // else
-    // {
-    //     Debug_println("Calling TNFS::begin");
-    //     if (((FileSystemTNFS *)_fs)->start(_hostname))
-    //     {
-    //         return 0;
-    //     }
-    // }
+    else
+    {
+        Debug_println("Calling TNFS::begin");
+        if (((FileSystemTNFS *)_fs)->start(_hostname))
+        {
+            return 0;
+        }
+    }
 
     return -1;
 }

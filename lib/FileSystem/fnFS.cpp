@@ -45,9 +45,23 @@ long FileSystem::filesize(FILE *f)
     return end;
 }
 
+
+long FileSystem::filesize(FileHandler *fh)
+{
+    Debug_println("FileSystem::filesize from FileHandler");
+    long curr = fh->tell();
+    fh->seek(0, SEEK_END);
+    long end = fh->tell();
+    fh->seek(curr, SEEK_SET);
+    return end;
+}
+
+
+// TODO - jk: implement per filesystem?
 // Returns size of file given path
 long FileSystem::filesize(const char *filepath)
 {
+    Debug_println("!!! TODO !!! FileSystem::filesize from filepath");
     struct stat fstat;
     if( 0 == stat(filepath, &fstat))
         return fstat.st_size;

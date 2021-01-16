@@ -335,7 +335,7 @@ void sioFuji::sio_disk_image_mount()
     Debug_printf("Selecting '%s' from host #%u as %s on D%u:\n",
                  disk.filename, disk.host_slot, flag, deviceSlot + 1);
 
-    disk.fileh = host.file_open(disk.filename, disk.filename, sizeof(disk.filename), flag);
+    disk.fileh = host.filehandler_open(disk.filename, disk.filename, sizeof(disk.filename), flag);
 
     if (disk.fileh == nullptr)
     {
@@ -952,7 +952,7 @@ void sioFuji::sio_new_disk()
         return;
     }
 
-    disk.fileh = host.file_open(disk.filename, disk.filename, sizeof(disk.filename), "w");
+    disk.fileh = host.filehandler_open(disk.filename, disk.filename, sizeof(disk.filename), "w");
     if (disk.fileh == nullptr)
     {
         Debug_printf("sio_new_disk Couldn't open file for writing: \"%s\"\n", disk.filename);
@@ -961,7 +961,7 @@ void sioFuji::sio_new_disk()
     }
 
     bool ok = disk.disk_dev.write_blank(disk.fileh, newDisk.sectorSize, newDisk.numSectors);
-    fclose(disk.fileh);
+    disk.fileh->close();
 
     if (ok == false)
     {
@@ -1315,7 +1315,7 @@ void sioFuji::setup(sioBus *siobus)
 
     const char *boot_atr = "/autorun.atr";
 
-    FILE *fBoot = fnSPIFFS.file_open(boot_atr);
+    FileHandler *fBoot = fnSPIFFS.filehandler_open(boot_atr);
     if (fBoot == nullptr)
     {
         perror("Failed to open autorun.atr disk image");

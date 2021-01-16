@@ -22,6 +22,7 @@ public:
     const char * typestring() override { return type_to_string(FSTYPE_TNFS); };
 
     FILE * file_open(const char* path, const char* mode = FILE_READ) override;
+    FileHandler * filehandler_open(const char* path, const char* mode = FILE_READ) override;
 
     bool exists(const char* path) override;
 
