@@ -5,8 +5,8 @@
 #include <string>
 #include <map>
 
-#include "esp_task.h"
-#include "esp_heap_task_info.h"
+// #include "esp_task.h"
+// #include "esp_heap_task_info.h"
 
 #include "httpServiceConfigurator.h"
 #include "fnConfig.h"
@@ -123,7 +123,7 @@ void fnHttpServiceConfigurator::config_hsio(std::string hsioindex)
         index = pc - '0';
     else
     {
-        Debug_printf("Bad HSIO index value: %s\n", hsioindex);
+        Debug_printf("Bad HSIO index value: %s\n", hsioindex.c_str());
         return;
     }
 
@@ -181,96 +181,97 @@ void fnHttpServiceConfigurator::config_cassette(std::string play_record, std::st
 {
     // call the cassette buttons function passing play_record.c_str()
     // find cassette via thefuji object?
-    Debug_printf("New play/record button value: %s\n", play_record.c_str());
-    if (!play_record.empty())
-    {
-        theFuji.cassette()->set_buttons(util_string_value_is_true(play_record));
-        Config.store_cassette_buttons(util_string_value_is_true(play_record));
-    }
-    if (!resistor.empty())
-    {
-        theFuji.cassette()->set_pulldown(util_string_value_is_true(resistor));
-        Config.store_cassette_pulldown(util_string_value_is_true(resistor));
-    }
-    Config.save();
+    Debug_printf("New play/record button value: %s - not implemented\n", play_record.c_str());
+    // if (!play_record.empty())
+    // {
+    //     theFuji.cassette()->set_buttons(util_string_value_is_true(play_record));
+    //     Config.store_cassette_buttons(util_string_value_is_true(play_record));
+    // }
+    // if (!resistor.empty())
+    // {
+    //     theFuji.cassette()->set_pulldown(util_string_value_is_true(resistor));
+    //     Config.store_cassette_pulldown(util_string_value_is_true(resistor));
+    // }
+    // Config.save();
 }
 
 void fnHttpServiceConfigurator::config_midimaze(std::string hostname)
 {
-    Debug_printf("Set MIDIMaze host: %s\n", hostname.c_str());
+    Debug_printf("Set MIDIMaze host: %s - not implemented\n", hostname.c_str());
 
-    // Update the host ip variable
-    SIO.setMIDIHost(hostname.c_str());
-    // Save change
-    Config.store_midimaze_host(hostname.c_str());
-    Config.save();
+    // // Update the host ip variable
+    // SIO.setMIDIHost(hostname.c_str());
+    // // Save change
+    // Config.store_midimaze_host(hostname.c_str());
+    // Config.save();
 }
 
 void fnHttpServiceConfigurator::config_printer(std::string printernumber, std::string printermodel, std::string printerport)
 {
+    Debug_printf("Set Printer: %s : %s : %s - not implemented\n", printernumber.c_str(), printermodel.c_str(), printerport.c_str());
 
-    // Take the last char in the 'printernumber' string and turn it into a digit
-    int pn = 1;
-    char pc = printernumber[printernumber.length() - 1];
+//     // Take the last char in the 'printernumber' string and turn it into a digit
+//     int pn = 1;
+//     char pc = printernumber[printernumber.length() - 1];
 
-    if (pc >= '0' && pc <= '9')
-        pn = pc - '0';
+//     if (pc >= '0' && pc <= '9')
+//         pn = pc - '0';
 
-    // Only handle 1 printer for now
-    if (pn != 1)
-    {
-        Debug_printf("config_printer invalid printer %d\n", pn);
-        return;
-    }
+//     // Only handle 1 printer for now
+//     if (pn != 1)
+//     {
+//         Debug_printf("config_printer invalid printer %d\n", pn);
+//         return;
+//     }
 
-    if (printerport.empty())
-    {
-        sioPrinter::printer_type t = sioPrinter::match_modelname(printermodel);
-        if (t == sioPrinter::printer_type::PRINTER_INVALID)
-        {
-            Debug_printf("Unknown printer type: \"%s\"\n", printermodel.c_str());
-            return;
-        }
-        Debug_printf("config_printer changing printer %d type to %d\n", pn, t);
-        // Store our change in Config
-        Config.store_printer_type(pn - 1, t);
-        // Store our change in the printer list
-        fnPrinters.set_type(0, t);
-        // Tell the printer to change its type
-        fnPrinters.get_ptr(0)->set_printer_type(t);
-    }
-    else
-    {
-        int port = -1;
-        pc = printerport[0];
-        if (pc >= '0' && pc <= '9')
-            port = pc - '1';
+//     if (printerport.empty())
+//     {
+//         sioPrinter::printer_type t = sioPrinter::match_modelname(printermodel);
+//         if (t == sioPrinter::printer_type::PRINTER_INVALID)
+//         {
+//             Debug_printf("Unknown printer type: \"%s\"\n", printermodel.c_str());
+//             return;
+//         }
+//         Debug_printf("config_printer changing printer %d type to %d\n", pn, t);
+//         // Store our change in Config
+//         Config.store_printer_type(pn - 1, t);
+//         // Store our change in the printer list
+//         fnPrinters.set_type(0, t);
+//         // Tell the printer to change its type
+//         fnPrinters.get_ptr(0)->set_printer_type(t);
+//     }
+//     else
+//     {
+//         int port = -1;
+//         pc = printerport[0];
+//         if (pc >= '0' && pc <= '9')
+//             port = pc - '1';
 
-        if (port < 0 || port > 3)
-        {
-#ifdef DEBUG
-            Debug_printf("Bad printer port number: %d\n", port);
-#endif
-            return;
-        }
-#ifdef DEBUG
-        Debug_printf("config_printer changing printer %d port to %d\n", pn, port);
-#endif
-        // Store our change in Config
-        Config.store_printer_port(pn - 1, port);
-        // Store our change in the printer list
-        fnPrinters.set_port(0, port);
-        // Tell the SIO daisy chain to change the device ID for this printer
-        SIO.changeDeviceId(fnPrinters.get_ptr(0), SIO_DEVICEID_PRINTER + port);
-    }
-    Config.save();
+//         if (port < 0 || port > 3)
+//         {
+// #ifdef DEBUG
+//             Debug_printf("Bad printer port number: %d\n", port);
+// #endif
+//             return;
+//         }
+// #ifdef DEBUG
+//         Debug_printf("config_printer changing printer %d port to %d\n", pn, port);
+// #endif
+//         // Store our change in Config
+//         Config.store_printer_port(pn - 1, port);
+//         // Store our change in the printer list
+//         fnPrinters.set_port(0, port);
+//         // Tell the SIO daisy chain to change the device ID for this printer
+//         SIO.changeDeviceId(fnPrinters.get_ptr(0), SIO_DEVICEID_PRINTER + port);
+//     }
+//     Config.save();
 }
 
 int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t postlen)
 {
-#ifdef DEBUG
-    Debug_printf("process_config_post: %s\n", postdata);
-#endif
+// #ifdef DEBUG
+//     Debug_printf("process_config_post: %s\n", postdata);
+// #endif
     // Create a new buffer for the url-decoded version of the data
     char *decoded_buf = (char *)malloc(postlen + 1);
     url_decode(decoded_buf, postdata, postlen);

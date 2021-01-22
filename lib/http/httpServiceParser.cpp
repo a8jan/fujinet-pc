@@ -12,7 +12,8 @@
 #include "printerlist.h"
 
 #include "../hardware/fnSystem.h"
-#include "../hardware/fnWiFi.h"
+// #include "../hardware/fnWiFi.h"
+#include "../hardware/fnDummyWiFi.h"
 #include "fnFsSPIF.h"
 #include "fnFsSD.h"
 
@@ -178,22 +179,27 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     switch (tagid)
     {
     case FN_HOSTNAME:
-        resultstream << fnSystem.Net.get_hostname();
+        // resultstream << fnSystem.Net.get_hostname();
+        resultstream << Config.get_general_devicename();
         break;
     case FN_VERSION:
         resultstream << fnSystem.get_fujinet_version();
         break;
     case FN_IPADDRESS:
-        resultstream << fnSystem.Net.get_ip4_address_str();
+        // resultstream << fnSystem.Net.get_ip4_address_str();
+        resultstream << "0.0.0.0";
         break;
     case FN_IPMASK:
-        resultstream << fnSystem.Net.get_ip4_mask_str();
+        // resultstream << fnSystem.Net.get_ip4_mask_str();
+        resultstream << "0.0.0.0";
         break;
     case FN_IPGATEWAY:
-        resultstream << fnSystem.Net.get_ip4_gateway_str();
+        // resultstream << fnSystem.Net.get_ip4_gateway_str();
+        resultstream << "0.0.0.0";
         break;
     case FN_IPDNS:
-        resultstream << fnSystem.Net.get_ip4_dns_str();
+        // resultstream << fnSystem.Net.get_ip4_dns_str();
+        resultstream << "0.0.0.0";
         break;
     case FN_WIFISSID:
         resultstream << fnWiFi.get_current_ssid();
@@ -255,24 +261,24 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     case FN_SIO_HSBAUD:
         resultstream << SIO.getHighSpeedBaud();
         break;
-    case FN_PRINTER1_MODEL:
-        resultstream << fnPrinters.get_ptr(0)->getPrinterPtr()->modelname();
-        break;
-    case FN_PRINTER1_PORT:
-        resultstream << (fnPrinters.get_port(0) + 1);
-        break;
-    case FN_PLAY_RECORD:
-        if (theFuji.cassette()->get_buttons())
-            resultstream << "0 PLAY";
-        else
-            resultstream << "1 RECORD";
-        break;
-    case FN_PULLDOWN:
-        if (theFuji.cassette()->has_pulldown())
-            resultstream << "1 Pulldown Resistor";
-        else
-            resultstream << "0 B Button Press";
-        break;
+    // case FN_PRINTER1_MODEL:
+    //     resultstream << fnPrinters.get_ptr(0)->getPrinterPtr()->modelname();
+    //     break;
+    // case FN_PRINTER1_PORT:
+    //     resultstream << (fnPrinters.get_port(0) + 1);
+    //     break;
+    // case FN_PLAY_RECORD:
+    //     if (theFuji.cassette()->get_buttons())
+    //         resultstream << "0 PLAY";
+    //     else
+    //         resultstream << "1 RECORD";
+    //     break;
+    // case FN_PULLDOWN:
+    //     if (theFuji.cassette()->has_pulldown())
+    //         resultstream << "1 Pulldown Resistor";
+    //     else
+    //         resultstream << "0 B Button Press";
+    //     break;
     case FN_CONFIG_ENABLED:
         resultstream << Config.get_general_config_enabled();
         break;
@@ -369,7 +375,7 @@ bool fnHttpServiceParser::is_parsable(const char *extension)
 string fnHttpServiceParser::parse_contents(const string &contents)
 {
     std::stringstream ss;
-    uint pos = 0, x, y;
+    size_t pos = 0, x, y;
     do
     {
         x = contents.find("<%", pos);

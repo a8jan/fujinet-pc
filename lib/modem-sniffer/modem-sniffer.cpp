@@ -46,23 +46,27 @@ void ModemSniffer::closeOutput()
 {
     Debug_print("ModemSniffer::closeOutput\n");
 
-    if (_file == nullptr)
-    {
-        _file = activeFS->file_open(SNIFFER_OUTPUT_FILE, "r+"); // Seeks don't work right if we use "append" mode - use "r+"
+    // ???
+    // if (_file == nullptr)
+    // {
+    //     _file = activeFS->file_open(SNIFFER_OUTPUT_FILE, "r+"); // Seeks don't work right if we use "append" mode - use "r+"
         
-        if (_file == nullptr)
-        {
-            Debug_printf("Error opening sniffer output: %d - %s\n", errno, strerror(errno));
-            return;
-        }
+    //     if (_file == nullptr)
+    //     {
+    //         Debug_printf("Error opening sniffer output: %d - %s\n", errno, strerror(errno));
+    //         return;
+    //     }
 
-        fseek(_file, 0, SEEK_END);
+    //     fseek(_file, 0, SEEK_END);
+    // }
+
+    if (_file != nullptr)
+    {
+        // Close the file
+        fflush(_file);
+        fclose(_file);
+        _file = nullptr;
     }
-
-    // Close the file
-    fflush(_file);
-    fclose(_file);
-    _file = nullptr;
 }
 
 FILE *ModemSniffer::closeOutputAndProvideReadHandle()

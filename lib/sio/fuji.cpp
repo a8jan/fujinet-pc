@@ -5,6 +5,7 @@
 #include "fuji.h"
 #include "led.h"
 // #include "fnWiFi.h"
+#include "fnDummyWiFi.h"
 #include "fnSystem.h"
 
 #include "../utils/utils.h"
@@ -169,8 +170,7 @@ void sioFuji::sio_net_scan_networks()
 
     char ret[4] = {0};
 
-    // _countScannedSSIDs = fnWiFi.scan_networks();
-    _countScannedSSIDs = 1;
+    _countScannedSSIDs = fnWiFi.scan_networks();
 
     ret[0] = _countScannedSSIDs;
 
@@ -191,12 +191,7 @@ void sioFuji::sio_net_scan_result()
 
     bool err = false;
     if (cmdFrame.aux1 < _countScannedSSIDs)
-    {
-        // fnWiFi.get_scan_result(cmdFrame.aux1, detail.ssid, &detail.rssi);
-        memset(&detail, 0, sizeof(detail));
-        strlcpy(detail.ssid, "Dummy WiFi", sizeof(detail.ssid));
-        detail.rssi = 255;  // signal strength
-    }
+        fnWiFi.get_scan_result(cmdFrame.aux1, detail.ssid, &detail.rssi);
     else
     {
         memset(&detail, 0, sizeof(detail));
@@ -258,7 +253,7 @@ void sioFuji::sio_net_set_ssid()
 
         Debug_printf("Connecting to net: %s password: %s\n", cfg.ssid, cfg.password);
 
-        // fnWiFi.connect(cfg.ssid, cfg.password);
+        fnWiFi.connect(cfg.ssid, cfg.password);
 
         // Only save these if we're asked to, otherwise assume it was a test for connectivity
         if (save)
@@ -277,8 +272,7 @@ void sioFuji::sio_net_get_wifi_status()
 {
     Debug_println("Fuji cmd: GET WIFI STATUS");
     // WL_CONNECTED = 3, WL_DISCONNECTED = 6
-    // uint8_t wifiStatus = fnWiFi.connected() ? 3 : 6;
-    uint8_t wifiStatus = 3;
+    uint8_t wifiStatus = fnWiFi.connected() ? 3 : 6;
     sio_to_computer(&wifiStatus, sizeof(wifiStatus), false);
 }
 
@@ -311,10 +305,10 @@ void sioFuji::sio_disk_image_mount()
     // This function opens the file, so cassette does not need to open the file.
     // Cassette needs the file pointer and file size. 
 
-    Debug_println("Fuji cmd: MOUNT IMAGE");
-
     uint8_t deviceSlot = cmdFrame.aux1;
     uint8_t options = cmdFrame.aux2; // DISK_ACCESS_MODE
+
+    Debug_printf("Fuji cmd: MOUNT IMAGE 0x%02X 0x%02X\n", deviceSlot, options);
 
     // TODO: Implement FETCH?
     char flag[3] = {'r', 0, 0};
@@ -887,23 +881,21 @@ void sioFuji::sio_get_adapter_config()
 
     strlcpy(cfg.fn_version, fnSystem.get_fujinet_version(true), sizeof(cfg.fn_version));
 
-    // if (!fnWiFi.connected())
-    // {
-    //     strlcpy(cfg.ssid, "NOT CONNECTED", sizeof(cfg.ssid));
-    // }
-    // else
+    if (!fnWiFi.connected())
+    {
+        strlcpy(cfg.ssid, "NOT CONNECTED", sizeof(cfg.ssid));
+    }
+    else
     {
         // strlcpy(cfg.hostname, fnSystem.Net.get_hostname().c_str(), sizeof(cfg.hostname));
-        // strlcpy(cfg.ssid, fnWiFi.get_current_ssid().c_str(), sizeof(cfg.ssid));
-        // fnWiFi.get_current_bssid(cfg.bssid);
+        strlcpy(cfg.hostname, Config.get_general_devicename().c_str(), sizeof(cfg.hostname));
+        strlcpy(cfg.ssid, fnWiFi.get_current_ssid().c_str(), sizeof(cfg.ssid));
+        fnWiFi.get_current_bssid(cfg.bssid);
         // fnSystem.Net.get_ip4_info(cfg.localIP, cfg.netmask, cfg.gateway);
         // fnSystem.Net.get_ip4_dns_info(cfg.dnsIP);
-
-        strlcpy(cfg.hostname, "Fujinet", sizeof(cfg.hostname));
-        strlcpy(cfg.ssid, "Dummy WiFi", sizeof(cfg.ssid));
     }
 
-    // fnWiFi.get_mac(cfg.macAddress);
+    fnWiFi.get_mac(cfg.macAddress);
 
     sio_to_computer((uint8_t *)&cfg, sizeof(cfg), false);
 }

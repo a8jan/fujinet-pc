@@ -3,8 +3,8 @@
 
 #include "debug.h"
 
-// #include "fnSystem.h"
-// #include "fnWiFi.h"
+#include "fnSystem.h"
+#include "fnDummyWiFi.h"
 #include "fnFsSD.h"
 #include "fnFsSPIF.h"
 #include "fnConfig.h"
@@ -13,9 +13,9 @@
 #include "sio.h"
 #include "fuji.h"
 #include "modem.h"
-// #include "apetime.h"
+#include "apetime.h"
 // #include "voice.h"
-// #include "httpService.h"
+#include "httpService.h"
 // #include "printerlist.h"
 // #include "midimaze.h"
 
@@ -36,7 +36,7 @@
 // fnHTTPD is declared and defineid in HttpService.h/cpp
 
 // // sioFuji theFuji; // moved to fuji.h/.cpp
-// sioApeTime apeTime;
+sioApeTime apeTime;
 // sioVoice sioV;
 // sioMIDIMaze sioMIDI;
 // // sioCassette sioC; // now part of sioFuji theFuji object
@@ -100,16 +100,15 @@ void main_setup()
     // Load our stored configuration
     Config.load();
 
-/*
     // Set up the WiFi adapter
     fnWiFi.start();
     // Go ahead and try reconnecting to WiFi
     fnWiFi.connect();
-*/
+
     theFuji.setup(&SIO);
     SIO.addDevice(&theFuji, SIO_DEVICEID_FUJINET); // the FUJINET!
 
-    // SIO.addDevice(&apeTime, SIO_DEVICEID_APETIME); // APETime
+    SIO.addDevice(&apeTime, SIO_DEVICEID_APETIME); // APETime
 
     // SIO.addDevice(&sioMIDI, SIO_DEVICEID_MIDI); // MIDIMaze
 
@@ -147,6 +146,9 @@ void fn_service_loop(void *param)
 {
     while (true)
     {
+        if (fnHTTPD.running())
+            fnHTTPD.service();
+
         // We don't have any delays in this loop, so IDLE threads will be starved
         // Shouldn't be a problem, but something to keep in mind...
         // Go service BT if it's active

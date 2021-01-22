@@ -1225,11 +1225,11 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
         else
         {
             // Wait for a response at most TNFS_TIMEOUT milliseconds
-            int ms_start = fnSystem.millis();
+            unsigned long ms_start = fnSystem.millis();
             uint8_t current_sequence_num = pkt.sequence_num;
             do
             {
-                fnSystem.delay(200); // TODO remove
+                fnSystem.delay_microseconds(2000); // wait short time for (local) data to arrive
                 if (udp.parsePacket())
                 {
                     unsigned short l = udp.read(pkt.rawData, sizeof(pkt.rawData));
@@ -1248,7 +1248,10 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
                     {
                         // Check in case the server asks us to wait and try again
                         if (pkt.payload[0] != TNFS_RESULT_TRY_AGAIN)
+                        {
+                            Debug_printf("_tnfs_transaction completed in %lu ms\n", fnSystem.millis() - ms_start);
                             return true;
+                        }
                         else
                         {
                             // Server should tell us how long it wants us to wait
@@ -1261,7 +1264,8 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
                         }
                     }
                 }
-                fnSystem.yield();
+                // fnSystem.yield();
+                fnSystem.delay_microseconds(5000); // wait more time for (remote) data to arrive
 
             } while ((fnSystem.millis() - ms_start) < m_info->timeout_ms);
 

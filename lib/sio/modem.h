@@ -193,8 +193,8 @@ private:
     // Command handlers
     void at_handle_answer();
     void at_handle_dial();
-    // void at_handle_wifilist();
-    // void at_handle_wificonnect();
+    void at_handle_wifilist();
+    void at_handle_wificonnect();
     void at_handle_help();
     void at_handle_get();
     void at_handle_port();

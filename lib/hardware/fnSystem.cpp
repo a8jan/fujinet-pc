@@ -21,10 +21,21 @@
 #include "fnSystem.h"
 #include "fnFsSD.h"
 #include "fnFsSPIF.h"
-// #include "fnWiFi.h"
+#include "fnDummyWiFi.h"
 
 // Global object to manage System
 SystemManager fnSystem;
+
+// keep reference timestamp
+unsigned long _get_start_millis()
+{
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return (unsigned long)(tv.tv_sec*1000UL+tv.tv_usec/1000UL);
+}
+unsigned long _start_millis = _get_start_millis();
+unsigned long _start_micros = _start_millis*1000;
+
 
 // Returns current CPU frequency in MHz
 uint32_t SystemManager::get_cpu_frequency()
@@ -121,7 +132,7 @@ unsigned long SystemManager::micros()
     // return (unsigned long)(esp_timer_get_time());
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return (unsigned long)(tv.tv_sec*1000000UL+tv.tv_usec);
+    return (unsigned long)(tv.tv_sec*1000000UL+tv.tv_usec) - _start_micros;
 }
 
 // from esp32-hal-misc.c
@@ -131,7 +142,7 @@ unsigned long SystemManager::millis()
     // return (unsigned long)(esp_timer_get_time() / 1000ULL);
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return (unsigned long)(tv.tv_sec*1000UL+tv.tv_usec/1000UL);
+    return (unsigned long)(tv.tv_sec*1000UL+tv.tv_usec/1000UL) - _start_millis;
 }
 
 /*
@@ -211,16 +222,16 @@ uint32_t SystemManager::get_free_heap_size()
 int64_t SystemManager::get_uptime()
 {
     // return esp_timer_get_time();
-    return 0;
+    return micros();
 }
 
-/*
 void SystemManager::update_timezone(const char *timezone)
 {
-    if (timezone != nullptr && timezone[0] != '\0')
-        setenv("TZ", timezone, 1);
+    Debug_printf("SystemManager::update_timezone(%s) - not implemented\n", timezone);
+    // if (timezone != nullptr && timezone[0] != '\0')
+    //     setenv("TZ", timezone, 1);
 
-    tzset();
+    // tzset();
 }
 
 void SystemManager::update_hostname(const char *hostname)
@@ -231,7 +242,6 @@ void SystemManager::update_hostname(const char *hostname)
         fnWiFi.set_hostname(hostname);
     }
 }
-*/
 
 const char *SystemManager::get_current_time_str()
 {
@@ -246,7 +256,7 @@ const char *SystemManager::get_current_time_str()
 const char *SystemManager::get_uptime_str()
 {
     // int64_t ms = esp_timer_get_time();
-    int64_t ms = 0;
+    int64_t ms = micros();
 
     long ml = ms / 1000;
     long s = ml / 1000;

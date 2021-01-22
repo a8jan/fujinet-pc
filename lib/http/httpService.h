@@ -29,7 +29,11 @@ If a file has an extention pre-determined to support parsing (see/update
 #ifndef HTTPSERVICE_H
 #define HTTPSERVICE_H
 
-#include <esp_http_server.h>
+// #include <esp_http_server.h>
+extern "C"
+{
+#include "mongoose.h"
+}
 #include "fnFS.h"
 
 // FNWS_FILE_ROOT should end in a slash '/'
@@ -47,7 +51,8 @@ If a file has an extention pre-determined to support parsing (see/update
 class fnHttpService 
 {
     struct serverstate {
-        httpd_handle_t hServer;
+        struct mg_mgr *hServer;
+        // httpd_handle_t hServer;
         FileSystem *_FS = nullptr;
     } state;
 
@@ -65,31 +70,39 @@ class fnHttpService
         std::string query;
     };
 
-    static void custom_global_ctx_free(void * ctx);
-    static httpd_handle_t start_server(serverstate &state);
-    static void stop_server(httpd_handle_t hServer);
-    static void return_http_error(httpd_req_t *req, _fnwserr errnum);
-    static const char * find_mimetype_str(const char *extension);
-    static char * get_extension(const char *filename);
-    static void set_file_content_type(httpd_req_t *req, const char *filepath);
-    static void send_file_parsed(httpd_req_t *req, const char *filename);
-    static void send_file(httpd_req_t *req, const char *filename);
-    static void parse_query(httpd_req_t *req, queryparts *results);
+    // static void custom_global_ctx_free(void * ctx);
+    // static httpd_handle_t start_server(serverstate &state);
+    static struct mg_mgr * start_server(serverstate &state);
+    static void cb(struct mg_connection *c, int ev, void *ev_data, void *fn_data);
+    // static void stop_server(httpd_handle_t hServer);
+    // static void return_http_error(httpd_req_t *req, _fnwserr errnum);
+    static void return_http_error(struct mg_connection *c, _fnwserr errnum);
+    // static const char * find_mimetype_str(const char *extension);
+    // static char * get_extension(const char *filename);
+    // static void set_file_content_type(httpd_req_t *req, const char *filepath);
+    // static void send_file_parsed(httpd_req_t *req, const char *filename);
+    static void send_file_parsed(struct mg_connection *c, const char *filename);
+    // static void send_file(httpd_req_t *req, const char *filename);
+    static void send_file(struct mg_connection *c, const char *filename);
+    // static void parse_query(httpd_req_t *req, queryparts *results);
 
 public:    
-    static esp_err_t get_handler_test(httpd_req_t *req);
-    static esp_err_t get_handler_index(httpd_req_t *req);
-    static esp_err_t get_handler_file_in_query(httpd_req_t *req);
-    static esp_err_t get_handler_file_in_path(httpd_req_t *req);
-    static esp_err_t get_handler_print(httpd_req_t *req);
-    static esp_err_t get_handler_modem_sniffer(httpd_req_t *req);
+    // static esp_err_t get_handler_test(httpd_req_t *req);
+    // static esp_err_t get_handler_index(httpd_req_t *req);
+    // static esp_err_t get_handler_file_in_query(httpd_req_t *req);
+    // static esp_err_t get_handler_file_in_path(httpd_req_t *req);
+    // static esp_err_t get_handler_print(httpd_req_t *req);
+    // static esp_err_t get_handler_modem_sniffer(httpd_req_t *req);
 
-    static esp_err_t post_handler_config(httpd_req_t *req);
+    // static esp_err_t post_handler_config(httpd_req_t *req);
+    static int post_handler_config(struct mg_connection *c, struct mg_http_message *hm);
 
+    
     void start();
     void stop();
+    void service();
     bool running(void) {
-        return state.hServer != NULL;
+        return state.hServer != nullptr;
     }
 };
 
