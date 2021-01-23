@@ -18,6 +18,7 @@
 #include "httpService.h"
 // #include "printerlist.h"
 // #include "midimaze.h"
+// #include "siocpm.h"
 
 // #include <esp_system.h>
 // #include <nvs_flash.h>
@@ -41,13 +42,14 @@ sioApeTime apeTime;
 // sioMIDIMaze sioMIDI;
 // // sioCassette sioC; // now part of sioFuji theFuji object
 sioModem *sioR;
+// sioCPM sioZ;
 
 
 void main_shutdown_handler()
 {
     Debug_println("Shutdown handler called");
     // Give devices an opportunity to clean up before rebooting
-   SIO.shutdown();
+    // SIO.shutdown();
 }
 
 void sighandler(int signum)
@@ -100,10 +102,19 @@ void main_setup()
     // Load our stored configuration
     Config.load();
 
-    // Set up the WiFi adapter
-    fnWiFi.start();
-    // Go ahead and try reconnecting to WiFi
-    fnWiFi.connect();
+    if ( Config.get_bt_status() )
+    {
+        // // Start SIO2BT mode if we were in it last shutdown
+        // fnLedManager.set(eLed::LED_BT, true); // BT LED ON
+        // fnBtManager.start();
+    }
+    else
+    {
+        // Set up the WiFi adapter
+        fnWiFi.start();
+        // Go ahead and try reconnecting to WiFi
+        fnWiFi.connect();
+    }
 
     theFuji.setup(&SIO);
     SIO.addDevice(&theFuji, SIO_DEVICEID_FUJINET); // the FUJINET!
@@ -130,6 +141,8 @@ void main_setup()
     SIO.addDevice(sioR, SIO_DEVICEID_RS232); // R:
 
     // SIO.addDevice(&sioV, SIO_DEVICEID_FN_VOICE); // P3:
+
+    // SIO.addDevice(&sioZ, SIO_DEVICEID_CPM); // (ATR8000 CPM)
 
     // Go setup SIO
     SIO.setup();
@@ -174,7 +187,7 @@ extern "C"
 
         // Create a new high-priority task to handle the main loop
         // This is assigned to CPU1; the WiFi task ends up on CPU0
-        #define MAIN_STACKSIZE 4096
+        #define MAIN_STACKSIZE 8192
         #define MAIN_PRIORITY 10
         #define MAIN_CPUAFFINITY 1
         xTaskCreatePinnedToCore(fn_service_loop, "fnLoop",

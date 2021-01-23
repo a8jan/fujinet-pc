@@ -653,6 +653,7 @@ void sioFuji::shutdown()
 {
     for (int i = 0; i < MAX_DISK_DEVICES; i++)
         _fnDisks[i].disk_dev.unmount();
+
 }
 
 void sioFuji::sio_open_directory()
@@ -864,18 +865,7 @@ void sioFuji::sio_get_adapter_config()
     Debug_println("Fuji cmd: GET ADAPTER CONFIG");
 
     // Response to SIO_FUJICMD_GET_ADAPTERCONFIG
-    struct
-    {
-        char ssid[32];
-        char hostname[64];
-        unsigned char localIP[4];
-        unsigned char gateway[4];
-        unsigned char netmask[4];
-        unsigned char dnsIP[4];
-        unsigned char macAddress[6];
-        unsigned char bssid[6];
-        char fn_version[15];
-    } cfg;
+    AdapterConfig cfg;
 
     memset(&cfg, 0, sizeof(cfg));
 
@@ -1490,5 +1480,9 @@ void sioFuji::sio_process(uint32_t commanddata, uint8_t checksum)
 
 int sioFuji::get_disk_id(int drive_slot) {
     return _fnDisks[drive_slot].disk_dev.id();
+}
+
+std::string sioFuji::get_host_prefix(int host_slot) {
+    return _fnHosts[host_slot].get_prefix();
 }
 

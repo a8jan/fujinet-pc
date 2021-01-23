@@ -4,6 +4,12 @@
 #ifdef __OPEN_BUILD_DEBUG__
 #define DEBUG
 
+#ifdef UNIT_TESTS
+#undef DEBUG
+#endif
+
+// #include "../lib/hardware/fnUART.h"
+
 #include <cstdio>
 /*
   Debugging Macros

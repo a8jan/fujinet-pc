@@ -9,6 +9,7 @@
 #define MAX_MOUNT_SLOTS 8
 #define MAX_PRINTER_SLOTS 4
 #define MAX_TAPE_SLOTS 1
+#define MAX_PB_SLOTS 16
 
 #define BASE_TAPE_SLOT 0x1A
 
@@ -69,11 +70,23 @@ public:
     void store_wifi_passphrase(const char *passphrase_octets, int num_octets);
     void reset_wifi() { _wifi.ssid.clear(); _wifi.passphrase.clear(); };
 
+    // BLUETOOTH
+    void store_bt_status(bool status);
+    bool get_bt_status() { return _bt.bt_status; };
+
     // HOSTS
     std::string get_host_name(uint8_t num);
     host_type_t get_host_type(uint8_t num);
     void store_host(uint8_t num, const char *hostname, host_type_t type);
     void clear_host(uint8_t num);
+
+    // PHONEBOOK SLOTS
+    std::string get_pb_host_name(const char *pbnum);
+    std::string get_pb_host_port(const char *pbnum);
+    std::string get_pb_entry(uint8_t n);
+    bool add_pb_number(const char *pbnum, const char *pbhost, const char *pbport);
+    bool del_pb_number(const char *pbnum);
+    void clear_pb(void);
 
     // MOUNTS
     std::string get_mount_path(uint8_t num, mount_type_t mounttype = mount_type_t::MOUNTTYPE_DISK);
@@ -110,6 +123,7 @@ private:
 
     void _read_section_general(std::stringstream &ss);
     void _read_section_wifi(std::stringstream &ss);
+    void _read_section_bt(std::stringstream &ss);
     void _read_section_network(std::stringstream &ss);
     void _read_section_host(std::stringstream &ss, int index);
     void _read_section_mount(std::stringstream &ss, int index);
@@ -117,11 +131,13 @@ private:
     void _read_section_tape(std::stringstream &ss, int index);    
     void _read_section_modem(std::stringstream &ss);
     void _read_section_cassette(std::stringstream &ss);
+    void _read_section_phonebook(std::stringstream &ss, int index);
 
     enum section_match
     {
         SECTION_GENERAL,
         SECTION_WIFI,
+        SECTION_BT,
         SECTION_HOST,
         SECTION_MOUNT,
         SECTION_PRINTER,
@@ -129,6 +145,7 @@ private:
         SECTION_TAPE,
         SECTION_MODEM,
         SECTION_CASSETTE,
+        SECTION_PHONEBOOK,
         SECTION_UNKNOWN
     };
     section_match _find_section_in_line(std::string &line, int &index);
@@ -182,6 +199,11 @@ private:
         std::string passphrase;
     };
 
+    struct bt_info
+    {
+        bool bt_status = false;
+    };
+
     struct network_info
     {
         char sntpserver [40];
@@ -208,16 +230,26 @@ private:
         bool button = false;
     };
 
+    struct phbook_info
+    {
+        std::string phnumber;
+        std::string hostname;
+        std::string port;
+    };
+
     host_info _host_slots[MAX_HOST_SLOTS];
     mount_info _mount_slots[MAX_MOUNT_SLOTS];
     printer_info _printer_slots[MAX_PRINTER_SLOTS];
     mount_info _tape_slots[MAX_TAPE_SLOTS];
 
     wifi_info _wifi;
+    bt_info _bt;
     network_info _network;
     general_info _general;
     modem_info _modem;
     cassette_info _cassette;
+
+    phbook_info _phonebook_slots[MAX_PB_SLOTS];
 };
 
 extern fnConfig Config;

@@ -9,6 +9,8 @@
 #include "utils.h"
 // #include "midimaze.h"
 // #include "cassette.h"
+// #include "siocpm.h"
+// #include "printer.h"
 #include "../hardware/fnUART.h"
 #include "../../include/debug.h"
 
@@ -284,6 +286,11 @@ void sioBus::service()
     //     _midiDev->sio_handle_midimaze();
     //     return; // break!
     // }
+    // else if (_cpmDev != nullptr && _cpmDev->cpmActive)
+    // {
+    //     _cpmDev->sio_handle_cpm();
+    //     return; // break!
+    // }
 
     // // check if cassette is mounted first
     // if (_fujiDev->cassette()->is_mounted())
@@ -310,8 +317,8 @@ void sioBus::service()
 
     //     if (_fujiDev->cassette()->is_active() == true) // handle cassette data traffic
     //     {
-    //         _fujiDev->cassette()->sio_handle_cassette(); // 
-    //         return;                                      // break! 
+    //         _fujiDev->cassette()->sio_handle_cassette(); //
+    //         return;                                      // break!
     //     }
     // }
 
@@ -337,7 +344,7 @@ void sioBus::service()
     // for (int i = 0; i < 8; i++)
     // {
     //     if (_netDev[i] != nullptr)
-    //         _netDev[i]->sio_assert_interrupts();
+            // _netDev[i]->sio_poll_interrupt();
     // }
 
    if (idle)
@@ -405,6 +412,18 @@ void sioBus::addDevice(sioDevice *pDevice, int device_id)
     // {
     //     _midiDev = (sioMIDIMaze *)pDevice;
     // }
+    // else if (device_id == SIO_DEVICEID_CASSETTE)
+    // {
+    //     _cassetteDev = (sioCassette *)pDevice;
+    // }
+    // else if (device_id == SIO_DEVICEID_CPM)
+    // {
+    //     _cpmDev = (sioCPM *)pDevice;
+    // }
+    // else if (device_id == SIO_DEVICEID_PRINTER)
+    // {
+    //     _printerdev = (sioPrinter *)pDevice;
+    // }
 
     pDevice->_devnum = device_id;
 
@@ -452,7 +471,11 @@ sioDevice *sioBus::deviceById(int device_id)
 void sioBus::shutdown()
 {
     for (auto devicep : _daisyChain)
+    {
+        Debug_printf("Shutting down device %02x\n",devicep->id());
         devicep->shutdown();
+    }
+    Debug_printf("All devices shut down.\n");
 }
 
 void sioBus::toggleBaudrate()
