@@ -1497,9 +1497,9 @@ void sioModem::modemCommand()
             at_cmd_println("OK");
         break;
     case AT_CPM:
-        modemActive=false;
-        SIO.getCPM()->init_cpm();
-        SIO.getCPM()->cpmActive=true;
+        // modemActive=false;
+        // SIO.getCPM()->init_cpm();
+        // SIO.getCPM()->cpmActive=true;
         break;
     case AT_PHONEBOOKLIST:
         at_handle_pblist();
