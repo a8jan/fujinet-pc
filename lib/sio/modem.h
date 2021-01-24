@@ -147,9 +147,9 @@ private:
     unsigned short listenPort = 0; // Listen to this if not connected. Set to zero to disable.
     fnTcpClient tcpClient;         // Modem client
     fnTcpServer tcpServer;         // Modem server
-    unsigned long lastRingMs = 0;  // Time of last "RING" message (millis())
+    uint64_t lastRingMs = 0;       // Time of last "RING" message (millis())
     char plusCount = 0;            // Go to AT mode at "+++" sequence, that has to be counted
-    unsigned long plusTime = 0;    // When did we last receive a "+++" sequence
+    uint64_t plusTime = 0;         // When did we last receive a "+++" sequence
     uint8_t txBuf[TX_BUF_SIZE];
     bool cmdOutput=true;            // toggle whether to emit command output
     bool numericResultCode=false;   // Use numeric result codes? (ATV0)
@@ -160,7 +160,7 @@ private:
     bool answerHack=false;          // ATA answer hack on SIO write.
     FileSystem *activeFS;           // Active Filesystem for ModemSniffer.
     ModemSniffer* modemSniffer;     // ptr to modem sniffer.
-    time_t _lasttime;               // most recent timestamp of data activity.
+    uint64_t _lasttime;             // most recent timestamp of data activity.
     telnet_t *telnet;               // telnet FSM state.
     bool use_telnet=false;          // Use telnet mode?
     bool do_echo;                   // telnet echo toggle.

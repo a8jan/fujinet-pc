@@ -16,7 +16,7 @@
 #include "apetime.h"
 // #include "voice.h"
 #include "httpService.h"
-// #include "printerlist.h"
+#include "printerlist.h"
 // #include "midimaze.h"
 // #include "siocpm.h"
 
@@ -125,16 +125,16 @@ void main_setup()
 
     // Create a new printer object, setting its output depending on whether we have SD or not
     FileSystem *ptrfs = fnSDFAT.running() ? (FileSystem *)&fnSDFAT : (FileSystem *)&fnSPIFFS;
-    // sioPrinter::printer_type ptype = Config.get_printer_type(0);
-    // if (ptype == sioPrinter::printer_type::PRINTER_INVALID)
-    //     ptype = sioPrinter::printer_type::PRINTER_FILE_TRIM;
+    sioPrinter::printer_type ptype = Config.get_printer_type(0);
+    if (ptype == sioPrinter::printer_type::PRINTER_INVALID)
+        ptype = sioPrinter::printer_type::PRINTER_FILE_TRIM;
 
-    // Debug_printf("Creating a default printer using %s storage and type %d\n", ptrfs->typestring(), ptype);
+    Debug_printf("Creating a default printer using %s storage and type %d\n", ptrfs->typestring(), ptype);
 
-    // sioPrinter *ptr = new sioPrinter(ptrfs, ptype);
-    // fnPrinters.set_entry(0, ptr, ptype, Config.get_printer_port(0));
+    sioPrinter *ptr = new sioPrinter(ptrfs, ptype);
+    fnPrinters.set_entry(0, ptr, ptype, Config.get_printer_port(0));
 
-    // SIO.addDevice(ptr, SIO_DEVICEID_PRINTER + fnPrinters.get_port(0)); // P:
+    SIO.addDevice(ptr, SIO_DEVICEID_PRINTER + fnPrinters.get_port(0)); // P:
 
     sioR = new sioModem(ptrfs, false); // turned off by default.
     

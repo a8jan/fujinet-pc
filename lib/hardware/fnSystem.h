@@ -90,9 +90,9 @@ public:
     const char *get_sdk_version();
     chipmodels get_cpu_model();
     int get_cpu_rev();
-    int64_t get_uptime();
-    unsigned long millis();
-    unsigned long micros();
+    uint64_t get_uptime();
+    uint64_t millis();
+    uint64_t micros();
     void delay_microseconds(uint32_t us);
     void delay(uint32_t ms);
 

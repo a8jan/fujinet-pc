@@ -28,14 +28,14 @@
 SystemManager fnSystem;
 
 // keep reference timestamp
-unsigned long _get_start_millis()
+uint64_t _get_start_millis()
 {
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return (unsigned long)(tv.tv_sec*1000UL+tv.tv_usec/1000UL);
+    return (uint64_t)(tv.tv_sec*1000UL+tv.tv_usec/1000UL);
 }
-unsigned long _start_millis = _get_start_millis();
-unsigned long _start_micros = _start_millis*1000;
+uint64_t _start_millis = _get_start_millis();
+uint64_t _start_micros = _start_millis*1000;
 
 
 // Returns current CPU frequency in MHz
@@ -128,22 +128,22 @@ int SystemManager::digital_read(uint8_t pin)
 
 // from esp32-hal-misc.c
 // unsigned long IRAM_ATTR SystemManager::micros()
-unsigned long SystemManager::micros()
+uint64_t SystemManager::micros()
 {
     // return (unsigned long)(esp_timer_get_time());
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return (unsigned long)(tv.tv_sec*1000000UL+tv.tv_usec) - _start_micros;
+    return (uint64_t)(tv.tv_sec*1000000UL+tv.tv_usec) - _start_micros;
 }
 
 // from esp32-hal-misc.c
 // unsigned long IRAM_ATTR SystemManager::millis()
-unsigned long SystemManager::millis()
+uint64_t SystemManager::millis()
 {
     // return (unsigned long)(esp_timer_get_time() / 1000ULL);
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return (unsigned long)(tv.tv_sec*1000UL+tv.tv_usec/1000UL) - _start_millis;
+    return (uint64_t)(tv.tv_sec*1000UL+tv.tv_usec/1000UL) - _start_millis;
 }
 
 /*
@@ -222,7 +222,7 @@ uint32_t SystemManager::get_free_heap_size()
 
 /* Microseconds since system boot-up
 */
-int64_t SystemManager::get_uptime()
+uint64_t SystemManager::get_uptime()
 {
     // return esp_timer_get_time();
     return micros();

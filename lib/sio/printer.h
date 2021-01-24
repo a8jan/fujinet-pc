@@ -20,7 +20,7 @@ protected:
     printer_emu *_pptr = nullptr;
     FileSystem *_storage = nullptr;
 
-    time_t _last_ms;
+    uint64_t _last_ms;
     uint8_t _lastaux1;
     uint8_t _lastaux2;
 
@@ -55,7 +55,7 @@ public:
     static printer_type match_modelname(std::string model_name);
     void set_printer_type(printer_type printer_type);
     void reset_printer() { set_printer_type(_ptype); };
-    time_t lastPrintTime() { return _last_ms; };
+    uint64_t lastPrintTime() { return _last_ms; };
     void print_from_cpm(uint8_t c);
 
     printer_emu *getPrinterPtr() { return _pptr; };

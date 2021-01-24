@@ -540,7 +540,7 @@ uint8_t epson80::epson_font_lookup(uint16_t code)
             return index + 1;
         index++;
     }
-    Debug_printf("Epson 80 cannot find font %\n", mask & code);
+    Debug_printf("Epson 80 cannot find font %d\n", mask & code);
     return 1; // return the default if can't make sense
 }
 

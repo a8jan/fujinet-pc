@@ -77,9 +77,10 @@ class fnHttpService
     // static void stop_server(httpd_handle_t hServer);
     // static void return_http_error(httpd_req_t *req, _fnwserr errnum);
     static void return_http_error(struct mg_connection *c, _fnwserr errnum);
-    // static const char * find_mimetype_str(const char *extension);
-    // static char * get_extension(const char *filename);
+    static const char * find_mimetype_str(const char *extension);
+    static const char * get_extension(const char *filename);
     // static void set_file_content_type(httpd_req_t *req, const char *filepath);
+    static void set_file_content_type(struct mg_connection *c, const char *filepath);
     // static void send_file_parsed(httpd_req_t *req, const char *filename);
     static void send_file_parsed(struct mg_connection *c, const char *filename);
     // static void send_file(httpd_req_t *req, const char *filename);
@@ -92,6 +93,7 @@ public:
     // static esp_err_t get_handler_file_in_query(httpd_req_t *req);
     // static esp_err_t get_handler_file_in_path(httpd_req_t *req);
     // static esp_err_t get_handler_print(httpd_req_t *req);
+    static int get_handler_print(struct mg_connection *c);
     // static esp_err_t get_handler_modem_sniffer(httpd_req_t *req);
 
     // static esp_err_t post_handler_config(httpd_req_t *req);

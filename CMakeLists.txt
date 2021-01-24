@@ -13,7 +13,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__OPEN_BUILD_DEBUG__ -DVE
 #set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DMG_ENABLE_DIRECTORY_LISTING=1")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMG_ENABLE_DIRECTORY_LISTING=1")
 
-set(INCLUDE_DIRS include lib/config lib/FileSystem lib/utils lib/hardware lib/tcpip lib/telnet lib/sio lib/mongoose lib/http)
+set(INCLUDE_DIRS include lib/config lib/FileSystem lib/utils lib/hardware lib/tcpip lib/telnet 
+    lib/sio lib/mongoose lib/http lib/printer-emulator)
 set(SOURCES src/main.cpp
     lib/config/fnConfig.h lib/config/fnConfig.cpp
     lib/FileSystem/fnFS.h lib/FileSystem/fnFS.cpp
@@ -30,7 +31,7 @@ set(SOURCES src/main.cpp
     lib/hardware/fnSystem.h lib/hardware/fnSystem.cpp
     lib/sio/diskType.h lib/sio/diskType.cpp
     lib/sio/diskTypeAtr.h lib/sio/diskTypeAtr.cpp
-    lib/sio/diskTypeAtx.h
+    lib/sio/diskTypeAtx.h 
     lib/sio/diskTypeXex.h lib/sio/diskTypeXex.cpp
     lib/tcpip/fnDNS.h lib/tcpip/fnDNS.cpp
     lib/tcpip/fnUDP.h lib/tcpip/fnUDP.cpp
@@ -38,7 +39,26 @@ set(SOURCES src/main.cpp
     lib/tcpip/fnTcpServer.h lib/tcpip/fnTcpServer.cpp
     lib/TNFSlib/tnfslibMountInfo.h lib/TNFSlib/tnfslibMountInfo.cpp
     lib/TNFSlib/tnfslib.h lib/TNFSlib/tnfslib.cpp
-    lib/sio/printer.h
+    lib/printer-emulator/atari_1020.h lib/printer-emulator/atari_1020.cpp
+    lib/printer-emulator/atari_1025.h lib/printer-emulator/atari_1025.cpp
+    lib/printer-emulator/atari_1027.h lib/printer-emulator/atari_1027.cpp
+    lib/printer-emulator/atari_1029.h lib/printer-emulator/atari_1029.cpp
+    lib/printer-emulator/atari_820.h lib/printer-emulator/atari_820.cpp
+    lib/printer-emulator/atari_822.h lib/printer-emulator/atari_822.cpp
+    lib/printer-emulator/atari_825.h lib/printer-emulator/atari_825.cpp
+    lib/printer-emulator/atari_xdm121.h lib/printer-emulator/atari_xdm121.cpp
+    lib/printer-emulator/atari_xmm801.h lib/printer-emulator/atari_xmm801.cpp
+    lib/printer-emulator/epson_80.h lib/printer-emulator/epson_80.cpp
+    lib/printer-emulator/epson_tps.h
+    lib/printer-emulator/file_printer.h lib/printer-emulator/file_printer.cpp
+    lib/printer-emulator/html_printer.h lib/printer-emulator/html_printer.cpp
+    lib/printer-emulator/okimate_10.h lib/printer-emulator/okimate_10.cpp
+    lib/printer-emulator/pdf_printer.h lib/printer-emulator/pdf_printer.cpp
+    lib/printer-emulator/png_printer.h lib/printer-emulator/png_printer.cpp
+    lib/printer-emulator/printer_emulator.h lib/printer-emulator/printer_emulator.cpp
+    lib/printer-emulator/svg_plotter.h lib/printer-emulator/svg_plotter.cpp
+    lib/sio/printerlist.h lib/sio/printerlist.cpp
+    lib/sio/printer.h lib/sio/printer.cpp
     lib/telnet/libtelnet.h lib/telnet/libtelnet.c
     lib/modem-sniffer/modem-sniffer.h lib/modem-sniffer/modem-sniffer.cpp
     lib/sio/modem.h lib/sio/modem.cpp

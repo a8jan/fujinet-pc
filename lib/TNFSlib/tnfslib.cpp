@@ -1225,7 +1225,7 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
         else
         {
             // Wait for a response at most TNFS_TIMEOUT milliseconds
-            unsigned long ms_start = fnSystem.millis();
+            uint64_t ms_start = fnSystem.millis();
             uint8_t current_sequence_num = pkt.sequence_num;
             do
             {
@@ -1249,7 +1249,7 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
                         // Check in case the server asks us to wait and try again
                         if (pkt.payload[0] != TNFS_RESULT_TRY_AGAIN)
                         {
-                            Debug_printf("_tnfs_transaction completed in %lu ms\n", fnSystem.millis() - ms_start);
+                            Debug_printf("_tnfs_transaction completed in %u ms\n", (unsigned)(fnSystem.millis() - ms_start));
                             return true;
                         }
                         else

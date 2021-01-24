@@ -245,6 +245,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         resultstream << format_uptime();
         break;
     case FN_UPTIME:
+        Debug_printf("Uptime: %lu\n", uptime_seconds());
         resultstream << uptime_seconds();
         break;
     case FN_CURRENTTIME:
@@ -277,12 +278,12 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     case FN_SIO_HSBAUD:
         resultstream << SIO.getHighSpeedBaud();
         break;
-    // case FN_PRINTER1_MODEL:
-    //     resultstream << fnPrinters.get_ptr(0)->getPrinterPtr()->modelname();
-    //     break;
-    // case FN_PRINTER1_PORT:
-    //     resultstream << (fnPrinters.get_port(0) + 1);
-    //     break;
+    case FN_PRINTER1_MODEL:
+        resultstream << fnPrinters.get_ptr(0)->getPrinterPtr()->modelname();
+        break;
+    case FN_PRINTER1_PORT:
+        resultstream << (fnPrinters.get_port(0) + 1);
+        break;
     // case FN_PLAY_RECORD:
     //     if (theFuji.cassette()->get_buttons())
     //         resultstream << "0 PLAY";

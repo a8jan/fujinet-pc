@@ -420,10 +420,10 @@ void sioBus::addDevice(sioDevice *pDevice, int device_id)
     // {
     //     _cpmDev = (sioCPM *)pDevice;
     // }
-    // else if (device_id == SIO_DEVICEID_PRINTER)
-    // {
-    //     _printerdev = (sioPrinter *)pDevice;
-    // }
+    else if (device_id == SIO_DEVICEID_PRINTER)
+    {
+        _printerdev = (sioPrinter *)pDevice;
+    }
 
     pDevice->_devnum = device_id;
 

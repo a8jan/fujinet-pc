@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "../../include/debug.h"
 #include "printer_emulator.h"
 

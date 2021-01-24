@@ -12,7 +12,7 @@
 #include "httpService.h"
 #include "httpServiceParser.h"
 #include "httpServiceConfigurator.h"
-// #include "printerlist.h"
+#include "printerlist.h"
 // #include "fnWiFi.h"
 #include "fnDummyWiFi.h"
 // #include "keys.h"
@@ -53,55 +53,57 @@ void fnHttpService::return_http_error(struct mg_connection *c, _fnwserr errnum)
     mg_http_reply(c, 400, "", "%s\n", message);
 }
 
-// const char *fnHttpService::find_mimetype_str(const char *extension)
-// {
-//     static std::map<std::string, std::string> mime_map{
-//         {"css", "text/css"},
-//         {"png", "image/png"},
-//         {"jpg", "image/jpeg"},
-//         {"gif", "image/gif"},
-//         {"svg", "image/svg+xml"},
-//         {"pdf", "application/pdf"},
-//         {"ico", "image/x-icon"},
-//         {"txt", "text/plain"},
-//         {"bin", "application/octet-stream"},
-//         {"js", "text/javascript"},
-//         {"atascii", "application/octet-stream"}};
+const char *fnHttpService::find_mimetype_str(const char *extension)
+{
+    static std::map<std::string, std::string> mime_map{
+        {"css", "text/css"},
+        {"png", "image/png"},
+        {"jpg", "image/jpeg"},
+        {"gif", "image/gif"},
+        {"svg", "image/svg+xml"},
+        {"pdf", "application/pdf"},
+        {"ico", "image/x-icon"},
+        {"txt", "text/plain"},
+        {"bin", "application/octet-stream"},
+        {"js", "text/javascript"},
+        {"atascii", "application/octet-stream"}};
 
-//     if (extension != NULL)
-//     {
-//         std::map<std::string, std::string>::iterator mmatch;
+    if (extension != NULL)
+    {
+        std::map<std::string, std::string>::iterator mmatch;
 
-//         mmatch = mime_map.find(extension);
-//         if (mmatch != mime_map.end())
-//             return mmatch->second.c_str();
-//     }
-//     return NULL;
-// }
+        mmatch = mime_map.find(extension);
+        if (mmatch != mime_map.end())
+            return mmatch->second.c_str();
+    }
+    return NULL;
+}
 
-// char *fnHttpService::get_extension(const char *filename)
-// {
-//     char *result = strrchr(filename, '.');
-//     if (result != NULL)
-//         return ++result;
-//     return NULL;
-// }
+const char *fnHttpService::get_extension(const char *filename)
+{
+    const char *result = strrchr(filename, '.');
+    if (result != NULL)
+        return ++result;
+    return NULL;
+}
 
-// /* Set the response content type based on the file being sent.
-// *  Just using the file extension
-// *  If nothing is set here, the default is 'text/html'
-// */
-// void fnHttpService::set_file_content_type(httpd_req_t *req, const char *filepath)
-// {
-//     // Find the current file extension
-//     char *dot = get_extension(filepath);
-//     if (dot != NULL)
-//     {
-//         const char *mimetype = find_mimetype_str(dot);
-//         if (mimetype)
-//             httpd_resp_set_type(req, mimetype);
-//     }
-// }
+/* Set the response content type based on the file being sent.
+*  Just using the file extension
+*  If nothing is set here, the default is 'text/html'
+*/
+void fnHttpService::set_file_content_type(struct mg_connection *c, const char *filepath)
+{
+    // Find the current file extension
+    const char *dot = get_extension(filepath);
+    if (dot != NULL)
+    {
+        const char *mimetype = find_mimetype_str(dot);
+        if (mimetype)
+            // httpd_resp_set_type(req, mimetype);
+            mg_printf(c, "Content-Type: %s\r\n", mimetype);
+
+    }
+}
 
 // /* Send file content after parsing for replaceable strings
 // */
@@ -268,106 +270,113 @@ void fnHttpService::return_http_error(struct mg_connection *c, _fnwserr errnum)
 //     return ESP_OK;
 // }
 
-// esp_err_t fnHttpService::get_handler_print(httpd_req_t *req)
-// {
-//     Debug_println("Print request handler");
+//esp_err_t fnHttpService::get_handler_print(httpd_req_t *req)
+int fnHttpService::get_handler_print(struct mg_connection *c)
+{
+    Debug_println("Print request handler");
 
-//     time_t now = fnSystem.millis();
-//     // Get a pointer to the current (only) printer
-//     sioPrinter *printer = (sioPrinter *)fnPrinters.get_ptr(0);
+    uint64_t now = fnSystem.millis();
+    // Get a pointer to the current (only) printer
+    sioPrinter *printer = (sioPrinter *)fnPrinters.get_ptr(0);
 
-//     if (now - printer->lastPrintTime() < PRINTER_BUSY_TIME)
-//     {
-//         _fnwserr err = fnwserr_post_fail;
-//         return_http_error(req, err);
-//         return ESP_FAIL;
-//     }
-//     // Get printer emulator pointer from sioP (which is now extern)
-//     printer_emu *currentPrinter = printer->getPrinterPtr();
+    if (now - printer->lastPrintTime() < PRINTER_BUSY_TIME)
+    {
+        _fnwserr err = fnwserr_post_fail;
+        return_http_error(c, err);
+        return -1; //ESP_FAIL;
+    }
+    // Get printer emulator pointer from sioP (which is now extern)
+    printer_emu *currentPrinter = printer->getPrinterPtr();
 
-//     // Build a print output name
-//     const char *exts;
+    // Build a print output name
+    const char *exts;
 
-//     bool sendAsAttachment = true;
+    bool sendAsAttachment = true;
 
-//     // Choose an extension based on current printer papertype
-//     switch (currentPrinter->getPaperType())
-//     {
-//     case RAW:
-//         exts = "bin";
-//         break;
-//     case TRIM:
-//         exts = "atascii";
-//         break;
-//     case ASCII:
-//         exts = "txt";
-//         sendAsAttachment = false;
-//         break;
-//     case PDF:
-//         exts = "pdf";
-//         break;
-//     case SVG:
-//         exts = "svg";
-//         sendAsAttachment = false;
-//         break;
-//     case PNG:
-//         exts = "png";
-//         sendAsAttachment = false;
-//         break;
-//     case HTML:
-//     case HTML_ATASCII:
-//         exts = "html";
-//         sendAsAttachment = false;
-//         break;
-//     default:
-//         exts = "bin";
-//     }
+    // Choose an extension based on current printer papertype
+    switch (currentPrinter->getPaperType())
+    {
+    case RAW:
+        exts = "bin";
+        break;
+    case TRIM:
+        exts = "atascii";
+        break;
+    case ASCII:
+        exts = "txt";
+        sendAsAttachment = false;
+        break;
+    case PDF:
+        exts = "pdf";
+        break;
+    case SVG:
+        exts = "svg";
+        sendAsAttachment = false;
+        break;
+    case PNG:
+        exts = "png";
+        sendAsAttachment = false;
+        break;
+    case HTML:
+    case HTML_ATASCII:
+        exts = "html";
+        sendAsAttachment = false;
+        break;
+    default:
+        exts = "bin";
+    }
 
-//     string filename = "printout.";
-//     filename += exts;
+    string filename = "printout.";
+    filename += exts;
 
-//     // Set the expected content type based on the filename/extension
-//     set_file_content_type(req, filename.c_str());
 
-//     // Tell printer to finish its output and get a read handle to the file
-//     FILE *poutput = currentPrinter->closeOutputAndProvideReadHandle();
+    // Set the expected content type based on the filename/extension
+    mg_printf(c, "HTTP/1.1 200 OK\r\n");
+    set_file_content_type(c, filename.c_str());
 
-//     char hdrval1[60];
-//     if (sendAsAttachment)
-//     {
-//         // Add a couple of attchment-specific details
-//         snprintf(hdrval1, sizeof(hdrval1), "attachment; filename=\"%s\"", filename.c_str());
-//         httpd_resp_set_hdr(req, "Content-Disposition", hdrval1);
-//     }
-//     // NOTE: Don't set the Content-Length, as it's invalid when using CHUNKED
+    // Tell printer to finish its output and get a read handle to the file
+    FILE *poutput = currentPrinter->closeOutputAndProvideReadHandle();
 
-//     // Finally, write the data
-//     // Send the file content out in chunks
-//     char *buf = (char *)malloc(FNWS_SEND_BUFF_SIZE);
-//     size_t count = 0, total = 0;
-//     do
-//     {
-//         count = fread((uint8_t *)buf, 1, FNWS_SEND_BUFF_SIZE, poutput);
-//         //count = currentPrinter->readFromOutput((uint8_t *)buf, FNWS_SEND_BUFF_SIZE);
-//         total += count;
+    // char hdrval1[60];
+    if (sendAsAttachment)
+    {
+        // Add a couple of attchment-specific details
+        // snprintf(hdrval1, sizeof(hdrval1), "attachment; filename=\"%s\"", filename.c_str());
+        // httpd_resp_set_hdr(req, "Content-Disposition", hdrval1);
+        mg_printf(c, "Content-Disposition: attachment; filename=\"%s\"\r\n", filename.c_str());
+    }
+    // NOTE: Don't set the Content-Length, as it's invalid when using CHUNKED
 
-//         // Debug_printf("Read %u bytes from print file\n", count);
+    mg_printf(c, "Transfer-Encoding: chunked\r\n\r\n");
 
-//         httpd_resp_send_chunk(req, buf, count);
-//     } while (count > 0);
+    // Finally, write the data
+    // Send the file content out in chunks
+    char *buf = (char *)malloc(FNWS_SEND_BUFF_SIZE);
+    size_t count = 0, total = 0;
+    do
+    {
+        count = fread((uint8_t *)buf, 1, FNWS_SEND_BUFF_SIZE, poutput);
+        //count = currentPrinter->readFromOutput((uint8_t *)buf, FNWS_SEND_BUFF_SIZE);
+        total += count;
 
-//     Debug_printf("Sent %u bytes total from print file\n", total);
+        // Debug_printf("Read %u bytes from print file\n", count);
 
-//     free(buf);
-//     fclose(poutput);
+        // httpd_resp_send_chunk(req, buf, count);
+        mg_http_write_chunk(c, buf, count);
+    } while (count > 0);
 
-//     // Tell the printer it can start writing from the beginning
-//     printer->reset_printer(); // destroy,create new printer emulator object of previous type.
+    Debug_printf("Sent %u bytes total from print file\n", (unsigned)total);
 
-//     Debug_println("Print request completed");
+    free(buf);
+    fclose(poutput);
 
-//     return ESP_OK;
-// }
+    // Tell the printer it can start writing from the beginning
+    printer->reset_printer(); // destroy,create new printer emulator object of previous type.
+
+    Debug_println("Print request completed");
+
+    return 0; //ESP_OK;
+}
 
 // esp_err_t fnHttpService::get_handler_modem_sniffer(httpd_req_t *req)
 // {
@@ -658,6 +667,10 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
             {
                 mg_http_reply(c, 400, "", "Bad config request\n");
             }
+        }
+        else if (mg_http_match_uri(hm, "/print"))
+        {
+            get_handler_print(c);
         }
         else
         // default handler, serve static content of www firectory
