@@ -3,7 +3,7 @@
 // #include <esp_system.h>
 // #include <esp_err.h>
 // #include <esp_timer.h>
-#include <time.h>
+// #include <time.h>
 // #include <driver/gpio.h>
 // #include <driver/dac.h>
 // #include <driver/adc.h>
@@ -13,6 +13,7 @@
 
 #include <cstring>
 #include <sys/time.h>
+#include <unistd.h>
 #include <sched.h>
 
 #include "../../include/debug.h"
@@ -32,7 +33,7 @@ uint64_t _get_start_millis()
 {
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return (uint64_t)(tv.tv_sec*1000UL+tv.tv_usec/1000UL);
+    return (uint64_t)(tv.tv_sec*1000ULL+tv.tv_usec/1000ULL);
 }
 uint64_t _start_millis = _get_start_millis();
 uint64_t _start_micros = _start_millis*1000;
@@ -133,7 +134,7 @@ uint64_t SystemManager::micros()
     // return (unsigned long)(esp_timer_get_time());
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return (uint64_t)(tv.tv_sec*1000000UL+tv.tv_usec) - _start_micros;
+    return (uint64_t)(tv.tv_sec*1000000ULL+tv.tv_usec) - _start_micros;
 }
 
 // from esp32-hal-misc.c
@@ -176,18 +177,20 @@ void IRAM_ATTR SystemManager::delay_microseconds(uint32_t us)
 
 void SystemManager::delay(uint32_t ms)
 {
-    struct timespec ts;
-    ts.tv_sec = ms / 1000;
-    ts.tv_nsec = (ms % 1000) * (1000 * 1000);
-    nanosleep(&ts, NULL);
+    // struct timespec ts;
+    // ts.tv_sec = ms / 1000;
+    // ts.tv_nsec = (ms % 1000) * (1000 * 1000);
+    // nanosleep(&ts, NULL);
+    usleep(ms*1000);
 }
 
 void SystemManager::delay_microseconds(uint32_t us)
 {
-    struct timespec ts;
-    ts.tv_sec = us / (1000 * 1000);
-    ts.tv_nsec = (us % (1000 * 1000)) * 1000;
-    nanosleep(&ts, NULL);
+    // struct timespec ts;
+    // ts.tv_sec = us / (1000 * 1000);
+    // ts.tv_nsec = (us % (1000 * 1000)) * 1000;
+    // nanosleep(&ts, NULL);
+    usleep(us);
 }
 
 // from esp32-hal-misc.

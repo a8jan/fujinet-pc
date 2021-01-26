@@ -176,6 +176,7 @@ void UARTManager::begin(int baud)
     // Set in/out baud rate to be 19200
     // if (cfsetspeed(&tios, B19200) != 0)
     if (cfsetspeed(&tios, 19200) != 0)
+    // if (cfsetispeed(&tios, baud) != 0 || cfsetospeed(&tios, baud) != 0)
     {
         perror("Failed to set I/O baud rate");
         return;
@@ -235,37 +236,90 @@ int UARTManager::peek()
 */
 void UARTManager::set_baudrate(uint32_t baud)
 {
-    // struct termios tios;
+    termios tios;
+    struct serial_struct ss;
 
-    // if(tcgetattr(_fd, &tios) != 0)
-    // {
-    //     perror("Failed to get termios structure");
-	// 	return;
-    // }
+    Debug_printf("set_baudrate: %d\n", baud);
 
-// #ifdef DEBUG
-//     uint32_t before = cfgetospeed(&tios);
-// #endif
+    tcgetattr(_fd, &tios);
+    tios.c_cflag &= ~CSTOPB;
+    cfmakeraw(&tios);
 
-    // // configure port to use custom speed instead of 38400
-    // struct serial_struct ss; 
-    // ioctl(_fd, TIOCGSERIAL, &ss);
-    // ss.flags = (ss.flags & ~ASYNC_SPD_MASK) | ASYNC_SPD_CUST;
-    // ss.custom_divisor = (ss.baud_base + (baud / 2)) / baud;
-    // int closestSpeed = ss.baud_base / ss.custom_divisor;
+    tios.c_cc[VTIME] = 10;
+    tios.c_cc[VMIN] = 0;
 
-    // if (closestSpeed < baud * 98 / 100 || closestSpeed > baud * 102 / 100) {
-    // 	printf("Cannot set serial port speed to %d. Closest possible is %d\n", baud, closestSpeed);
-    // }
+    int baud_id = 0;
 
-    // ioctl(_fd, TIOCSSERIAL, &ss);
+    switch (baud)
+    {
+        case 300:
+            baud_id = B300;
+            break;
+        case 600:
+            baud_id = B600;
+            break;
+        case 1200:
+            baud_id = B1200;
+            break;
+        case 1800:
+            baud_id = B1800;
+            break;
+        case 2400:
+            baud_id = B2400;
+            break;
+        case 4800:
+            baud_id = B4800;
+            break;
+        case 9600:
+            baud_id = B9600;
+            break;
+        case 19200:
+            baud_id = B19200;
+            break;
+        case 38400:
+            baud_id = B38400;
+            break;
+        case 57600:
+            baud_id = B57600;
+            break;
+        case 115200:
+            baud_id = B115200;
+            break;
+    }
 
-    // cfsetispeed(&tios, B38400);
-    // cfsetospeed(&tios, B38400);
+    // set speed
+    if (baud_id != 0)
+    {
+        // standard speeds
+        if (baud_id == B38400)
+        {
+            // reset special handling of B38400 back to 38400
+            ioctl(_fd, TIOCGSERIAL, &ss);
+            ss.flags &= ~ASYNC_SPD_MASK;
+            ioctl(_fd, TIOCSSERIAL, &ss);
+        }
+    }
+    else
+    {
+        // configure B38400 to custom speed
+        ioctl(_fd, TIOCGSERIAL, &ss);
+        ss.flags = (ss.flags & ~ASYNC_SPD_MASK) | ASYNC_SPD_CUST;
+        ss.custom_divisor = (ss.baud_base + (baud / 2)) / baud;
+        int custom = ss.baud_base / ss.custom_divisor;
 
-// #ifdef DEBUG
-//     Debug_printf("set_baudrate change from %d to %d\n", before, baud);
-// #endif
+        if (custom < baud * 98 / 100 || custom > baud * 102 / 100)
+            Debug_printf("Cannot set serial port speed to %d: Closest possible speed is %d\n", baud, custom);
+
+        ioctl(_fd, TIOCSSERIAL, &ss);
+        baud_id == B38400;
+    }
+
+    if ((cfsetispeed(&tios, baud_id) | cfsetospeed(&tios, baud_id)) != 0)
+        perror("Failed to set baud rate");
+
+    // Apply settings
+    if (tcsetattr(_fd, TCSANOW, &tios) != 0)
+        perror("Failed to set serial attributes");
 }
 
 bool UARTManager::is_command(void)

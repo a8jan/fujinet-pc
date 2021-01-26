@@ -245,7 +245,6 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         resultstream << format_uptime();
         break;
     case FN_UPTIME:
-        Debug_printf("Uptime: %lu\n", uptime_seconds());
         resultstream << uptime_seconds();
         break;
     case FN_CURRENTTIME:

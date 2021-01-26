@@ -176,6 +176,8 @@ void sioBus::_sio_process_cmd()
     // while (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
     //     fnSystem.yield();
     while (fnUartSIO.is_command())
+        ;
+        // fnSystem.yield();
         fnSystem.delay_microseconds(500);
 
     uint8_t ck = sio_checksum((uint8_t *)&tempFrame.commanddata, sizeof(tempFrame.commanddata)); // Calculate Checksum
@@ -326,8 +328,20 @@ void sioBus::service()
     //if (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
     if (fnUartSIO.is_command())
     {
+
+#ifdef DEBUG
+        // fnUartDebug.begin(DEBUG_SPEED);
+        unsigned long startms = fnSystem.millis();
+#endif
+
         _sio_process_cmd();
         idle = false;
+
+#ifdef DEBUG
+        // fnUartDebug.begin(DEBUG_SPEED);
+        unsigned long endms = fnSystem.millis();
+        Debug_printf("SIO CMD processed in %lu ms\n", (long unsigned)endms-startms);
+#endif
     }
     // Go check if the modem needs to read data if it's active
     else if (_modemDev != nullptr && _modemDev->modemActive)
@@ -347,9 +361,9 @@ void sioBus::service()
             // _netDev[i]->sio_poll_interrupt();
     // }
 
-   if (idle)
-       // fnSystem.yield();
-       fnSystem.delay_microseconds(500);
+    if (idle)
+        // fnSystem.yield();
+        fnSystem.delay_microseconds(500);
 }
 
 // Setup SIO bus
@@ -512,8 +526,45 @@ void sioBus::setBaudrate(int baud)
 int sioBus::setHighSpeedIndex(int hsio_index)
 {
     int temp = _sioBaudHigh;
-    _sioBaudHigh = (SIO_ATARI_PAL_FREQUENCY * 10) / (10 * (2 * (hsio_index + 7)) + 3);
-    //_sioBaudHigh = (int)(1781610.0 / (2*(hsio_index+7)));
+    // _sioBaudHigh = (SIO_ATARI_PAL_FREQUENCY * 10) / (10 * (2 * (hsio_index + 7)) + 3);
+
+    switch (hsio_index) {
+        case 0:
+            // _sioBaudHigh = 125000;
+            _sioBaudHigh = 115200; // TODO
+            break;
+        case 1:
+            // _sioBaudHigh = 110598;
+            _sioBaudHigh = 115200; // TODO
+            break;
+        case 2:
+            // _sioBaudHigh = 98797;
+            _sioBaudHigh = 115200; // TODO
+            break;
+
+        // TODO
+        case 3:
+            _sioBaudHigh = 115200;
+            break;
+        case 4:
+            _sioBaudHigh = 115200;
+            break;
+        // TODO
+        case 8:
+            _sioBaudHigh = 57600;
+            break;
+        case 9:
+            _sioBaudHigh = 57600;
+            break;
+        // TODO
+        // case 20:
+        //     _sioBaudHigh = 38400;
+        //     break;
+
+        default:
+            _sioBaudHigh = (int)(1781610.0 / (2* hsio_index + 14 ));
+    }
+
     _sioHighSpeedIndex = hsio_index;
 
     int alt = SIO_ATARI_PAL_FREQUENCY / (2 * hsio_index + 14);
