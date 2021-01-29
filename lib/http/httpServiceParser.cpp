@@ -96,6 +96,10 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_HOST6PREFIX,
         FN_HOST7PREFIX,
         FN_HOST8PREFIX,
+        FN_SERIALPORT,
+        FN_SERIALCOMMAND,
+        FN_SERIALPROCEED,
+        FN_SIO_HSTEXT,
         FN_LASTTAG
     };
 
@@ -171,7 +175,11 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_HOST5PREFIX",
         "FN_HOST6PREFIX",
         "FN_HOST7PREFIX",
-        "FN_HOST8PREFIX"
+        "FN_HOST8PREFIX",
+        "FN_SERIALPORT",
+        "FN_SERIALCOMMAND",
+        "FN_SERIALPROCEED",
+        "FN_SIO_HSTEXT"
     };
 
     stringstream resultstream;
@@ -190,6 +198,9 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
 
     int drive_slot, host_slot;
     char disk_id;
+
+    int hsioindex = SIO.getHighSpeedIndex();
+    fnConfig::serial_hsio_mode hsiomode = Config.get_serial_hsiomode();
 
     // Provide a replacement value
     switch (tagid)
@@ -272,10 +283,49 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         resultstream << ((float)fnSystem.get_sio_voltage()) / 1000.00 << "V";
         break;
     case FN_SIO_HSINDEX:
-        resultstream << SIO.getHighSpeedIndex();
+        // combine HSIO index and HSIO mode into SIO2PC: -6,-3,-2 Disabled: -1  POKEY: 0..10
+        hsioindex = SIO.getHighSpeedIndex();
+        hsiomode = Config.get_serial_hsiomode();
+        if (hsiomode == fnConfig::SERIAL_HSIO_DISABLED)
+            hsioindex = HSIO_INVALID_INDEX;
+        else if (hsiomode == fnConfig::SERIAL_HSIO_SIO2PC)
+            switch (hsioindex)
+            {
+            case HSIO_SIO2PC_2X_POKEY:
+                hsioindex = HSIO_SIO2PC_2X_INDEX;
+                break;
+            case HSIO_SIO2PC_3X_POKEY:
+                hsioindex = HSIO_SIO2PC_3X_INDEX;
+                break;
+            case HSIO_SIO2PC_6X_POKEY:
+                hsioindex = HSIO_SIO2PC_6X_INDEX;
+                break;
+            }
+        resultstream << hsioindex;
+        break;
+    case FN_SIO_HSTEXT:
+        hsioindex = SIO.getHighSpeedIndex();
+        hsiomode = Config.get_serial_hsiomode();
+        if (hsiomode == fnConfig::SERIAL_HSIO_DISABLED)
+            resultstream << "HSIO Disabled";
+        else if (hsiomode == fnConfig::SERIAL_HSIO_SIO2PC)
+            resultstream << hsioindex << " Mode: SIO2PC";
+        else if (hsiomode == fnConfig::SERIAL_HSIO_POKEY)
+            resultstream << hsioindex << " Mode: POKEY";
+        else
+            resultstream << hsioindex;
         break;
     case FN_SIO_HSBAUD:
         resultstream << SIO.getHighSpeedBaud();
+        break;
+    case FN_SERIALPORT:
+        resultstream << Config.get_serial_port();
+        break;
+    case FN_SERIALCOMMAND:
+        resultstream << Config.get_serial_command();
+        break;
+    case FN_SERIALPROCEED:
+        resultstream << Config.get_serial_proceed();
         break;
     case FN_PRINTER1_MODEL:
         resultstream << fnPrinters.get_ptr(0)->getPrinterPtr()->modelname();

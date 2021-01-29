@@ -10,7 +10,11 @@ class UARTManager
 {
 private:
     // uart_port_t _uart_num;
-    const char *_device;
+    char _device[64]; // device name or path
+    int _command_pin;
+    int _proceed_pin;
+    int _command_tiocm;
+    int _proceed_tiocm;
     int _fd;
     // QueueHandle_t _uart_q;
     bool _initialized; // is UART ready?
@@ -26,12 +30,14 @@ public:
     void set_baudrate(uint32_t baud);
     bool initialized() { return _initialized; }
 
+    void set_port(const char *device, int command_pin, int proceed_pin);
+    const char* get_port(int &command_pin, int &proceed_pin);
+    bool is_command();
+
     int available();
     int peek();
     void flush();
     void flush_input();
-
-    bool is_command();
 
     int read();
     size_t readBytes(uint8_t *buffer, size_t length);

@@ -315,7 +315,7 @@
 				</div>
 				<div class="detline">
 					<div class="deth">WiFi details</div>
-					<div class="det small"><%FN_WIFIDETAIL%></div>
+					<div class="det small"></div>
 				</div>
 			</div>
 			<div class="flexchild">
@@ -622,10 +622,16 @@
 					</div>
 					<div class="cform">
 						<div class="formwrapper">
-							<br>Change HSIO index
+							<br>High Speed IO
 							<form action="/config" method="post">
 								<select name="hsioindex" id="select_hsioindex">
 									<optgroup>
+										<option value="-1">HSIO Disabled</option>
+										<option disabled>--- SIO2PC ---</option>
+										<option value="-6">1: 115200 (x6)</option>
+										<option value="-3">8: 57600 (x3)</option>
+										<option value="-2">16: 38400 (x2)</option>
+										<option disabled>--- POKEY Divisor ---</option>
 										<option value="0">0: 124Kb</option>
 										<option value="1">1: 109Kb</option>
 										<option value="2">2: 97Kb</option>
@@ -636,12 +642,13 @@
 										<option value="7">7: 63Kb</option>
 										<option value="8">8: 58Kb</option>
 										<option value="9">9: 55Kb</option>
+										<option value="10">10: 51Kb</option>
 									</optgroup>
 								</select>
 								<input type="submit" value="Save">
 							</form>
 							<br>
-							<hr>Current Setting: <%FN_SIO_HSINDEX%>
+							<hr>Current Setting: <%FN_SIO_HSTEXT%>
 							<script>
 								var current_hsioindex = "<%FN_SIO_HSINDEX%>";
 							</script>
@@ -917,6 +924,49 @@
 							Reboot FujiNet after changing this value.<br/>
 							Disabling the built-in CONFIG boot disk will require changing
 							disk mounts using the individual FujiNet config tools</span>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="flexchild">
+				<header>SERIAL<span id="logowob"></span>PORT</header>
+				<div class="detline">
+					<div class="cicon">
+						<div class="svgicon">
+						</div>
+					</div>
+					<div class="cform">
+						<div class="formwrapper">
+							<form action="/config" method="post">
+								<br>Serial Port
+								<br><input type="text" name="serialport" id="txt_serialport" value="<%FN_SERIALPORT%>" />
+								<input type="submit" value="Save">
+							</form>
+							<form action="/config" method="post">
+								<br>SIO2PC Adapter
+								<br>COMMAND on
+								<select name="serialcommand" id="select_serialcommand">
+									<optgroup>
+										<option value="0">None</option>
+										<option value="1">DSR</option>
+										<option value="2">CTS</option>
+										<option value="3">RI</option>
+									</optgroup>
+								</select>
+								<br>PROCEED on
+								<select name="serialproceed" id="select_serialproceed">
+									<optgroup>
+										<option value="0">None</option>
+										<option value="1">DTR</option>
+										<option value="2">RTS</option>
+									</optgroup>
+								</select>
+								<br><input type="submit" value="Save">
+							</form>
+							<script>
+								var current_serialcommand = "<%FN_SERIALCOMMAND%>";
+								var current_serialproceed = "<%FN_SERIALPROCEED%>";
+							</script>
 						</div>
 					</div>
 				</div>

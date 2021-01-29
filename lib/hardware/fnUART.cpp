@@ -6,6 +6,8 @@
 // C library headers
 #include <stdio.h>
 #include <string.h>
+#include <bsd/string.h>
+
 
 // Linux headers
 #include <fcntl.h> // Contains file controls like O_RDWR
@@ -41,7 +43,7 @@ UARTManager fnUartSIO;
 
 // Constructor
 // UARTManager::UARTManager(uart_port_t uart_num) : _uart_num(uart_num), _uart_q(NULL) {}
-UARTManager::UARTManager() : _device(nullptr) {}
+UARTManager::UARTManager() : _initialized(false), _fd(-1) {};
 
 void UARTManager::end()
 {
@@ -50,8 +52,70 @@ void UARTManager::end()
     //     free(_uart_q);
     // _uart_q = NULL;
 
-    close(_fd);
-    _fd  = -1;
+    if (_fd >= 0)
+    {
+        close(_fd);
+        _fd  = -1;
+    }
+    _initialized = false;
+}
+
+void UARTManager::set_port(const char *device, int command_pin, int proceed_pin)
+{
+    if (device != nullptr)
+        strlcpy(_device, device, sizeof(_device));
+    else
+        _device[0] = 0;
+    _command_pin = command_pin;
+    _proceed_pin = proceed_pin;
+    switch (_command_pin)
+    {
+// TODO move from fnConfig.h to fnUART.h
+// enum serial_command_pin
+// {
+//     SERIAL_COMMAND_NONE = 0,
+//     SERIAL_COMMAND_DSR,
+//     SERIAL_COMMAND_CTS,
+//     SERIAL_COMMAND_RI,
+//     SERIAL_COMMAND_INVALID
+// };
+    case 1: // SERIAL_COMMAND_DSR
+        _command_tiocm = TIOCM_DSR;
+        break;
+    case 2: // SERIAL_COMMAND_CTS
+        _command_tiocm = TIOCM_CTS;
+        break;
+    case 3: // SERIAL_COMMAND_RI
+        _command_tiocm = TIOCM_RI;
+        break;
+    default:
+        _command_tiocm = 0;
+    }
+
+// TODO move from fnConfig.h to fnUART.h
+// enum serial_proceed_pin
+// {
+//     SERIAL_PROCEED_NONE = 0,
+//     SERIAL_PROCEED_DTR,
+//     SERIAL_PROCEED_RTS,
+//     SERIAL_PROCEED_INVALID
+// };
+    switch (_proceed_pin)
+    {
+    case 1: // SERIAL_PROCEED_DTR
+        _proceed_tiocm = TIOCM_DTR;
+        break;
+    case 2: // SERIAL_PROCEED_RTS
+        _proceed_tiocm = TIOCM_RTS;
+        break;
+    }
+}
+
+const char* UARTManager::get_port(int &command_pin, int &proceed_pin)
+{
+    command_pin = _command_pin;
+    proceed_pin = _proceed_pin;
+    return _device;
 }
 
 void UARTManager::begin(int baud)
@@ -104,25 +168,21 @@ void UARTManager::begin(int baud)
     // uart_driver_install(_uart_num, uart_buffer_size, 0, uart_queue_size, NULL, intr_alloc_flags);
 
     // Open the serial port
-    if (_device == nullptr)
+    if (*_device == 0)
     {
         // Probe some serial ports
         Debug_println("Trying " SIO_PROBE_DEV1);
         if ((_fd = open(SIO_PROBE_DEV1, O_RDWR)) >= 0)
-        {
-            _device = SIO_PROBE_DEV1;
-        }
+            strlcpy(_device, SIO_PROBE_DEV1, sizeof(_device));
         else
         {
             Debug_println("Trying " SIO_PROBE_DEV2);
             if ((_fd = open(SIO_PROBE_DEV2, O_RDWR)) >= 0)
-            {
-                _device = SIO_PROBE_DEV2;
-            }
+                strlcpy(_device, SIO_PROBE_DEV2, sizeof(_device));
         }
 
         // successfull probe
-        if (_device != nullptr)
+        if (*_device != 0)
             Debug_printf("Setting up serial port (%s)\n", _device);
     }
     else
@@ -134,8 +194,7 @@ void UARTManager::begin(int baud)
     if (_fd < 0)
     {
 		perror("Failed to open serial device");
-		// return;
-        exit(1);
+		return;
 	}
     
 
@@ -146,8 +205,7 @@ void UARTManager::begin(int baud)
     if(tcgetattr(_fd, &tios) != 0)
     {
         perror("Failed to get termios structure");
-		// return;
-        exit(1);
+		return;
     }
 
     tios.c_cflag &= ~PARENB; // Clear parity bit, disabling parity (most common)
@@ -248,7 +306,7 @@ void UARTManager::set_baudrate(uint32_t baud)
     tios.c_cc[VTIME] = 10;
     tios.c_cc[VMIN] = 0;
 
-    int baud_id = 0;
+    int baud_id = B0;
 
     switch (baud)
     {
@@ -288,7 +346,7 @@ void UARTManager::set_baudrate(uint32_t baud)
     }
 
     // set speed
-    if (baud_id != 0)
+    if (baud_id != B0)
     {
         // standard speeds
         if (baud_id == B38400)
@@ -302,16 +360,18 @@ void UARTManager::set_baudrate(uint32_t baud)
     else
     {
         // configure B38400 to custom speed
+        baud_id = B38400;
         ioctl(_fd, TIOCGSERIAL, &ss);
         ss.flags = (ss.flags & ~ASYNC_SPD_MASK) | ASYNC_SPD_CUST;
         ss.custom_divisor = (ss.baud_base + (baud / 2)) / baud;
         int custom = ss.baud_base / ss.custom_divisor;
 
         if (custom < baud * 98 / 100 || custom > baud * 102 / 100)
+        {
             Debug_printf("Cannot set serial port speed to %d: Closest possible speed is %d\n", baud, custom);
+        }
 
         ioctl(_fd, TIOCSSERIAL, &ss);
-        baud_id == B38400;
     }
 
     if ((cfsetispeed(&tios, baud_id) | cfsetospeed(&tios, baud_id)) != 0)
@@ -325,13 +385,17 @@ void UARTManager::set_baudrate(uint32_t baud)
 bool UARTManager::is_command(void)
 {
     int status;
-    int mask = TIOCM_DSR;
-    if (ioctl(_fd, TIOCMGET, &status) < 0) 
+
+    if (! _initialized)
+        return false;
+
+    if (ioctl(_fd, TIOCMGET, &status) < 0)
     {
         perror("Cannot retrieve serial port status");
         return false;
     }
-    return ((status & mask) != 0);
+
+    return ((status & _command_tiocm) != 0);
 }
 
 /* Returns a single byte from the incoming stream

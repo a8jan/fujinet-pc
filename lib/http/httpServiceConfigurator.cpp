@@ -1,6 +1,7 @@
 #include <sstream>
 #include <string>
 #include <cstdio>
+#include <stdlib.h>
 
 #include <string>
 #include <map>
@@ -10,6 +11,7 @@
 
 #include "httpServiceConfigurator.h"
 #include "fnConfig.h"
+#include "fnUART.h"
 #include "printerlist.h"
 #include "utils.h"
 
@@ -21,8 +23,9 @@ char *fnHttpServiceConfigurator::url_decode(char *dst, const char *src, size_t d
 {
     char a, b;
     size_t i = 0;
+    size_t j = 0;
 
-    while (*src && i++ < dstsize)
+    while (*src && i++ < dstsize && j++ < dstsize)
     {
         if ((*src == '%') &&
             ((a = src[1]) && (b = src[2])) &&
@@ -41,7 +44,7 @@ char *fnHttpServiceConfigurator::url_decode(char *dst, const char *src, size_t d
             else
                 b -= '0';
             *dst++ = 16 * a + b;
-            src += 3;
+            src += 3; j += 2;
         }
         else if (*src == '+')
         {
@@ -117,19 +120,54 @@ std::map<std::string, std::string> fnHttpServiceConfigurator::parse_postdata(con
 
 void fnHttpServiceConfigurator::config_hsio(std::string hsioindex)
 {
-    int index = -1;
-    char pc = hsioindex[0];
-    if (pc >= '0' && pc <= '9')
-        index = pc - '0';
+    Debug_printf("New HSIO index value: %s\n", hsioindex.c_str());
+    // int index = -1;
+    // char pc = hsioindex[0];
+    // if (pc >= '0' && pc <= '9')
+    //     index = pc - '0';
+    // else
+
+    int index = atoi(hsioindex.c_str());
+    fnConfig::serial_hsio_mode mode = fnConfig::SERIAL_HSIO_DISABLED;
+
+    // get HSIO index and HSIO mode
+    if (index >= 0 && index <= 10)
+    {
+        mode = fnConfig::SERIAL_HSIO_POKEY;
+    }
     else
     {
-        Debug_printf("Bad HSIO index value: %s\n", hsioindex.c_str());
-        return;
+        switch (index)
+        {
+        case HSIO_SIO2PC_2X_INDEX:
+            index = HSIO_SIO2PC_2X_POKEY;
+            mode = fnConfig::SERIAL_HSIO_SIO2PC;
+            break;
+        case HSIO_SIO2PC_3X_INDEX:
+            index = HSIO_SIO2PC_3X_POKEY;
+            mode = fnConfig::SERIAL_HSIO_SIO2PC;
+            break;
+        case HSIO_SIO2PC_6X_INDEX:
+            index = HSIO_SIO2PC_6X_POKEY;
+            mode = fnConfig::SERIAL_HSIO_SIO2PC;
+            break;
+        case HSIO_INVALID_INDEX:
+            // mode = fnConfig::SERIAL_HSIO_DISABLED;
+            break;
+        default:
+            Debug_printf("Bad HSIO index value: %s\n", hsioindex.c_str());
+            return;
+        }
     }
 
-    SIO.setHighSpeedIndex(index);
-    // Store our change in Config
-    Config.store_general_hsioindex(index);
+    // Store our change in Config and aply
+    Config.store_serial_hsiomode(mode);
+    SIO.setHighSpeedMode(mode);
+    if (index != HSIO_INVALID_INDEX)
+    {
+        Config.store_general_hsioindex(index);
+        SIO.setHighSpeedIndex(index);
+    }
     Config.save();
 }
 
@@ -213,7 +251,7 @@ void fnHttpServiceConfigurator::config_midimaze(std::string hostname)
 
 void fnHttpServiceConfigurator::config_printer(std::string printernumber, std::string printermodel, std::string printerport)
 {
-    Debug_printf("Set Printer: %s : %s : %s\n", printernumber.c_str(), printermodel.c_str(), printerport.c_str());
+    Debug_printf("Set Printer: %s,%s,%s\n", printernumber.c_str(), printermodel.c_str(), printerport.c_str());
 
     // Take the last char in the 'printernumber' string and turn it into a digit
     int pn = 1;
@@ -268,6 +306,38 @@ void fnHttpServiceConfigurator::config_printer(std::string printernumber, std::s
         fnPrinters.set_port(0, port);
         // Tell the SIO daisy chain to change the device ID for this printer
         SIO.changeDeviceId(fnPrinters.get_ptr(0), SIO_DEVICEID_PRINTER + port);
+    }
+    Config.save();
+}
+
+void fnHttpServiceConfigurator::config_serial(std::string port, std::string command, std::string proceed)
+{
+    Debug_printf("Set Serial: %s,%s,%s\n", port.c_str(), command.c_str(), proceed.c_str());
+
+    // current settings
+    const char *devname;
+    int command_pin;
+    int proceed_pin;
+    devname = fnUartSIO.get_port(command_pin, proceed_pin);
+
+    // update settings
+    if (!port.empty())
+    {
+        Config.store_serial_port(port.c_str());
+        // re-set serial port
+        fnUartSIO.end();
+        fnUartSIO.set_port(Config.get_serial_port().c_str(), command_pin, proceed_pin);
+        fnUartSIO.begin(SIO.getBaudrate());
+    }
+    if (!command.empty())
+    {
+        Config.store_serial_command((fnConfig::serial_command_pin)atoi(command.c_str()));
+        fnUartSIO.set_port(nullptr, Config.get_serial_command(), proceed_pin);
+    }
+    if (!proceed.empty())
+    {
+        Config.store_serial_proceed((fnConfig::serial_proceed_pin)atoi(proceed.c_str()));
+        fnUartSIO.set_port(nullptr, command_pin, Config.get_serial_proceed());
     }
     Config.save();
 }
@@ -330,6 +400,18 @@ int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t 
         else if (i->first.compare("config_enable") == 0)
         {
             config_enable_config(i->second);
+        }
+        else if (i->first.compare("serialport") == 0)
+        {
+            config_serial(i->second, std::string(), std::string());
+        }
+        else if (i->first.compare("serialcommand") == 0)
+        {
+            config_serial(std::string(), i->second, std::string());
+        }
+        else if (i->first.compare("serialproceed") == 0)
+        {
+            config_serial(std::string(), std::string(), i->second);
         }
     }
 

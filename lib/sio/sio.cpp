@@ -330,7 +330,6 @@ void sioBus::service()
     {
 
 #ifdef DEBUG
-        // fnUartDebug.begin(DEBUG_SPEED);
         unsigned long startms = fnSystem.millis();
 #endif
 
@@ -338,7 +337,6 @@ void sioBus::service()
         idle = false;
 
 #ifdef DEBUG
-        // fnUartDebug.begin(DEBUG_SPEED);
         unsigned long endms = fnSystem.millis();
         Debug_printf("SIO CMD processed in %lu ms\n", (long unsigned)endms-startms);
 #endif
@@ -372,6 +370,7 @@ void sioBus::setup()
     Debug_println("SIO SETUP");
 
     // Set up UART
+    fnUartSIO.set_port(Config.get_serial_port().c_str(), Config.get_serial_command(), Config.get_serial_proceed());
     fnUartSIO.begin(_sioBaud);
 
     // // INT PIN
@@ -398,11 +397,13 @@ void sioBus::setup()
 
     // Set the initial HSIO index
     // First see if Config has read a value
-    int i = Config.get_general_hsioindex();
-    if (i != HSIO_INVALID_INDEX)
-        setHighSpeedIndex(i);
-    else
-        setHighSpeedIndex(_sioHighSpeedIndex);
+    // int i = Config.get_general_hsioindex();
+    // if (i != HSIO_INVALID_INDEX)
+    //     setHighSpeedIndex(i);
+    // else
+    //     setHighSpeedIndex(_sioHighSpeedIndex);
+    setHighSpeedMode(Config.get_serial_hsiomode());
+    setHighSpeedIndex(Config.get_general_hsioindex());
 
     fnUartSIO.flush_input();
 }
@@ -522,54 +523,46 @@ void sioBus::setBaudrate(int baud)
     fnUartSIO.set_baudrate(baud);
 }
 
+
+void sioBus::setHighSpeedMode(int hsio_mode)
+{
+    _sioHighSpeedMode = hsio_mode;
+}
+
 // Set HSIO index. Sets high speed SIO baud and also returns that value.
 int sioBus::setHighSpeedIndex(int hsio_index)
 {
     int temp = _sioBaudHigh;
     // _sioBaudHigh = (SIO_ATARI_PAL_FREQUENCY * 10) / (10 * (2 * (hsio_index + 7)) + 3);
+    _sioBaudHigh = (int)(1781610.0 / (2* hsio_index + 14 ));
 
-    switch (hsio_index) {
+    switch (hsio_index) 
+    {
         case 0:
-            // _sioBaudHigh = 125000;
-            _sioBaudHigh = 115200; // TODO
+            _sioBaudHigh = 125000;
             break;
         case 1:
-            // _sioBaudHigh = 110598;
-            _sioBaudHigh = 115200; // TODO
+            _sioBaudHigh = (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) ? 115200 : 110598;
             break;
         case 2:
-            // _sioBaudHigh = 98797;
-            _sioBaudHigh = 115200; // TODO
+            _sioBaudHigh = 98797;
             break;
 
-        // TODO
-        case 3:
-            _sioBaudHigh = 115200;
-            break;
-        case 4:
-            _sioBaudHigh = 115200;
-            break;
-        // TODO
         case 8:
-            _sioBaudHigh = 57600;
+            if (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) _sioBaudHigh = 57600; 
             break;
-        case 9:
-            _sioBaudHigh = 57600;
+        case 16:
+            if (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) _sioBaudHigh = 38400; 
             break;
-        // TODO
-        // case 20:
-        //     _sioBaudHigh = 38400;
-        //     break;
-
-        default:
-            _sioBaudHigh = (int)(1781610.0 / (2* hsio_index + 14 ));
     }
 
     _sioHighSpeedIndex = hsio_index;
 
-    int alt = SIO_ATARI_PAL_FREQUENCY / (2 * hsio_index + 14);
+    // int alt = SIO_ATARI_PAL_FREQUENCY / (2 * hsio_index + 14);
 
-    Debug_printf("Set HSIO baud from %d to %d (index %d), alt=%d\n", temp, _sioBaudHigh, hsio_index, alt);
+    Debug_printf("Set HSIO baud from %d to %d (index %d%s)\n", temp, _sioBaudHigh, hsio_index, 
+        (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) ? ", SIO2PC" : ""
+    );
     return _sioBaudHigh;
 }
 

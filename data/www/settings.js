@@ -26,3 +26,5 @@ selectListValue("select_rotation_sounds", current_rotation_sounds);
 selectListValue("select_config_enable", current_config_enabled);
 selectListValue("select_play_record", current_play_record);
 selectListValue("select_pulldown", current_pulldown);
+selectListValue("select_serialcommand", current_serialcommand);
+selectListValue("select_serialproceed", current_serialproceed);

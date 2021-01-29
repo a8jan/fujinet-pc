@@ -46,7 +46,7 @@ int FileHandlerTNFS::seek(long int off, int whence)
         return -1;
     }
     errno = 0;
-    Debug_printf("\nnew pos is %u\n", new_pos);
+    Debug_printf("new pos is %u\n", new_pos);
     return 0;
 }
 
@@ -62,7 +62,7 @@ long int FileHandlerTNFS::tell()
         return -1;
     }
     pos = pFileInf->cached_pos;
-    Debug_printf("\treturning %u\n", pos);
+    Debug_printf("returning %u\n", pos);
     return pos;
 }
 

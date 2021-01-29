@@ -75,6 +75,42 @@ void fnConfig::store_general_hsioindex(int hsio_index)
     _dirty = true;
 }
 
+void fnConfig::store_serial_port(const char *port)
+{
+    if (_serial.port.compare(port) == 0)
+        return;
+
+    _serial.port = port;
+    _dirty = true;
+}
+
+void fnConfig::store_serial_command(serial_command_pin command_pin)
+{
+    if (command_pin < 0 || command_pin >= SERIAL_COMMAND_INVALID || _serial.command == command_pin)
+        return;
+
+    _serial.command = command_pin;
+    _dirty = true;
+}
+
+void fnConfig::store_serial_proceed(serial_proceed_pin proceed_pin)
+{
+    if (proceed_pin < 0 || proceed_pin >= SERIAL_PROCEED_INVALID || _serial.proceed == proceed_pin)
+        return;
+
+    _serial.proceed = proceed_pin;
+    _dirty = true;
+}
+
+void fnConfig::store_serial_hsiomode(serial_hsio_mode hsio_mode)
+{
+    if (hsio_mode < 0 || hsio_mode >= SERIAL_HSIO_INVALID || _serial.hsiomode == hsio_mode)
+        return;
+
+    _serial.hsiomode = hsio_mode;
+    _dirty = true;
+}
+
 /* Replaces stored SSID with up to num_octets bytes, but stops if '\0' is reached
 */
 void fnConfig::store_wifi_ssid(const char *ssid_octets, int num_octets)
@@ -456,6 +492,13 @@ void fnConfig::save()
 
     ss << LINETERM;
 
+    // SERIAL
+    ss << LINETERM << "[Serial]" << LINETERM;
+    ss << "port=" << _serial.port << LINETERM;
+    ss << "command=" << std::string(_serial_command_pin_names[_serial.command]) << LINETERM;
+    ss << "proceed=" << std::string(_serial_proceed_pin_names[_serial.proceed]) << LINETERM;
+    ss << "hsiomode=" << std::string(_serial_hsio_mode_names[_serial.hsiomode]) << LINETERM;
+
     // WIFI
     ss << LINETERM << "[WiFi]" LINETERM;
     ss << "SSID=" << _wifi.ssid << LINETERM;
@@ -695,6 +738,9 @@ New behavior: copy from SD first if available, then read SPIFFS.
         case SECTION_PHONEBOOK: //Mauricio put this here to handle the phonebook
             _read_section_phonebook(ss, index);
             break;
+        case SECTION_SERIAL:
+            _read_section_serial(ss);
+            break;
         case SECTION_UNKNOWN:
             break;
         }
@@ -721,7 +767,7 @@ void fnConfig::_read_section_general(std::stringstream &ss)
             {
                 int index = atoi(value.c_str());
                 // if (index >= 0 && index < 10)
-                if (index >= 0 && index <= 40) // jk: TODO fix high speed
+                if (index >= 0 && index <= 10 || index == 16) // 0..10,16
                     _general.hsio_index = index;
             }
             else if (strcasecmp(name.c_str(), "timezone") == 0)
@@ -757,6 +803,37 @@ void fnConfig::_read_section_network(std::stringstream &ss)
         }
     }
 }
+
+void fnConfig::_read_section_serial(std::stringstream &ss)
+{
+    std::string line;
+    // Read lines until one starts with '[' which indicates a new section
+    while (_read_line(ss, line, '[') >= 0)
+    {
+        std::string name;
+        std::string value;
+        if (_split_name_value(line, name, value))
+        {
+            if (strcasecmp(name.c_str(), "port") == 0)
+            {
+                _serial.port = value;
+            }
+            else if (strcasecmp(name.c_str(), "command") == 0)
+            {
+                _serial.command = serial_command_from_string(value.c_str());
+            }
+            else if (strcasecmp(name.c_str(), "proceed") == 0)
+            {
+                _serial.proceed = serial_proceed_from_string(value.c_str());
+            }
+            else if (strcasecmp(name.c_str(), "hsiomode") == 0)
+            {
+                _serial.hsiomode = serial_hsiomode_from_string(value.c_str());
+            }
+        }
+    }
+}
+
 
 void fnConfig::_read_section_wifi(std::stringstream &ss)
 {
@@ -1105,6 +1182,10 @@ fnConfig::section_match fnConfig::_find_section_in_line(std::string &line, int &
                 //Debug_printf("Found Phonebook Entry %d\n", index);
                 return SECTION_PHONEBOOK;
             }
+            else if (strncasecmp("Serial", s1.c_str(), 6) == 0)
+            {
+                return SECTION_SERIAL;
+            }
         }
     }
     return SECTION_UNKNOWN;
@@ -1126,6 +1207,33 @@ fnConfig::mount_mode_t fnConfig::mount_mode_from_string(const char *str)
         if (strcasecmp(_mount_mode_names[i], str) == 0)
             break;
     return (mount_mode_t)i;
+}
+
+fnConfig::serial_command_pin fnConfig::serial_command_from_string(const char *str)
+{
+    int i = 0;
+    for (; i < serial_command_pin::SERIAL_COMMAND_INVALID; i++)
+        if (strcasecmp(_serial_command_pin_names[i], str) == 0)
+            break;
+    return (serial_command_pin)i;
+}
+
+fnConfig::serial_proceed_pin fnConfig::serial_proceed_from_string(const char *str)
+{
+    int i = 0;
+    for (; i < serial_proceed_pin::SERIAL_PROCEED_INVALID; i++)
+        if (strcasecmp(_serial_proceed_pin_names[i], str) == 0)
+            break;
+    return (serial_proceed_pin)i;
+}
+
+fnConfig::serial_hsio_mode fnConfig::serial_hsiomode_from_string(const char *str)
+{
+    int i = 0;
+    for (; i < serial_hsio_mode::SERIAL_HSIO_INVALID; i++)
+        if (strcasecmp(_serial_hsio_mode_names[i], str) == 0)
+            break;
+    return (serial_hsio_mode)i;
 }
 
 bool fnConfig::_split_name_value(std::string &line, std::string &name, std::string &value)

@@ -17,6 +17,14 @@
 
 #define HSIO_INVALID_INDEX -1
 
+// for httpServiceParser and httpServiceConfigurator
+#define HSIO_SIO2PC_2X_INDEX (-2)
+#define HSIO_SIO2PC_3X_INDEX (-3)
+#define HSIO_SIO2PC_6X_INDEX (-6)
+#define HSIO_SIO2PC_2X_POKEY 16
+#define HSIO_SIO2PC_3X_POKEY 8
+#define HSIO_SIO2PC_6X_POKEY 1
+
 class fnConfig
 {
 public:
@@ -36,6 +44,7 @@ public:
         MOUNTMODE_INVALID
     };
     typedef mount_modes mount_mode_t;
+    mount_mode_t mount_mode_from_string(const char *str);
 
     enum mount_types
     {
@@ -44,7 +53,37 @@ public:
     };
     typedef mount_types mount_type_t;
 
-    mount_mode_t mount_mode_from_string(const char *str);
+    enum serial_command_pin
+    {
+        SERIAL_COMMAND_NONE = 0,
+        SERIAL_COMMAND_DSR,
+        SERIAL_COMMAND_CTS,
+        SERIAL_COMMAND_RI,
+        SERIAL_COMMAND_INVALID
+    };
+    // typedef serial_command_pin serial_command_pin_t;
+    serial_command_pin serial_command_from_string(const char *str);
+
+    enum serial_proceed_pin
+    {
+        SERIAL_PROCEED_NONE = 0,
+        SERIAL_PROCEED_DTR,
+        SERIAL_PROCEED_RTS,
+        SERIAL_PROCEED_INVALID
+    };
+    // typedef serial_proceed_pin serial_proceed_pin_t;
+    serial_proceed_pin serial_proceed_from_string(const char *str);
+
+    enum serial_hsio_mode
+    {
+        SERIAL_HSIO_DISABLED = 0,
+        SERIAL_HSIO_SIO2PC,
+        SERIAL_HSIO_POKEY,
+        SERIAL_HSIO_INVALID
+    };
+    // typedef serial_hsio_mode serial_hsio_mode_t;
+    serial_hsio_mode serial_hsiomode_from_string(const char *str);
+
 
     // GENERAL
     std::string get_general_devicename() { return _general.devicename; };
@@ -61,6 +100,16 @@ public:
     void store_midimaze_host(const char host_ip[64]);
 
     const char * get_network_sntpserver() { return _network.sntpserver; };
+
+    // SERIAL PORT
+    std::string get_serial_port() { return _serial.port; };
+    serial_command_pin get_serial_command() { return _serial.command; };
+    serial_proceed_pin get_serial_proceed() { return _serial.proceed; };
+    serial_hsio_mode get_serial_hsiomode() { return _serial.hsiomode; };
+    void store_serial_port(const char *port);
+    void store_serial_command(serial_command_pin command_pin);
+    void store_serial_proceed(serial_proceed_pin proceed_pin);
+    void store_serial_hsiomode(serial_hsio_mode hsio_mode);
 
     // WIFI
     bool have_wifi_info() { return _wifi.ssid.empty() == false; };
@@ -122,6 +171,7 @@ private:
     int _read_line(std::stringstream &ss, std::string &line, char abort_if_starts_with = '\0');
 
     void _read_section_general(std::stringstream &ss);
+    void _read_section_serial(std::stringstream &ss);
     void _read_section_wifi(std::stringstream &ss);
     void _read_section_bt(std::stringstream &ss);
     void _read_section_network(std::stringstream &ss);
@@ -146,6 +196,7 @@ private:
         SECTION_MODEM,
         SECTION_CASSETTE,
         SECTION_PHONEBOOK,
+        SECTION_SERIAL,
         SECTION_UNKNOWN
     };
     section_match _find_section_in_line(std::string &line, int &index);
@@ -158,6 +209,25 @@ private:
     const char * _mount_mode_names[MOUNTMODE_INVALID] = {
         "r",
         "w"
+    };
+
+    const char * _serial_command_pin_names[SERIAL_COMMAND_INVALID] = {
+        "none",
+        "DSR",
+        "CTS",
+        "RI"
+    };
+
+    const char * _serial_proceed_pin_names[SERIAL_PROCEED_INVALID] = {
+        "none",
+        "DTR",
+        "RTS"
+    };
+
+    const char * _serial_hsio_mode_names[SERIAL_HSIO_INVALID] = {
+        "disabled",
+        "sio2pc",
+        "pokey"
     };
 
     struct host_info
@@ -213,10 +283,18 @@ private:
     struct general_info
     {
         std::string devicename = "fujinet";
-        int hsio_index = HSIO_INVALID_INDEX;
+        int hsio_index = SIO_HISPEED_INDEX; // HSIO_INVALID_INDEX;
         std::string timezone;
         bool rotation_sounds = true;
         bool config_enabled = true;
+    };
+
+    struct serial_info
+    {
+        std::string port;
+        serial_command_pin command = SERIAL_COMMAND_DSR;
+        serial_proceed_pin proceed = SERIAL_PROCEED_DTR;
+        serial_hsio_mode hsiomode = SERIAL_HSIO_SIO2PC;
     };
 
     struct modem_info
@@ -248,6 +326,7 @@ private:
     general_info _general;
     modem_info _modem;
     cassette_info _cassette;
+    serial_info _serial;
 
     phbook_info _phonebook_slots[MAX_PB_SLOTS];
 };
