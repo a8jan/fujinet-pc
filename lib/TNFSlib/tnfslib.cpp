@@ -382,6 +382,7 @@ int _tnfs_fill_cache(tnfsMountInfo *m_info, tnfsFileHandleInfo *pFHI)
                 #ifdef VERBOSE_TNFS
                 Debug_print("_tnfs_fill_cache got EOF\n");
                 #endif
+                error = TNFS_RESULT_END_OF_FILE; // push EOF up
                 break;
             }
             else
@@ -400,9 +401,10 @@ int _tnfs_fill_cache(tnfsMountInfo *m_info, tnfsFileHandleInfo *pFHI)
     }
 
     // If we're successful, note the total number of valid bytes in our cache
-    if (error == 0)
+    if (error == 0 || error == TNFS_RESULT_END_OF_FILE)
     {
         pFHI->cache_available = sizeof(pFHI->cache) - bytes_remaining_to_load;
+        if (pFHI->cache_available > 0) error = 0; // neutralize EOF
 #ifdef DEBUG
         //_tnfs_cache_dump("CACHE FILL RESULTS", pFHI->cache, pFHI->cache_available);
 #endif
@@ -442,7 +444,18 @@ int tnfs_read(tnfsMountInfo *m_info, int16_t file_handle, uint8_t *buffer, uint1
         result = _tnfs_fill_cache(m_info, pFileInf);
         if (result != 0)
         {
-            Debug_printf("tnfs_read cache fill failed (%u) - aborting", result);
+            if (result == TNFS_RESULT_END_OF_FILE)
+            {
+                Debug_println("tnfs_read empty cache got EOF");
+                if (pFileInf->cached_pos < pFileInf->file_size)
+                {
+                    Debug_printf("tnfs_read premature end of file, got %u, expected %u\n", (unsigned)pFileInf->cached_pos, (unsigned)pFileInf->file_size);
+                }
+            }
+            else
+            {
+                Debug_printf("tnfs_read cache fill failed (%u) - aborting\n", result);
+            }
             break;
         }
     }
