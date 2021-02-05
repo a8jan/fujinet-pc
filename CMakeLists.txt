@@ -72,6 +72,7 @@ set(SOURCES src/main.cpp
     lib/http/httpService.h lib/http/httpService.cpp
     lib/http/httpServiceParser.h lib/http/httpServiceParser.cpp
     lib/http/httpServiceConfigurator.h lib/http/httpServiceConfigurator.cpp
+    lib/http/httpServiceBrowser.h lib/http/httpServiceBrowser.cpp
 )
 add_executable(fujinet ${SOURCES})
 

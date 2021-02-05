@@ -12,6 +12,7 @@
 #include "httpService.h"
 #include "httpServiceParser.h"
 #include "httpServiceConfigurator.h"
+#include "httpServiceBrowser.h"
 #include "printerlist.h"
 // #include "fnWiFi.h"
 #include "fnDummyWiFi.h"
@@ -66,6 +67,14 @@ const char *fnHttpService::find_mimetype_str(const char *extension)
         {"txt", "text/plain"},
         {"bin", "application/octet-stream"},
         {"js", "text/javascript"},
+        {"com", "application/octet-stream"},
+        {"bin", "application/octet-stream"},
+        {"exe", "application/octet-stream"},
+        {"xex", "application/octet-stream"},
+        {"atr", "application/octet-stream"},
+        {"atx", "application/octet-stream"},
+        {"cas", "application/octet-stream"},
+        {"wav", "audio/wav"},
         {"atascii", "application/octet-stream"}};
 
     if (extension != NULL)
@@ -87,6 +96,14 @@ const char *fnHttpService::get_extension(const char *filename)
     return NULL;
 }
 
+const char *fnHttpService::get_basename(const char *filepath)
+{
+    const char *result = strrchr(filepath, '/');
+    if (result != NULL)
+        return ++result;
+    return filepath;
+}
+
 /* Set the response content type based on the file being sent.
 *  Just using the file extension
 *  If nothing is set here, the default is 'text/html'
@@ -101,7 +118,6 @@ void fnHttpService::set_file_content_type(struct mg_connection *c, const char *f
         if (mimetype)
             // httpd_resp_set_type(req, mimetype);
             mg_printf(c, "Content-Type: %s\r\n", mimetype);
-
     }
 }
 
@@ -346,7 +362,6 @@ int fnHttpService::get_handler_print(struct mg_connection *c)
         mg_printf(c, "Content-Disposition: attachment; filename=\"%s\"\r\n", filename.c_str());
     }
     // NOTE: Don't set the Content-Length, as it's invalid when using CHUNKED
-
     mg_printf(c, "Transfer-Encoding: chunked\r\n\r\n");
 
     // Finally, write the data
@@ -447,6 +462,36 @@ int fnHttpService::post_handler_config(struct mg_connection *c, struct mg_http_m
     return 0; //ESP_OK;
 }
 
+
+int fnHttpService::get_handler_browse(mg_connection *c, mg_http_message *hm)
+{
+    const char prefix[] = "/browse/host/";
+    int prefixlen = sizeof(prefix) - 1;
+    int pathlen = hm->uri.len - prefixlen -1;
+
+    Debug_println("Browse request handler");
+    if (pathlen >= 0 && strncmp(hm->uri.ptr, prefix, hm->uri.len))
+    {
+        const char *s = hm->uri.ptr + prefixlen;
+        // /browse/host/{1..8}[/path/on/host...]
+        if (*s >= '1' && *s <= '8' && (pathlen == 0 || s[1] == '/'))
+        {
+            int host_slot = *s - '1';
+            fnHttpServiceBrowser::process_browse_get(c, host_slot, s+1, pathlen);
+        }
+        else
+        {
+            mg_http_reply(c, 403, "", "Bad host slot\n");
+        }
+    }
+    else
+    {
+        mg_http_reply(c, 403, "", "Bad browse request\n");
+    }
+    
+    return 0;
+}
+
 // /* We're pointing global_ctx to a member of our fnHttpService object,
 // *  so we don't want the libarary freeing it for us. It'll be freed when
 // *  our fnHttpService object is freed.
@@ -544,34 +589,31 @@ void fnHttpService::send_file(struct mg_connection *c, const char *filename)
     // serverstate *pState = (serverstate *)httpd_get_global_user_ctx(req->handle);
     serverstate *pState = &fnHTTPD.state; // ops TODO
 
-    // FILE *fInput = pState->_FS->file_open(fpath.c_str());
     FILE *fInput = pState->_FS->file_open(fpath.c_str());
     if (fInput == nullptr)
     {
         Debug_printf("Failed to open file for sending: '%s'\n", fpath.c_str());
-        // return_http_error(req, fnwserr_fileopen);
-        mg_http_reply(c, 404, "", "Failed to open file for sending: '%s'\n", fpath.c_str());
+        return_http_error(c, fnwserr_fileopen);
     }
     else
     {
-        size_t sz = FileSystem::filesize(fInput) + 1;
-        char *buf = (char *)calloc(sz, 1);
-        if (buf == NULL)
-        {
-            Debug_printf("Couldn't allocate %u bytes to load file contents!\n", (unsigned)sz);
-            // err = fnwserr_memory;
-            mg_http_reply(c, 400, "", "Failed to allocate memory\n");
-        }
-        else
-        {
-            int len = fread(buf, 1, sz, fInput);
-            fclose(fInput);
+        mg_printf(c, "HTTP/1.1 200 OK\r\n");
+        // Set the response content type
+        set_file_content_type(c, fpath.c_str());
+        // Set the expected length of the content
+        mg_printf(c, "Content-Length: %lu\r\n\r\n", (unsigned long)FileSystem::filesize(fInput));
 
-            // httpd_resp_send(req, contents.c_str(), contents.length());
-            mg_printf(c, "HTTP/1.1 200 OK\r\n%sContent-Length: %d\r\n\r\n", "", len);
-            mg_send(c, buf, len);
-            free(buf);
-        }
+        // Send the file content out in chunks
+        char *buf = (char *)malloc(FNWS_SEND_BUFF_SIZE);
+        size_t count = 0;
+        do
+        {
+            count = fread((uint8_t *)buf, 1, FNWS_SEND_BUFF_SIZE, fInput);
+            mg_send(c, buf, count);
+        } while (count > 0);
+
+        free(buf);
+        fclose(fInput);
     }
 }
 
@@ -617,8 +659,8 @@ void fnHttpService::send_file_parsed(struct mg_connection *c, const char *filena
             contents = fnHttpServiceParser::parse_contents(contents);
 
             // httpd_resp_send(req, contents.c_str(), contents.length());
-            int len = contents.length();
-            mg_printf(c, "HTTP/1.1 200 OK\r\n%sContent-Length: %d\r\n\r\n", "", len);
+            size_t len = contents.length();
+            mg_printf(c, "HTTP/1.1 200 OK\r\nContent-Length: %lu\r\n\r\n", (unsigned long)len);
             mg_send(c, contents.c_str(), len);
         }
     }
@@ -633,18 +675,18 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
     {
         struct mg_http_message *hm = (struct mg_http_message *) ev_data;
         if (mg_http_match_uri(hm, "/test"))
-        // test handler
         {
+            // test handler
             mg_http_reply(c, 200, "", "{\"result\": %d}\n", 1);  // Serve REST
         }
         else if (mg_http_match_uri(hm, "/"))
-        // index handler
         {
+            // index handler
             send_file_parsed(c, "index.html");
         }
         else if (mg_http_match_uri(hm, "/file"))
-        // file handler
         {
+            // file handler
             char fname[60];
             if (hm->query.ptr != NULL && hm->query.len > 0 && hm->query.len < sizeof(fname))
             {
@@ -659,6 +701,7 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
         }
         else if (mg_http_match_uri(hm, "/config"))
         {
+            // config POST handler
             if (mg_vcasecmp(&hm->method, "POST") == 0)
             {
                 post_handler_config(c, hm);
@@ -670,7 +713,13 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
         }
         else if (mg_http_match_uri(hm, "/print"))
         {
+            // print handler
             get_handler_print(c);
+        }
+        else if (mg_http_match_uri(hm, "/browse/#"))
+        {
+            // browse handler
+            get_handler_browse(c, hm);
         }
         else
         // default handler, serve static content of www firectory

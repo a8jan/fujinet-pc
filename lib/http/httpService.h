@@ -30,6 +30,7 @@ If a file has an extention pre-determined to support parsing (see/update
 #define HTTPSERVICE_H
 
 // #include <esp_http_server.h>
+#include <string>
 extern "C"
 {
 #include "mongoose.h"
@@ -79,6 +80,7 @@ class fnHttpService
     static void return_http_error(struct mg_connection *c, _fnwserr errnum);
     static const char * find_mimetype_str(const char *extension);
     static const char * get_extension(const char *filename);
+    static const char * get_basename(const char *filepath);
     // static void set_file_content_type(httpd_req_t *req, const char *filepath);
     static void set_file_content_type(struct mg_connection *c, const char *filepath);
     // static void send_file_parsed(httpd_req_t *req, const char *filename);
@@ -86,6 +88,8 @@ class fnHttpService
     // static void send_file(httpd_req_t *req, const char *filename);
     static void send_file(struct mg_connection *c, const char *filename);
     // static void parse_query(httpd_req_t *req, queryparts *results);
+
+    friend class fnHttpServiceBrowser; // allow browser to call above functions
 
 public:    
     // static esp_err_t get_handler_test(httpd_req_t *req);
@@ -98,6 +102,8 @@ public:
 
     // static esp_err_t post_handler_config(httpd_req_t *req);
     static int post_handler_config(struct mg_connection *c, struct mg_http_message *hm);
+
+    static int get_handler_browse(mg_connection *c, mg_http_message *hm);
 
     
     void start();
