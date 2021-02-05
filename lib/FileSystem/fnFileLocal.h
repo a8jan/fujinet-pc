@@ -14,7 +14,7 @@ public:
     FileHandlerLocal(FILE *fh);
     virtual ~FileHandlerLocal() override;
 
-    virtual int close() override;
+    virtual int close(bool destroy=true) override;
     virtual int seek(long int off, int whence) override;
     virtual long int tell() override;
     virtual size_t read(void *ptr, size_t size, size_t n) override;
