@@ -14,11 +14,11 @@ FileHandlerLocal::FileHandlerLocal(FILE *fh)
 FileHandlerLocal::~FileHandlerLocal()
 {
     Debug_println("delete FileHandlerLocal");
-    close();
+    if (_fh != nullptr) close(false);
 }
 
 
-int FileHandlerLocal::close()
+int FileHandlerLocal::close(bool destroy)
 {
     Debug_println("FileHandlerLocal::close");
     int result = 0;
@@ -27,6 +27,7 @@ int FileHandlerLocal::close()
         result = fclose(_fh);
         _fh = nullptr;
     }
+    if (destroy) delete this;
     return result;
 }
 

@@ -15,21 +15,21 @@ FileHandlerTNFS::FileHandlerTNFS(tnfsMountInfo *mountinfo, int handle)
 FileHandlerTNFS::~FileHandlerTNFS()
 {
     Debug_println("delete FileHandlerTNFS");
-    close();
+    if (_handle != -1) close(false);
 }
 
 
-int FileHandlerTNFS::close()
+int FileHandlerTNFS::close(bool destroy)
 {
     Debug_println("FileHandlerTNFS::close");
     int result = 0;
     if (_handle != -1) 
     {
-        // TODO call tnfs_close
-
+        result = tnfs_close(_mountinfo, _handle);
         _handle = -1;
         _mountinfo = nullptr;
     }
+    if (destroy) delete this;
     return result;
 }
 
