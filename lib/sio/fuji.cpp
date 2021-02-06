@@ -306,7 +306,7 @@ void sioFuji::sio_disk_image_mount()
     // to the C: device. Everything stays the same here and the mounting
     // where all the magic happens is done in the sioDisk::mount() function.
     // This function opens the file, so cassette does not need to open the file.
-    // Cassette needs the file pointer and file size. 
+    // Cassette needs the file pointer and file size.
 
     uint8_t deviceSlot = cmdFrame.aux1;
     uint8_t options = cmdFrame.aux2; // DISK_ACCESS_MODE
@@ -375,8 +375,10 @@ void sioFuji::sio_copy_file()
     char *dataBuf;
     unsigned short dataLen;
     unsigned short writeLen;
+    unsigned char sourceSlot;
+    unsigned char destSlot;
 
-    dataBuf = (char *)malloc(8192);
+    dataBuf = (char *)malloc(532);
 
     if (dataBuf == nullptr)
     {
@@ -384,7 +386,7 @@ void sioFuji::sio_copy_file()
         return;
     }
 
-    memset(&csBuf,0,sizeof(csBuf));
+    memset(&csBuf, 0, sizeof(csBuf));
 
     ck = sio_to_peripheral(csBuf, sizeof(csBuf));
 
@@ -394,7 +396,9 @@ void sioFuji::sio_copy_file()
         return;
     }
 
-    copySpec = string((char *)csBuf, sizeof(csBuf));
+    copySpec = string((char *)csBuf);
+
+    Debug_printf("copySpec: %s\n", copySpec.c_str());
 
     // Check for malformed copyspec.
     if (copySpec.empty() || copySpec.find_first_of("|") == string::npos)
@@ -415,19 +419,29 @@ void sioFuji::sio_copy_file()
         return;
     }
 
+    sourceSlot = cmdFrame.aux1 - 1;
+    destSlot = cmdFrame.aux2 - 1;
+
     // All good, after this point...
 
     // Chop up copyspec.
-    sourcePath = copySpec.substr(0,copySpec.find_first_of("|")-1);
-    destPath = copySpec.substr(copySpec.find_first_of("|")+1);
+    sourcePath = copySpec.substr(0, copySpec.find_first_of("|"));
+    destPath = copySpec.substr(copySpec.find_first_of("|") + 1);
+
+    // At this point, if last part of dest path is / then copy filename from source.
+    if (destPath.back() == '/')
+    {
+        Debug_printf("append source file\n");
+        string sourceFilename = sourcePath.substr(sourcePath.find_last_of("/") + 1);
+        destPath += sourceFilename;
+    }
 
     // Mount hosts, if needed.
-    _fnHosts[cmdFrame.aux1].mount();
-    _fnHosts[cmdFrame.aux2].mount();
+    _fnHosts[sourceSlot].mount();
+    _fnHosts[destSlot].mount();
 
     // Open files...
-    //sourceFile = _fnHosts[cmdFrame.aux1].file_open(sourcePath.c_str(),(char *)sourcePath.c_str(),sourcePath.size(),"r");
-    sourceFile = _fnHosts[cmdFrame.aux1].filehandler_open(sourcePath.c_str(),(char *)sourcePath.c_str(),sourcePath.size(),"r");
+    sourceFile = _fnHosts[sourceSlot].filehandler_open(sourcePath.c_str(), (char *)sourcePath.c_str(), sourcePath.size() + 1, "r");
 
     if (sourceFile == nullptr)
     {
@@ -435,7 +449,7 @@ void sioFuji::sio_copy_file()
         return;
     }
 
-    destFile = _fnHosts[cmdFrame.aux2].filehandler_open(destPath.c_str(),(char *)destPath.c_str(),destPath.size(),"w");
+    destFile = _fnHosts[destSlot].filehandler_open(destPath.c_str(), (char *)destPath.c_str(), destPath.size() + 1, "w");
 
     if (destFile == nullptr)
     {
@@ -443,23 +457,16 @@ void sioFuji::sio_copy_file()
         return;
     }
 
-    // while ((dataLen = fread(&dataBuf,1,8192,sourceFile)))
-    while ((dataLen = sourceFile->read(&dataBuf,1,8192)))
+    size_t count = 0;
+    do
     {
-        // writeLen = fwrite(dataBuf,1,dataLen,destFile);
-        writeLen = destFile->write(dataBuf,1,dataLen);
-        if (writeLen != dataLen)
-        {
-            sio_error();
-            goto copyEnd;
-        }
-    }
+        count = sourceFile->read(dataBuf, 1, 532);
+        destFile->write(dataBuf, 1, count);
+    } while (count > 0);
 
     sio_complete();
 
-copyEnd:
-    // fclose(sourceFile);
-    // fclose(destFile);
+    // copyEnd:
     sourceFile->close();
     destFile->close();
     free(dataBuf);
@@ -701,7 +708,7 @@ void sioFuji::sio_disk_image_umount()
     // {
     // }
     // Invalid slot
-    else 
+    else
     {
         sio_error();
         return;
@@ -761,7 +768,6 @@ void sioFuji::shutdown()
 {
     for (int i = 0; i < MAX_DISK_DEVICES; i++)
         _fnDisks[i].disk_dev.unmount();
-
 }
 
 void sioFuji::sio_open_directory()
@@ -1432,7 +1438,6 @@ void sioFuji::setup(sioBus *siobus)
     // _sio_bus->addDevice(&_cassetteDev, SIO_DEVICEID_CASSETTE);
     // cassette()->set_buttons(Config.get_cassette_buttons());
     // cassette()->set_pulldown(Config.get_cassette_pulldown());
-
 }
 
 sioDisk *sioFuji::bootdisk()
@@ -1590,11 +1595,12 @@ void sioFuji::sio_process(uint32_t commanddata, uint8_t checksum)
     }
 }
 
-int sioFuji::get_disk_id(int drive_slot) {
+int sioFuji::get_disk_id(int drive_slot)
+{
     return _fnDisks[drive_slot].disk_dev.id();
 }
 
-std::string sioFuji::get_host_prefix(int host_slot) {
+std::string sioFuji::get_host_prefix(int host_slot)
+{
     return _fnHosts[host_slot].get_prefix();
 }
-
