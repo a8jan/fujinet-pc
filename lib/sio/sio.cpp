@@ -282,47 +282,56 @@ void sioBus::service()
     // modes disrupt normal SIO handling - should probably make a separate task for this)
     _sio_process_queue();
 
-    // // Handle MIDIMaze if enabled and do not process SIO commands
-    // if (_midiDev != nullptr && _midiDev->midimazeActive)
-    // {
-    //     _midiDev->sio_handle_midimaze();
-    //     return; // break!
-    // }
-    // else if (_cpmDev != nullptr && _cpmDev->cpmActive)
-    // {
-    //     _cpmDev->sio_handle_cpm();
-    //     return; // break!
-    // }
+//     if (_midiDev != nullptr && _midiDev->midimazeActive)
+//     {
+//         if (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
+//         {
+// #ifdef DEBUG
+//             Debug_println("CMD Asserted, stopping MIDIMaze");
+// #endif
+//             _midiDev->sio_disable_midimaze();
+//         }
+//         else
+//         {
+//             _midiDev->sio_handle_midimaze();
+//             return; // break!
+//         }
+//     }
+//     else if (_cpmDev != nullptr && _cpmDev->cpmActive)
+//     {
+//         _cpmDev->sio_handle_cpm();
+//         return; // break!
+//     }
 
-    // // check if cassette is mounted first
-    // if (_fujiDev->cassette()->is_mounted())
-    // { // the test which tape activation mode
-    //     if (_fujiDev->cassette()->has_pulldown())
-    //     {                                                    // motor line mode
-    //         if (fnSystem.digital_read(PIN_MTR) == DIGI_HIGH) // TODO: use cassette helper function for consistency?
-    //         {
-    //             if (_fujiDev->cassette()->is_active() == false) // keep this logic because motor line mode
-    //             {
-    //                 Debug_println("MOTOR ON: activating cassette");
-    //                 _fujiDev->cassette()->sio_enable_cassette();
-    //             }
-    //         }
-    //         else // check if need to stop tape
-    //         {
-    //             if (_fujiDev->cassette()->is_active() == true)
-    //             {
-    //                 Debug_println("MOTOR OFF: de-activating cassette");
-    //                 _fujiDev->cassette()->sio_disable_cassette();
-    //             }
-    //         }
-    //     }
+//     // check if cassette is mounted first
+//     if (_fujiDev->cassette()->is_mounted())
+//     { // the test which tape activation mode
+//         if (_fujiDev->cassette()->has_pulldown())
+//         {                                                    // motor line mode
+//             if (fnSystem.digital_read(PIN_MTR) == DIGI_HIGH) // TODO: use cassette helper function for consistency?
+//             {
+//                 if (_fujiDev->cassette()->is_active() == false) // keep this logic because motor line mode
+//                 {
+//                     Debug_println("MOTOR ON: activating cassette");
+//                     _fujiDev->cassette()->sio_enable_cassette();
+//                 }
+//             }
+//             else // check if need to stop tape
+//             {
+//                 if (_fujiDev->cassette()->is_active() == true)
+//                 {
+//                     Debug_println("MOTOR OFF: de-activating cassette");
+//                     _fujiDev->cassette()->sio_disable_cassette();
+//                 }
+//             }
+//         }
 
-    //     if (_fujiDev->cassette()->is_active() == true) // handle cassette data traffic
-    //     {
-    //         _fujiDev->cassette()->sio_handle_cassette(); //
-    //         return;                                      // break!
-    //     }
-    // }
+//         if (_fujiDev->cassette()->is_active() == true) // handle cassette data traffic
+//         {
+//             _fujiDev->cassette()->sio_handle_cassette(); //
+//             return;                                      // break!
+//         }
+//     }
 
     // Go process a command frame if the SIO CMD line is asserted
     //if (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
