@@ -49,6 +49,8 @@
 #define SIO_FUJICMD_STATUS 0x53
 #define SIO_FUJICMD_HSIO_INDEX 0x3F
 
+using std::string;
+
 sioFuji theFuji; // global fuji device object
 
 //sioDisk sioDiskDevs[MAX_HOSTS];
@@ -366,8 +368,10 @@ void sioFuji::sio_copy_file()
     string sourcePath;
     string destPath;
     uint8_t ck;
-    FILE *sourceFile;
-    FILE *destFile;
+    // FILE *sourceFile;
+    // FILE *destFile;
+    FileHandler *sourceFile;
+    FileHandler *destFile;
     char *dataBuf;
     unsigned short dataLen;
     unsigned short writeLen;
@@ -422,7 +426,8 @@ void sioFuji::sio_copy_file()
     _fnHosts[cmdFrame.aux2].mount();
 
     // Open files...
-    sourceFile = _fnHosts[cmdFrame.aux1].file_open(sourcePath.c_str(),(char *)sourcePath.c_str(),sourcePath.size(),"r");
+    //sourceFile = _fnHosts[cmdFrame.aux1].file_open(sourcePath.c_str(),(char *)sourcePath.c_str(),sourcePath.size(),"r");
+    sourceFile = _fnHosts[cmdFrame.aux1].filehandler_open(sourcePath.c_str(),(char *)sourcePath.c_str(),sourcePath.size(),"r");
 
     if (sourceFile == nullptr)
     {
@@ -430,7 +435,7 @@ void sioFuji::sio_copy_file()
         return;
     }
 
-    destFile = _fnHosts[cmdFrame.aux2].file_open(destPath.c_str(),(char *)destPath.c_str(),destPath.size(),"w");
+    destFile = _fnHosts[cmdFrame.aux2].filehandler_open(destPath.c_str(),(char *)destPath.c_str(),destPath.size(),"w");
 
     if (destFile == nullptr)
     {
@@ -438,9 +443,11 @@ void sioFuji::sio_copy_file()
         return;
     }
 
-    while ((dataLen = fread(&dataBuf,1,8192,sourceFile)))
+    // while ((dataLen = fread(&dataBuf,1,8192,sourceFile)))
+    while ((dataLen = sourceFile->read(&dataBuf,1,8192)))
     {
-        writeLen = fwrite(dataBuf,1,dataLen,destFile);
+        // writeLen = fwrite(dataBuf,1,dataLen,destFile);
+        writeLen = destFile->write(dataBuf,1,dataLen);
         if (writeLen != dataLen)
         {
             sio_error();
@@ -451,8 +458,10 @@ void sioFuji::sio_copy_file()
     sio_complete();
 
 copyEnd:
-    fclose(sourceFile);
-    fclose(destFile);
+    // fclose(sourceFile);
+    // fclose(destFile);
+    sourceFile->close();
+    destFile->close();
     free(dataBuf);
 }
 
