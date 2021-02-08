@@ -150,6 +150,8 @@ disktype_t DiskType::discover_disktype(const char *filename)
             return DISKTYPE_XEX;
         } else if(strcasecmp(ext, "BIN") == 0) {
             return DISKTYPE_XEX;
+        } else if(strcasecmp(ext, "TUR") == 0) {
+            return DISKTYPE_XEX;
         } else if(strcasecmp(ext, "ATR") == 0) {
             return DISKTYPE_ATR;
         } else if(strcasecmp(ext, "ATX") == 0) {
