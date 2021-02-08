@@ -85,7 +85,7 @@ FILE * FileSystemSPIFFS::file_open(const char* path, const char* mode)
 FileHandler * FileSystemSPIFFS::filehandler_open(const char* path, const char* mode)
 {
     Debug_printf("FileSystemSPIFFS::filehandler_open %s %s\n", path, mode);
-    FILE *fh = file_open(path, mode);
+    FILE * fh = file_open(path, mode);
     return (fh == nullptr) ? nullptr : new FileHandlerLocal(fh);
 }
 

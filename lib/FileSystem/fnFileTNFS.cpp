@@ -78,21 +78,26 @@ size_t FileHandlerTNFS::read(void *ptr, size_t size, size_t count)
 
     uint16_t bytes_read = 0;
     int result = tnfs_read(_mountinfo, _handle, (uint8_t *)ptr, bytes_requested, &bytes_read);
-
-    if(result == TNFS_RESULT_SUCCESS || (result == TNFS_RESULT_END_OF_FILE && bytes_read > 0))
-        errno = 0;
-    else
-        errno = tnfs_code_to_errno(result);
+    errno = (result == TNFS_RESULT_SUCCESS || (result == TNFS_RESULT_END_OF_FILE && bytes_read > 0)) ? 0 : tnfs_code_to_errno(result);
 
     return (size_t)(bytes_requested == bytes_read ? count : bytes_read / size);
 }
 
 
-size_t FileHandlerTNFS::write(const void *ptr, size_t size, size_t n)
+size_t FileHandlerTNFS::write(const void *ptr, size_t size, size_t count)
 {
     Debug_println("FileHandlerTNFS::write");
     // return fwrite(ptr, size, n, _fh);
-    return 0;
+
+    uint16_t bytes_requested = size * count;
+    if (bytes_requested == 0)
+        return 0;
+
+    uint16_t bytes_written;
+    int result = tnfs_write(_mountinfo, _handle, (uint8_t *)ptr, bytes_requested, &bytes_written);
+    errno = (result == TNFS_RESULT_SUCCESS) ? 0 : tnfs_code_to_errno(result);
+
+    return (size_t)(bytes_requested == bytes_written ? count : bytes_written / size);
 }
 
 

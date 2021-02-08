@@ -136,23 +136,43 @@ FileHandler * FileSystemTNFS::filehandler_open(const char* path, const char* mod
     if(!_started || path == nullptr)
         return nullptr;
 
+    char * fpath = _make_fullpath(path);
     int16_t handle;
-    // Translate mode to open_mode
-    uint16_t open_mode = TNFS_OPENMODE_READ; // TODO
-    // if(flags == 0)
-    //     tflags = TNFS_OPENMODE_READ;
-    // else
-    // {
-    //     tflags |= (flags & O_WRONLY) ? TNFS_OPENMODE_WRITE : 0;
-    //     tflags |= (flags & O_CREAT) ? TNFS_OPENMODE_WRITE_CREATE : 0;
-    //     tflags |= (flags & O_TRUNC) ? TNFS_OPENMODE_WRITE_TRUNCATE : 0;
-    //     tflags |= (flags & O_APPEND) ? TNFS_OPENMODE_WRITE_APPEND : 0;
-    //     tflags |= (flags & O_RDWR) ? TNFS_OPENMODE_READWRITE : 0;
-    //     tflags |= (flags & O_EXCL) ? TNFS_OPENMODE_CREATE_EXCLUSIVE : 0;
-    // }
     uint16_t create_perms = TNFS_CREATEPERM_S_IRUSR | TNFS_CREATEPERM_S_IWUSR | TNFS_CREATEPERM_S_IXUSR;
 
-    int result = tnfs_open(&_mountinfo, path, open_mode, create_perms, &handle);
+    // Translate mode to open_mode
+    uint16_t open_mode = 0;
+    for (const char *m = mode; *m != '\0'; m++)
+    {
+        switch (*m)
+        {
+        case 'r':
+            open_mode = TNFS_OPENMODE_READ;
+            break;
+        case 'w':
+            open_mode = TNFS_OPENMODE_WRITE | TNFS_OPENMODE_WRITE_CREATE | TNFS_OPENMODE_WRITE_TRUNCATE;
+            break;
+        case 'a':
+            open_mode = TNFS_OPENMODE_WRITE | TNFS_OPENMODE_WRITE_CREATE;
+            break;
+        case '+':
+            if (open_mode == TNFS_OPENMODE_READ) // "r+""
+                open_mode = TNFS_OPENMODE_READWRITE;
+            else if (open_mode == TNFS_OPENMODE_WRITE | TNFS_OPENMODE_WRITE_CREATE | TNFS_OPENMODE_WRITE_TRUNCATE) // "w+"
+                open_mode = TNFS_OPENMODE_READWRITE | TNFS_OPENMODE_WRITE_CREATE | TNFS_OPENMODE_WRITE_TRUNCATE;
+            else if (open_mode == TNFS_OPENMODE_WRITE | TNFS_OPENMODE_WRITE_CREATE) // "a+"
+                open_mode = TNFS_OPENMODE_READWRITE | TNFS_OPENMODE_WRITE_CREATE;
+            break;
+        }
+    }
+    if (open_mode == 0)
+    {
+        Debug_printf("FileSystemTNFS::filehandler_open - bad open mode %s -> %u\n", mode, open_mode);
+        return nullptr;
+    }
+
+    int result = tnfs_open(&_mountinfo, fpath, open_mode, create_perms, &handle);
+    free(fpath);
     if(result != TNFS_RESULT_SUCCESS)
     {
         #ifdef DEBUG

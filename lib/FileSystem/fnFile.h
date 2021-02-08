@@ -13,7 +13,7 @@ class FileHandler
 {
 
 public:
-    virtual ~FileHandler() {};
+    virtual ~FileHandler() = 0;
 
     virtual int close(bool destroy=true) = 0;
     virtual int seek(long int off, int whence) = 0;

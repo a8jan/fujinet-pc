@@ -2,4 +2,6 @@
 
 #include "../../include/debug.h"
 
-// nothing yet
+// nothing to do in base class
+
+FileHandler::~FileHandler() {};
