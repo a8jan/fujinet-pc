@@ -179,7 +179,7 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int s
         c,
         "<!DOCTYPE html><html><head><title>Browse Host %d</title>"
         "<style>th,td {text-align: left; padding-right: 1em; "
-        "font-family: monospace; }</style></head>"
+        "font-family: monospace; font-size: 14px;}</style></head>"
         "<body><h1>[Host %d] %s %s</h1><table cellpadding=\"0\"><thead>"
         "<tr><th>Size</th><th>Modified</th><th>Name</th></tr>"
         "<tr><td colspan=\"3\"><hr></td></tr></thead><tbody>",

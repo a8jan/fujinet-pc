@@ -30,10 +30,8 @@ fnHttpService fnHTTPD;
 
 extern sioModem *sioR;
 
-
 /* Send some meaningful(?) error message to client
 */
-// void fnHttpService::return_http_error(httpd_req_t *req, _fnwserr errnum)
 void fnHttpService::return_http_error(struct mg_connection *c, _fnwserr errnum)
 {
     const char *message;
@@ -57,6 +55,7 @@ void fnHttpService::return_http_error(struct mg_connection *c, _fnwserr errnum)
 const char *fnHttpService::find_mimetype_str(const char *extension)
 {
     static std::map<std::string, std::string> mime_map{
+        {"html", "text/html"},
         {"css", "text/css"},
         {"png", "image/png"},
         {"jpg", "image/jpeg"},
@@ -74,6 +73,7 @@ const char *fnHttpService::find_mimetype_str(const char *extension)
         {"atr", "application/octet-stream"},
         {"atx", "application/octet-stream"},
         {"cas", "application/octet-stream"},
+        {"tur", "application/octet-stream"},
         {"wav", "audio/wav"},
         {"atascii", "application/octet-stream"}};
 
@@ -116,104 +116,110 @@ void fnHttpService::set_file_content_type(struct mg_connection *c, const char *f
     {
         const char *mimetype = find_mimetype_str(dot);
         if (mimetype)
-            // httpd_resp_set_type(req, mimetype);
             mg_printf(c, "Content-Type: %s\r\n", mimetype);
     }
 }
 
-// /* Send file content after parsing for replaceable strings
-// */
-// void fnHttpService::send_file_parsed(httpd_req_t *req, const char *filename)
-// {
-//     // Note that we don't add FNWS_FILE_ROOT as it should've been done in send_file()
-//     Debug_printf("Opening file for parsing: '%s'\n", filename);
+/* Send content of given file out to client
+*/
+void fnHttpService::send_file_parsed(struct mg_connection *c, const char *filename)
+{
+    // Build the full file path
+    string fpath = FNWS_FILE_ROOT;
+    // Trim any '/' prefix before adding it to the base directory
+    while (*filename == '/')
+        filename++;
+    fpath += filename;
 
-//     _fnwserr err = fnwserr_noerrr;
+    Debug_printf("Opening file for parsing: '%s'\n", fpath.c_str());
 
-//     // Retrieve server state
-//     serverstate *pState = (serverstate *)httpd_get_global_user_ctx(req->handle);
-//     FILE *fInput = pState->_FS->file_open(filename);
+    _fnwserr err = fnwserr_noerrr;
 
-//     if (fInput == nullptr)
-//     {
-//         Debug_println("Failed to open file for parsing");
-//         err = fnwserr_fileopen;
-//     }
-//     else
-//     {
-//         // Set the response content type
-//         set_file_content_type(req, filename);
-//         // We're going to load the whole thing into memory, so watch out for big files!
-//         size_t sz = FileSystem::filesize(fInput) + 1;
-//         char *buf = (char *)calloc(sz, 1);
-//         if (buf == NULL)
-//         {
-//             Debug_printf("Couldn't allocate %u bytes to load file contents!\n", sz);
-//             err = fnwserr_memory;
-//         }
-//         else
-//         {
-//             fread(buf, 1, sz, fInput);
-//             string contents(buf);
-//             free(buf);
-//             contents = fnHttpServiceParser::parse_contents(contents);
+    // Retrieve server state
+    serverstate *pState = &fnHTTPD.state; // ops TODO
+    FILE *fInput = pState->_FS->file_open(fpath.c_str());
 
-//             httpd_resp_send(req, contents.c_str(), contents.length());
-//         }
-//     }
+    if (fInput == nullptr)
+    {
+        Debug_println("Failed to open file for parsing");
+        err = fnwserr_fileopen;
+    }
+    else
+    {
+        // We're going to load the whole thing into memory, so watch out for big files!
+        size_t sz = FileSystem::filesize(fInput) + 1;
+        char *buf = (char *)calloc(sz, 1);
+        if (buf == NULL)
+        {
+            Debug_printf("Couldn't allocate %u bytes to load file contents!\n", (unsigned)sz);
+            err = fnwserr_memory;
+        }
+        else
+        {
+            fread(buf, 1, sz, fInput);
+            string contents(buf);
+            free(buf);
+            contents = fnHttpServiceParser::parse_contents(contents);
 
-//     if (fInput != nullptr)
-//         fclose(fInput);
+            mg_printf(c, "HTTP/1.1 200 OK\r\n");
+            // Set the response content type
+            set_file_content_type(c, fpath.c_str());
+            // Set the expected length of the content
+            size_t len = contents.length();
+            mg_printf(c, "Content-Length: %lu\r\n\r\n", (unsigned long)len);
+            // Send parsed content
+            mg_send(c, contents.c_str(), len);
+        }
+    }
 
-//     if (err != fnwserr_noerrr)
-//         return_http_error(req, err);
-// }
+    if (fInput != nullptr)
+        fclose(fInput);
 
-// /* Send content of given file out to client
-// */
-// void fnHttpService::send_file(httpd_req_t *req, const char *filename)
-// {
-//     // Build the full file path
-//     string fpath = FNWS_FILE_ROOT;
-//     // Trim any '/' prefix before adding it to the base directory
-//     while (*filename == '/')
-//         filename++;
-//     fpath += filename;
+    if (err != fnwserr_noerrr)
+        return_http_error(c, err);
+}
 
-//     // Handle file differently if it's one of the types we parse
-//     if (fnHttpServiceParser::is_parsable(get_extension(filename)))
-//         return send_file_parsed(req, fpath.c_str());
+/* Send file content after parsing for replaceable strings
+*/
+void fnHttpService::send_file(struct mg_connection *c, const char *filename)
+{
+    // Build the full file path
+    string fpath = FNWS_FILE_ROOT;
+    // Trim any '/' prefix before adding it to the base directory
+    while (*filename == '/')
+        filename++;
+    fpath += filename;
 
-//     // Retrieve server state
-//     serverstate *pState = (serverstate *)httpd_get_global_user_ctx(req->handle);
 
-//     FILE *fInput = pState->_FS->file_open(fpath.c_str());
-//     if (fInput == nullptr)
-//     {
-//         Debug_printf("Failed to open file for sending: '%s'\n", fpath.c_str());
-//         return_http_error(req, fnwserr_fileopen);
-//     }
-//     else
-//     {
-//         // Set the response content type
-//         set_file_content_type(req, fpath.c_str());
-//         // Set the expected length of the content
-//         char hdrval[10];
-//         snprintf(hdrval, 10, "%ld", FileSystem::filesize(fInput));
-//         httpd_resp_set_hdr(req, "Content-Length", hdrval);
+    // Retrieve server state
+    serverstate *pState = &fnHTTPD.state; // ops TODO
 
-//         // Send the file content out in chunks
-//         char *buf = (char *)malloc(FNWS_SEND_BUFF_SIZE);
-//         size_t count = 0;
-//         do
-//         {
-//             count = fread(buf, 1, FNWS_SEND_BUFF_SIZE, fInput);
-//             httpd_resp_send_chunk(req, buf, count);
-//         } while (count > 0);
-//         fclose(fInput);
-//         free(buf);
-//     }
-// }
+    FILE *fInput = pState->_FS->file_open(fpath.c_str());
+    if (fInput == nullptr)
+    {
+        Debug_printf("Failed to open file for sending: '%s'\n", fpath.c_str());
+        return_http_error(c, fnwserr_fileopen);
+    }
+    else
+    {
+        mg_printf(c, "HTTP/1.1 200 OK\r\n");
+        // Set the response content type
+        set_file_content_type(c, fpath.c_str());
+        // Set the expected length of the content
+        mg_printf(c, "Content-Length: %lu\r\n\r\n", (unsigned long)FileSystem::filesize(fInput));
+
+        // Send the file content out in chunks
+        char *buf = (char *)malloc(FNWS_SEND_BUFF_SIZE);
+        size_t count = 0;
+        do
+        {
+            count = fread((uint8_t *)buf, 1, FNWS_SEND_BUFF_SIZE, fInput);
+            mg_send(c, buf, count);
+        } while (count > 0);
+        free(buf);
+        fclose(fInput);
+    }
+}
 
 // void fnHttpService::parse_query(httpd_req_t *req, queryparts *results)
 // {
@@ -286,7 +292,6 @@ void fnHttpService::set_file_content_type(struct mg_connection *c, const char *f
 //     return ESP_OK;
 // }
 
-//esp_err_t fnHttpService::get_handler_print(httpd_req_t *req)
 int fnHttpService::get_handler_print(struct mg_connection *c)
 {
     Debug_println("Print request handler");
@@ -345,7 +350,6 @@ int fnHttpService::get_handler_print(struct mg_connection *c)
     string filename = "printout.";
     filename += exts;
 
-
     // Set the expected content type based on the filename/extension
     mg_printf(c, "HTTP/1.1 200 OK\r\n");
     set_file_content_type(c, filename.c_str());
@@ -357,12 +361,9 @@ int fnHttpService::get_handler_print(struct mg_connection *c)
     if (sendAsAttachment)
     {
         // Add a couple of attchment-specific details
-        // snprintf(hdrval1, sizeof(hdrval1), "attachment; filename=\"%s\"", filename.c_str());
-        // httpd_resp_set_hdr(req, "Content-Disposition", hdrval1);
         mg_printf(c, "Content-Disposition: attachment; filename=\"%s\"\r\n", filename.c_str());
     }
-    // NOTE: Don't set the Content-Length, as it's invalid when using CHUNKED
-    mg_printf(c, "Transfer-Encoding: chunked\r\n\r\n");
+    mg_printf(c, "Content-Length: %lu\r\n\r\n", (unsigned long)FileSystem::filesize(poutput));
 
     // Finally, write the data
     // Send the file content out in chunks
@@ -376,8 +377,7 @@ int fnHttpService::get_handler_print(struct mg_connection *c)
 
         // Debug_printf("Read %u bytes from print file\n", count);
 
-        // httpd_resp_send_chunk(req, buf, count);
-        mg_http_write_chunk(c, buf, count);
+        mg_send(c, buf, count);
     } while (count > 0);
 
     Debug_printf("Sent %u bytes total from print file\n", (unsigned)total);
@@ -454,9 +454,6 @@ int fnHttpService::post_handler_config(struct mg_connection *c, struct mg_http_m
     }
 
     // Redirect back to the main page
-    // httpd_resp_set_status(req, "303 See Other");
-    // httpd_resp_set_hdr(req, "Location", "/");
-    // httpd_resp_send(req, NULL, 0);
     mg_printf(c, "HTTP/1.1 303 See Other\r\nLocation: /\r\nContent-Length: 0\r\n\r\n");
 
     return 0; //ESP_OK;
@@ -492,184 +489,9 @@ int fnHttpService::get_handler_browse(mg_connection *c, mg_http_message *hm)
     return 0;
 }
 
-// /* We're pointing global_ctx to a member of our fnHttpService object,
-// *  so we don't want the libarary freeing it for us. It'll be freed when
-// *  our fnHttpService object is freed.
-// */
-// void fnHttpService::custom_global_ctx_free(void *ctx)
-// {
-//     // keep this commented for the moment to avoid warning.
-//     // serverstate * ctx_state = (serverstate *)ctx;
-//     // We could do something fancy here, but we don't need to do anything
-// }
-
-// httpd_handle_t fnHttpService::start_server(serverstate &state)
-// {
-//     std::vector<httpd_uri_t> uris{
-//         {.uri = "/test",
-//          .method = HTTP_GET,
-//          .handler = get_handler_test,
-//          .user_ctx = NULL},
-//         {.uri = "/",
-//          .method = HTTP_GET,
-//          .handler = get_handler_index,
-//          .user_ctx = NULL},
-//         {.uri = "/file",
-//          .method = HTTP_GET,
-//          .handler = get_handler_file_in_query,
-//          .user_ctx = NULL},
-//         {.uri = "/print",
-//          .method = HTTP_GET,
-//          .handler = get_handler_print,
-//          .user_ctx = NULL},
-//         {.uri = "/modem-sniffer.txt",
-//          .method = HTTP_GET,
-//          .handler = get_handler_modem_sniffer,
-//          .user_ctx = NULL},
-//         {.uri = "/favicon.ico",
-//          .method = HTTP_GET,
-//          .handler = get_handler_file_in_path,
-//          .user_ctx = NULL},
-//         {.uri = "/config",
-//          .method = HTTP_POST,
-//          .handler = post_handler_config,
-//          .user_ctx = NULL}};
-
-//     if (!fnWiFi.connected())
-//     {
-//         Debug_println("WiFi not connected - aborting web server startup");
-//         return nullptr;
-//     }
-
-//     // Set filesystem where we expect to find our static files
-//     state._FS = &fnSPIFFS;
-
-//     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-//     config.stack_size = 8192;
-//     config.max_resp_headers = 12;
-//     // Keep a reference to our object
-//     config.global_user_ctx = (void *)&state;
-//     // Set our own global_user_ctx free function, otherwise the library will free an object we don't want freed
-//     config.global_user_ctx_free_fn = (httpd_free_ctx_fn_t)custom_global_ctx_free;
-
-//     Debug_printf("Starting web server on port %d\n", config.server_port);
-
-//     if (httpd_start(&(state.hServer), &config) == ESP_OK)
-//     {
-//         // Register URI handlers
-//         for (const httpd_uri_t uridef : uris)
-//             httpd_register_uri_handler(state.hServer, &uridef);
-//     }
-//     else
-//     {
-//         state.hServer = NULL;
-//         Debug_println("Error starting web server!");
-//     }
-
-//     return state.hServer;
-// }
-
-
-/* Send file content after parsing for replaceable strings
-*/
-void fnHttpService::send_file(struct mg_connection *c, const char *filename)
-{
-    // Build the full file path
-    string fpath = FNWS_FILE_ROOT;
-    // Trim any '/' prefix before adding it to the base directory
-    while (*filename == '/')
-        filename++;
-    fpath += filename;
-
-    // // Handle file differently if it's one of the types we parse
-    // if (fnHttpServiceParser::is_parsable(get_extension(filename)))
-    //     return send_file_parsed(req, fpath.c_str());
-
-    // // Retrieve server state
-    // serverstate *pState = (serverstate *)httpd_get_global_user_ctx(req->handle);
-    serverstate *pState = &fnHTTPD.state; // ops TODO
-
-    FILE *fInput = pState->_FS->file_open(fpath.c_str());
-    if (fInput == nullptr)
-    {
-        Debug_printf("Failed to open file for sending: '%s'\n", fpath.c_str());
-        return_http_error(c, fnwserr_fileopen);
-    }
-    else
-    {
-        mg_printf(c, "HTTP/1.1 200 OK\r\n");
-        // Set the response content type
-        set_file_content_type(c, fpath.c_str());
-        // Set the expected length of the content
-        mg_printf(c, "Content-Length: %lu\r\n\r\n", (unsigned long)FileSystem::filesize(fInput));
-
-        // Send the file content out in chunks
-        char *buf = (char *)malloc(FNWS_SEND_BUFF_SIZE);
-        size_t count = 0;
-        do
-        {
-            count = fread((uint8_t *)buf, 1, FNWS_SEND_BUFF_SIZE, fInput);
-            mg_send(c, buf, count);
-        } while (count > 0);
-
-        free(buf);
-        fclose(fInput);
-    }
-}
-
-/* Send content of given file out to client
-*/
-void fnHttpService::send_file_parsed(struct mg_connection *c, const char *filename)
-{
-    // Build the full file path
-    string fpath = FNWS_FILE_ROOT;
-    // Trim any '/' prefix before adding it to the base directory
-    while (*filename == '/')
-        filename++;
-    fpath += filename;
-
-    // // Retrieve server state
-    // serverstate *pState = (serverstate *)httpd_get_global_user_ctx(req->handle);
-    serverstate *pState = &fnHTTPD.state; // ops TODO
-
-    // FILE *fInput = pState->_FS->file_open(fpath.c_str());
-    FILE *fInput = pState->_FS->file_open(fpath.c_str());
-    if (fInput == nullptr)
-    {
-        Debug_printf("Failed to open file for sending: '%s'\n", fpath.c_str());
-        // return_http_error(req, fnwserr_fileopen);
-        mg_http_reply(c, 404, "", "Failed to open file for sending: '%s'\n", fpath.c_str());
-    }
-    else
-    {
-        size_t sz = FileSystem::filesize(fInput) + 1;
-        char *buf = (char *)calloc(sz, 1);
-        if (buf == NULL)
-        {
-            Debug_printf("Couldn't allocate %u bytes to load file contents!\n", (unsigned)sz);
-            // err = fnwserr_memory;
-            mg_http_reply(c, 400, "", "Failed to allocate memory\n");
-        }
-        else
-        {
-            fread(buf, 1, sz, fInput);
-            fclose(fInput);
-            string contents(buf);
-            free(buf);
-            contents = fnHttpServiceParser::parse_contents(contents);
-
-            // httpd_resp_send(req, contents.c_str(), contents.length());
-            size_t len = contents.length();
-            mg_printf(c, "HTTP/1.1 200 OK\r\nContent-Length: %lu\r\n\r\n", (unsigned long)len);
-            mg_send(c, contents.c_str(), len);
-        }
-    }
-}
-
 void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
 {
     static const char *s_root_dir = "www";
-    // static const char *s_ssi_pattern = "#.shtml";
 
     if (ev == MG_EV_HTTP_MSG)
     {
@@ -731,12 +553,9 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
     (void) fn_data;
 }
 
-
-struct mg_mgr * fnHttpService::start_server(serverstate &st)
+struct mg_mgr * fnHttpService::start_server(serverstate &srvstate)
 {
-    // static const char *s_root_dir = "www";
-    // static const char *s_listening_address = "http://localhost:8000";
-    static const char *s_listening_address = "http://0.0.0.0:8000";
+    static const char *s_listening_address = "http://0.0.0.0:8000"; // or "http://localhost:8000";
 
     static struct mg_mgr s_mgr;
 
@@ -749,7 +568,7 @@ struct mg_mgr * fnHttpService::start_server(serverstate &st)
     }
 
     // Set filesystem where we expect to find our static files
-    st._FS = &fnSPIFFS;
+    srvstate._FS = &fnSPIFFS;
 
     Debug_printf("Starting web server %s\n", s_listening_address);
 
@@ -757,19 +576,14 @@ struct mg_mgr * fnHttpService::start_server(serverstate &st)
 
     if ((c = mg_http_listen(&s_mgr, s_listening_address, cb, &s_mgr)) != nullptr)
     {
-        st.hServer = &s_mgr;
-        // s_root_dir = realpath(s_root_dir, NULL);
-        // if (s_root_dir == NULL) s_root_dir = "www";
-        // LOG(LL_INFO, ("Starting Mongoose v%s, serving %s", MG_VERSION, s_root_dir));
+        srvstate.hServer = &s_mgr;
     }
     else
     {
-        // LOG(LL_ERROR, ("Cannot listen on %s. Use http://ADDR:PORT or :PORT", s_listening_address));
-        // exit(EXIT_FAILURE);
-        st.hServer = nullptr;
+        srvstate.hServer = nullptr;
         Debug_println("Error starting web server!");
     }
-    return st.hServer;
+    return srvstate.hServer;
 }
 
 

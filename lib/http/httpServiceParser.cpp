@@ -309,9 +309,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         if (hsiomode == fnConfig::SERIAL_HSIO_DISABLED)
             resultstream << "HSIO Disabled";
         else if (hsiomode == fnConfig::SERIAL_HSIO_SIO2PC)
-            resultstream << hsioindex << " Mode: SIO2PC";
-        else if (hsiomode == fnConfig::SERIAL_HSIO_POKEY)
-            resultstream << hsioindex << " Mode: POKEY";
+            resultstream << hsioindex << " (SIO2PC)";
         else
             resultstream << hsioindex;
         break;
@@ -333,18 +331,19 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     case FN_PRINTER1_PORT:
         resultstream << (fnPrinters.get_port(0) + 1);
         break;
-    // case FN_PLAY_RECORD:
+    case FN_PLAY_RECORD:
     //     if (theFuji.cassette()->get_buttons())
     //         resultstream << "0 PLAY";
     //     else
     //         resultstream << "1 RECORD";
     //     break;
-    // case FN_PULLDOWN:
+    case FN_PULLDOWN:
     //     if (theFuji.cassette()->has_pulldown())
     //         resultstream << "1 Pulldown Resistor";
     //     else
     //         resultstream << "0 B Button Press";
-    //     break;
+        resultstream << "TBD";
+        break;
     case FN_CONFIG_ENABLED:
         resultstream << Config.get_general_config_enabled();
         break;
