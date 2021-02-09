@@ -30,6 +30,8 @@
 // #include "fnBluetooth.h"
 // #endif
 
+#include "fnTaskManager.h"
+
 // fnSystem is declared and defined in fnSystem.h/cpp
 // fnBtManager is declared and defined in fnBluetooth.h/cpp
 // fnLedManager is declared and defined in led.h/cpp
@@ -171,6 +173,8 @@ void fn_service_loop(void *param)
         else
     #endif
         SIO.service();
+
+        taskMgr.service();
     }
 }
 
@@ -200,7 +204,8 @@ extern "C"
 }
 */
 
-int main(int, char**) {
+int main(int, char**) 
+{
     // Call our setup routine
     main_setup();
     // Enter service loop

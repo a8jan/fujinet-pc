@@ -5,10 +5,70 @@
 #include "fuji.h"
 #include "fnFsSD.h"
 #include "fnFsTNFS.h"
+#include "fnTaskManager.h"
 
 #include "debug.h"
 
 
+class fnHttpSendFileTask : public fnTask
+{
+public:
+    fnHttpSendFileTask(FileSystem *fs, FileHandler *fh, mg_connection *c);
+protected:
+    virtual int start() override;
+    virtual int abort() override;
+    virtual int step() override;
+private:
+    char buf[FNWS_SEND_BUFF_SIZE];
+    FileSystem * _fs;
+    FileHandler * _fh;
+    mg_connection * _c;
+    size_t _filesize;
+    size_t _total;
+};
+
+fnHttpSendFileTask::fnHttpSendFileTask(FileSystem *fs, FileHandler *fh, mg_connection *c)
+{
+    _fs = fs;
+    _fh = fh;
+    _c = c;
+    _filesize = 0;
+    _total = 0;
+}
+
+int fnHttpSendFileTask::start()
+{
+    _filesize = _fs->filesize(_fh);
+    Debug_printf("fnHttpSendFileTask started #%d\n", _id);
+}
+
+int fnHttpSendFileTask::abort()
+{
+    _fh->close();
+    delete _fs;
+    Debug_printf("fnHttpSendFileTask aborted #%d\n", _id);
+}
+
+int fnHttpSendFileTask::step()
+{
+    Debug_printf("fnHttpSendFileTask::step #%d\n", _id);
+
+    // Send the file content out in chunks
+    size_t count = 0;
+    count = _fh->read((uint8_t *)buf, 1, FNWS_SEND_BUFF_SIZE);
+    _total += count;
+    mg_send(_c, buf, count);
+
+    if (count)
+        return 0; // continue
+
+    // done
+    _fh->close();
+    delete _fs;
+    Debug_printf("Sent %lu of %lu bytes\n", (unsigned long)_total, (unsigned long)_filesize);
+
+    return 1; // task has completed
+}
 
 int fnHttpServiceBrowser::browse_url_encode(const char *src, size_t src_len, char *dst, size_t dst_len)
 {
@@ -69,7 +129,7 @@ int fnHttpServiceBrowser::browse_html_escape(const char *src, size_t src_len, ch
 }
 
 
-int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *pFS, int slot, const char *host_path, unsigned pathlen)
+int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int slot, const char *host_path, unsigned pathlen)
 {
     char path[256];
     char enc_path[256]; // URL encoded path
@@ -99,14 +159,12 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *pFS, int 
     }
 
 
-    if (!pFS->dir_open(path, "", 0))
+    if (!fs->dir_open(path, "", 0))
     {
-        FileHandler *fh = pFS->filehandler_open(path);
+        FileHandler *fh = fs->filehandler_open(path);
         if (fh != nullptr)
         {
-            browse_sendfile(c, fh, fnHttpService::get_basename(path), pFS->filesize(fh));
-            fh->close();
-            return 0;
+            return browse_sendfile(c, fs, fh, fnHttpService::get_basename(path), fs->filesize(fh));
         }
         else
         {
@@ -128,7 +186,7 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *pFS, int 
         slot+1, slot+1, theFuji.get_hosts(slot)->get_hostname(), esc_path, esc_path); // TODO escape hostname
 
 	fsdir_entry *dp;
-	while ((dp = pFS->dir_read()) != nullptr)
+	while ((dp = fs->dir_read()) != nullptr)
     {
         Debug_printf("%d %s\t%d\t%lu\n", dp->isDir, dp->filename, (int)dp->size, (unsigned long)dp->modified_time);
         // Do not show current dir and hidden files
@@ -142,7 +200,7 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *pFS, int 
         "</table></body></html>");
     mg_http_write_chunk(c, "", 0);
 
-    pFS->dir_close();
+    fs->dir_close();
     return 0;
 }
 
@@ -185,7 +243,7 @@ void fnHttpServiceBrowser::browse_printdentry(mg_connection *c, fsdir_entry *dp,
 }
 
 
-void fnHttpServiceBrowser::browse_sendfile(mg_connection *c, FileHandler *fh, const char *filename, unsigned long filesize)
+int fnHttpServiceBrowser::browse_sendfile(mg_connection *c, FileSystem *fs, FileHandler *fh, const char *filename, unsigned long filesize)
 {
     mg_printf(c, "HTTP/1.1 200 OK\r\n");
     // Set the response content type
@@ -193,42 +251,47 @@ void fnHttpServiceBrowser::browse_sendfile(mg_connection *c, FileHandler *fh, co
     // Set the expected length of the content
     mg_printf(c, "Content-Length: %lu\r\n\r\n", filesize);
 
-    // Send the file content out in chunks
-    char *buf = (char *)malloc(FNWS_SEND_BUFF_SIZE);
-    size_t count = 0, total = 0;
-    do
+    // Create a task to send the file content out
+    fnTask *task = new fnHttpSendFileTask(fs, fh, c);
+    if (task == nullptr)
     {
-        count = fh->read((uint8_t *)buf, 1, FNWS_SEND_BUFF_SIZE);
-        total += count;
-        mg_send(c, buf, count);
-    } while (count > 0);
-    free(buf);
-
-    Debug_printf("Sent %lu of %lu bytes from %s\n", (unsigned long)total, (unsigned long)filesize, filename);
+        Debug_println("Failed to create fnHttpSendFileTask");
+        fh->close();
+        mg_http_reply(c, 400, "", "Failed to create a task\n");
+        return -1;
+    }
+    return (taskMgr.submit_task(task) > 0) ? 1 : 0; // 1 -> do not delete the file system, if task was submitted
 }
 
 
 int fnHttpServiceBrowser::process_browse_get(mg_connection *c, int host_slot, const char *host_path, unsigned pathlen)
 {
     fujiHost *pHost = theFuji.get_hosts(host_slot);
-    FileSystem *pFS;
+    FileSystem *fs;
     int host_type;
     bool started = false;
 
     Debug_printf("Browse host %d (%s)\n", host_slot, pHost->get_hostname());
 
-    if (strcmp("SD", pHost->get_hostname()) == 0)
+    const char *hostname = pHost->get_hostname();
+    if (hostname == nullptr || *hostname == '\0')
     {
-        pFS = new FileSystemSDFAT;
+        Debug_println("Empty Host Slot");
+        mg_http_reply(c, 400, "", "Empty Host Slot\n");
+        return -1;
+    }
+    if (strcmp("SD", hostname) == 0)
+    {
+        fs = new FileSystemSDFAT;
         host_type = HOSTTYPE_LOCAL;
     }
     else
     {
-        pFS = new FileSystemTNFS;
+        fs = new FileSystemTNFS;
         host_type = HOSTTYPE_TNFS;
     }
 
-    if (pFS == nullptr)
+    if (fs == nullptr)
     {
         Debug_println("Couldn't create a new File System");
         mg_http_reply(c, 400, "", "Couldn't create a new File System\n");
@@ -238,23 +301,26 @@ int fnHttpServiceBrowser::process_browse_get(mg_connection *c, int host_slot, co
     Debug_println("Starting temporary File System");
     // why is start() not in base class ?
     if (host_type == HOSTTYPE_LOCAL)
-        started = ((FileSystemSDFAT *)pFS)->start();
+        started = ((FileSystemSDFAT *)fs)->start();
     else
-        started = ((FileSystemTNFS *)pFS)->start(pHost->get_hostname());
+        started = ((FileSystemTNFS *)fs)->start(pHost->get_hostname());
 
     if (!started)
     {
         Debug_println("Couldn't start File System");
         mg_http_reply(c, 400, "", "File System error\n");
-        delete pFS;
+        delete fs;
         return -1;
     }
 
 
-    int result = browse_listdir(c, pFS, host_slot, host_path, pathlen);
+    int result = browse_listdir(c, fs, host_slot, host_path, pathlen);
 
-    Debug_println("Destroying temporary File System");
-    delete pFS;
+    if (result != 1)
+    {
+        Debug_println("Destroying temporary File System");
+        delete fs;
+    }
 
     return result;
 }

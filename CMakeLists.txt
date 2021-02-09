@@ -14,7 +14,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__OPEN_BUILD_DEBUG__ -DVE
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMG_ENABLE_DIRECTORY_LISTING=1")
 
 set(INCLUDE_DIRS include lib/config lib/FileSystem lib/utils lib/hardware lib/tcpip lib/telnet 
-    lib/sio lib/mongoose lib/http lib/printer-emulator)
+    lib/sio lib/printer-emulator lib/mongoose lib/http lib/task)
 set(SOURCES src/main.cpp
     lib/config/fnConfig.h lib/config/fnConfig.cpp
     lib/FileSystem/fnFS.h lib/FileSystem/fnFS.cpp
@@ -73,6 +73,8 @@ set(SOURCES src/main.cpp
     lib/http/httpServiceParser.h lib/http/httpServiceParser.cpp
     lib/http/httpServiceConfigurator.h lib/http/httpServiceConfigurator.cpp
     lib/http/httpServiceBrowser.h lib/http/httpServiceBrowser.cpp
+    lib/task/fnTask.h lib/task/fnTask.cpp
+    lib/task/fnTaskManager.h lib/task/fnTaskManager.cpp
 )
 add_executable(fujinet ${SOURCES})
 
