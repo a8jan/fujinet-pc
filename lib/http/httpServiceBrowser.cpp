@@ -137,6 +137,8 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int s
 
     if (pathlen > 0)
     {
+        // trim trailing slash(es)
+        while (pathlen > 1 && host_path[pathlen-1] == '/') --pathlen;
         if ((pathlen >= sizeof(enc_path)) || (mg_url_decode(host_path, pathlen, path, sizeof(path), 0) < 0))
         {
             mg_http_reply(c, 403, "", "Path too long\n");
@@ -149,6 +151,7 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int s
     }
     else
     {
+        // root dir
         strcpy(path, "/");
         strcpy(enc_path, "/");
     }
@@ -168,22 +171,31 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int s
         }
         else
         {
-            Debug_printf("Couldn't open host directory: %s\n", path);
-            mg_http_reply(c, 400, "", "Couldn't open directory\n");
+            Debug_printf("Couldn't open host file or directory: %s\n", path);
+            mg_http_reply(c, 400, "", "Failed to open.\n");
             return -1;
         }
     }
 
-    mg_printf(c, "%s\r\n", "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n");
+    mg_printf(c, "%s\r\n", "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n");
     mg_http_printf_chunk(
         c,
-        "<!DOCTYPE html><html><head><title>Browse Host %d</title>"
+        "<!DOCTYPE html><html><head><title>Host %d</title>"
         "<style>th,td {text-align: left; padding-right: 1em; "
-        "font-family: monospace; font-size: 14px;}</style></head>"
-        "<body><h1>[Host %d] %s %s</h1><table cellpadding=\"0\"><thead>"
+        "font-family: monospace; font-size: 14px;} "
+        "a {color: black; text-decoration: none; border-radius: .2em; padding: .1em;} "
+        "a:hover {background: gold; transition: background-color .4s;}"
+        "</style></head>"
+        "<body><h1><a href=\"/\" title=\"Back to Config\">[^]</a> Host %d</h1>", slot+1, slot+1);
+    
+    browse_printnavi(c, slot, esc_path, enc_path);
+    
+    mg_http_printf_chunk(
+        c,
+        "<table cellpadding=\"0\"><thead>"
         "<tr><th>Size</th><th>Modified</th><th>Name</th></tr>"
         "<tr><td colspan=\"3\"><hr></td></tr></thead><tbody>",
-        slot+1, slot+1, theFuji.get_hosts(slot)->get_hostname(), esc_path, esc_path); // TODO escape hostname
+        esc_path);
 
 	fsdir_entry *dp;
 	while ((dp = fs->dir_read()) != nullptr)
@@ -204,6 +216,48 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int s
     return 0;
 }
 
+int fnHttpServiceBrowser::browse_printnavi(mg_connection *c, int slot, char *esc_path, char*enc_path)
+{
+    char *p1_esc = esc_path;
+    char *p2_esc;
+    char *p_enc = enc_path;
+
+    mg_http_printf_chunk(c,
+        "<h2><a href=\"/browse/host/%d\">%s</a> :: ", slot+1, theFuji.get_hosts(slot)->get_hostname()); // TODO escape hostname
+
+    for(;;)
+    {
+        // separator
+        mg_http_printf_chunk(c, "/");
+        // skip slash(es)
+        while (*p1_esc == '/') ++p1_esc;
+        while (*p_enc == '/') ++p_enc;
+        if (*p1_esc == '\0' || *p_enc == '\0') break;
+        // find slash
+        p2_esc = p1_esc;
+        while (*p2_esc != '/' && *p2_esc != '\0') ++p2_esc;
+        while (*p_enc != '/' && *p_enc != '\0') ++p_enc;
+        // end of path?
+        if (*p2_esc == '\0' || *p_enc == '\0')
+        {
+            // send last path element
+            mg_http_printf_chunk(c, "<a href=\"/browse/host/%d", slot+1);
+            mg_http_write_chunk(c, enc_path, p_enc - enc_path);
+            mg_http_printf_chunk(c, "\">");
+            mg_http_write_chunk(c, p1_esc, p2_esc - p1_esc);
+            mg_http_printf_chunk(c, "</a>");
+            break;
+        }
+        // send path element
+        mg_http_printf_chunk(c, "<a href=\"/browse/host/%d", slot+1);
+        mg_http_write_chunk(c, enc_path, p_enc - enc_path);
+        mg_http_printf_chunk(c, "\">");
+        mg_http_write_chunk(c, p1_esc, p2_esc - p1_esc);
+        mg_http_printf_chunk(c, "</a>");
+        p1_esc = p2_esc;
+    }
+    mg_http_printf_chunk(c, "</h2>");
+}
 
 void fnHttpServiceBrowser::browse_printdentry(mg_connection *c, fsdir_entry *dp, int slot, const char *enc_path)
 {
