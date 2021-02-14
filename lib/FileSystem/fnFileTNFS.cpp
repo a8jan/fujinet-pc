@@ -1,4 +1,5 @@
 #include <unistd.h>  // for fsync
+#include <errno.h>
 
 #include "fnFileTNFS.h"
 #include "../../include/debug.h"

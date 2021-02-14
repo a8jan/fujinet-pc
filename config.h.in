@@ -1,0 +1,4 @@
+#ifndef _CONFIG_H
+#define _CONFIG_H
+#cmakedefine HAVE_BSD_STRING_H
+#endif // _CONFIG_H

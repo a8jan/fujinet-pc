@@ -1,4 +1,7 @@
+#include "config.h"
+#ifdef HAVE_BSD_STRING_H
 #include <bsd/string.h>
+#endif
 
 #include "httpServiceBrowser.h"
 #include "httpService.h"
@@ -40,6 +43,7 @@ int fnHttpSendFileTask::start()
 {
     _filesize = _fs->filesize(_fh);
     Debug_printf("fnHttpSendFileTask started #%d\n", _id);
+    return 0;
 }
 
 int fnHttpSendFileTask::abort()
@@ -47,6 +51,7 @@ int fnHttpSendFileTask::abort()
     _fh->close();
     delete _fs;
     Debug_printf("fnHttpSendFileTask aborted #%d\n", _id);
+    return 0;
 }
 
 int fnHttpSendFileTask::step()
@@ -257,6 +262,7 @@ int fnHttpServiceBrowser::browse_printnavi(mg_connection *c, int slot, char *esc
         p1_esc = p2_esc;
     }
     mg_http_printf_chunk(c, "</h2>");
+    return 0;
 }
 
 void fnHttpServiceBrowser::browse_printdentry(mg_connection *c, fsdir_entry *dp, int slot, const char *enc_path)

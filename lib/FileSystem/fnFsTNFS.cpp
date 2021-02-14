@@ -1,5 +1,9 @@
-#include <bsd/string.h>
+#include <errno.h>
 #include <arpa/inet.h>
+#include "config.h"
+#ifdef HAVE_BSD_STRING_H
+#include <bsd/string.h>
+#endif
 
 #include "fnFsTNFS.h"
 #include "fnFileTNFS.h"

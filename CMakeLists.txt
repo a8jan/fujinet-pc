@@ -8,12 +8,21 @@
 cmake_minimum_required(VERSION 3.10)
 project(fujinet-open VERSION 0.1.0)
 
+# C++ standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__OPEN_BUILD_DEBUG__ -DVERBOSE_TNFS")
+
 # mongoose.c some compile options: -DMG_ENABLE_LINES=1 -DMG_ENABLE_DIRECTORY_LISTING=1 -DMG_ENABLE_SSI=1
 #set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DMG_ENABLE_DIRECTORY_LISTING=1")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMG_ENABLE_DIRECTORY_LISTING=1")
 
-set(INCLUDE_DIRS include lib/config lib/FileSystem lib/utils lib/hardware lib/tcpip lib/telnet 
+INCLUDE (CheckIncludeFiles)
+CHECK_INCLUDE_FILES (bsd/string.h HAVE_BSD_STRING_H)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
+
+set(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include lib/config lib/FileSystem lib/utils lib/hardware lib/tcpip lib/telnet 
     lib/sio lib/printer-emulator lib/mongoose lib/http lib/task)
 set(SOURCES src/main.cpp
     lib/config/fnConfig.h lib/config/fnConfig.cpp
@@ -76,7 +85,11 @@ set(SOURCES src/main.cpp
     lib/task/fnTask.h lib/task/fnTask.cpp
     lib/task/fnTaskManager.h lib/task/fnTaskManager.cpp
 )
+
 add_executable(fujinet ${SOURCES})
 
 target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS})
-target_link_libraries(fujinet bsd)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_libraries(fujinet bsd)
+endif()

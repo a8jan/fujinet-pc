@@ -183,6 +183,8 @@ bool fnTaskManager::service()
                 completed.push_back(it->first);
             }
             break;
+        default:
+            ;
         }
     }
 

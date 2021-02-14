@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
+#include <string>
 
 #include "../../include/debug.h"
 

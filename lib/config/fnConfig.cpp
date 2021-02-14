@@ -1,7 +1,10 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include "config.h"
+#ifdef HAVE_BSD_STRING_H
 #include <bsd/string.h>
+#endif
 
 #include "fnConfig.h"
 #include "../FileSystem/fnFsSPIF.h"

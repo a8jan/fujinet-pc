@@ -4,6 +4,7 @@
  */
 
 #include <string.h>
+#include <errno.h>
 
 #include "modem-sniffer.h"
 #include "../../include/debug.h"

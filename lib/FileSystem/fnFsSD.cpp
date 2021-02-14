@@ -12,7 +12,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
+#include "config.h"
+#ifdef HAVE_BSD_STRING_H
 #include <bsd/string.h>
+#endif
 
 #include "fnFsSD.h"
 #include "fnFileLocal.h"

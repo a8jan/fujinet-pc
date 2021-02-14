@@ -1,6 +1,7 @@
 #include <memory.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "../../include/debug.h"
 #include "../utils/utils.h"
@@ -286,7 +287,7 @@ bool DiskTypeATR::create(FileHandler *f, uint16_t sectorSize, uint16_t numSector
         size_t out = f->write(blank, 1, 128);
         if (out != 128)
         {
-            Debug_printf("Error writing sector %hhu\n", i);
+            Debug_printf("Error writing sector %hhu\n", (uint8_t)i);
             return false;
         }
         offset += 128;

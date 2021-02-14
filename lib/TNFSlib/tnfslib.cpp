@@ -1,7 +1,11 @@
 #include <memory>
 #include <string.h>
-#include <bsd/string.h>
 #include <sys/stat.h>
+#include <errno.h>
+#include "config.h"
+#ifdef HAVE_BSD_STRING_H
+#include <bsd/string.h>
+#endif
 
 #include "tnfslib.h"
 #include "../tcpip/fnUDP.h"
@@ -190,7 +194,7 @@ int tnfs_open(tnfsMountInfo *m_info, const char *filepath, uint16_t open_mode, u
                 else if (open_mode & TNFS_OPENMODE_WRITE_TRUNCATE)
                     pFileInf->file_size = 0;
             }
-            Debug_printf("File opened, handle ID: %hhd, size: %u, pos: %u\n", *file_handle, pFileInf->file_size, pFileInf->file_position);
+            Debug_printf("File opened, handle ID: %hd, size: %u, pos: %u\n", *file_handle, pFileInf->file_size, pFileInf->file_position);
         }
         result = packet.payload[0];
     }
@@ -675,7 +679,7 @@ int tnfs_opendirx(tnfsMountInfo *m_info, const char *directory, uint8_t sortopts
         {
             m_info->dir_handle = packet.payload[1];
             m_info->dir_entries = TNFS_UINT16_FROM_LOHI_BYTEPTR(packet.payload + 2);
-            Debug_printf("Directory opened, handle ID: %hhd, entries: %u\n", m_info->dir_handle, m_info->dir_entries);
+            Debug_printf("Directory opened, handle ID: %hd, entries: %u\n", m_info->dir_handle, m_info->dir_entries);
         }
         return packet.payload[0];
     }
@@ -966,7 +970,7 @@ int tnfs_stat(tnfsMountInfo *m_info, tnfsStat *filestat, const char *filepath)
 
     if (_tnfs_transaction(m_info, packet, len + 1))
     {
-        __BEGIN_IGNORE_UNUSEDVARS
+        // __BEGIN_IGNORE_UNUSEDVARS
         if (packet.payload[0] == TNFS_RESULT_SUCCESS)
         {
 
@@ -988,7 +992,7 @@ int tnfs_stat(tnfsMountInfo *m_info, tnfsStat *filestat, const char *filepath)
                 filestat->isDir ? 1 : 0, filestat->filesize, filestat->a_time, filestat->m_time, filestat->c_time );
             */
         }
-        __END_IGNORE_UNUSEDVARS
+        // __END_IGNORE_UNUSEDVARS
         return packet.payload[0];
     }
     return -1;

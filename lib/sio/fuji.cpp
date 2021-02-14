@@ -1,6 +1,10 @@
 #include <cstdint>
 // #include <driver/ledc.h>
+#include <errno.h>
+#include "config.h"
+#ifdef HAVE_BSD_STRING_H
 #include <bsd/string.h>
+#endif
 
 #include "fuji.h"
 #include "led.h"
@@ -741,7 +745,7 @@ void sioFuji::image_rotate()
         for (int n = count; n > 0; n--)
         {
             int swap = _fnDisks[n - 1].disk_dev.id();
-            Debug_printf("setting slot %d to ID %hx\n", n, swap);
+            Debug_printf("setting slot %d to ID %x\n", n, swap);
             _sio_bus->changeDeviceId(&_fnDisks[n].disk_dev, swap);
         }
 

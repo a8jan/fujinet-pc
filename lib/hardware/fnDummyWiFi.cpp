@@ -1,5 +1,8 @@
 #include <cstring>
+#include "config.h"
+#ifdef HAVE_BSD_STRING_H
 #include <bsd/string.h>
+#endif
 
 #include "../../include/debug.h"
 #include "../utils/utils.h"
@@ -113,7 +116,7 @@ const char *_wifi_country_string()
     static char buff[100];
 
     snprintf(buff, sizeof(buff), "ccode=0x%02hx%02hx%02hx, firstchan=%hu, numchan=%hu, maxpwr=%hd, policy=%s",
-             0, 0, 0, 1, 11, 1,
+             uint8_t(0), uint8_t(0), uint8_t(0), uint8_t(1), uint8_t(11), uint8_t(1),
              "auto");
 
     return buff;
@@ -127,8 +130,8 @@ const char *DummyWiFiManager::get_current_detail_str()
     snprintf(buff, sizeof(buff),
                 "chan=%hu, chan2=%s, rssi=%hd, auth=%s, paircipher=%s, groupcipher=%s, ant=%u "
                 "11b=%c, 11g=%c, 11n=%c, lowr=%c, wps=%c, (%s)",
-                8, "20-none",
-                255,
+                uint8_t(8), "20-none",
+                int8_t(255),
                 "WIFI_AUTH_OPEN",
                 "WIFI_CIPHER_TYPE_NONE", "WIFI_CIPHER_TYPE_NONE",
                 0,
