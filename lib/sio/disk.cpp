@@ -244,8 +244,12 @@ void sioDisk::unmount()
 {
     Debug_print("disk UNMOUNT\n");
 
-    if (_disk != nullptr)
+    if (_disk != nullptr) 
+    {
         _disk->unmount();
+        delete _disk;
+        _disk = nullptr;
+    }
 }
 
 // Create blank disk

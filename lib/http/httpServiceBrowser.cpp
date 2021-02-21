@@ -9,6 +9,7 @@
 #include "fnFsSD.h"
 #include "fnFsTNFS.h"
 #include "fnTaskManager.h"
+#include "fnConfig.h"
 
 #include "debug.h"
 
@@ -134,7 +135,7 @@ int fnHttpServiceBrowser::browse_html_escape(const char *src, size_t src_len, ch
 }
 
 
-int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int slot, const char *host_path, unsigned pathlen)
+int fnHttpServiceBrowser::browse_listdir(mg_connection *c, mg_http_message *hm, FileSystem *fs, int slot, const char *host_path, unsigned pathlen)
 {
     char path[256];
     char enc_path[256]; // URL encoded path
@@ -144,6 +145,7 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int s
     {
         // trim trailing slash(es)
         while (pathlen > 1 && host_path[pathlen-1] == '/') --pathlen;
+        // decode host_path to path
         if ((pathlen >= sizeof(enc_path)) || (mg_url_decode(host_path, pathlen, path, sizeof(path), 0) < 0))
         {
             mg_http_reply(c, 403, "", "Path too long\n");
@@ -151,6 +153,7 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int s
         }
         else
         {
+            // enc_path =  host_path + '\0'
             strlcpy(enc_path, host_path, pathlen+1);
         }
     }
@@ -161,18 +164,89 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int s
         strcpy(enc_path, "/");
     }
 
+    // HTML escape the path
     if (browse_html_escape(path, strlen(path), esc_path, sizeof(esc_path)) < 0)
     {
         strcpy(esc_path, "&lt;-- Path too long --&gt;");
     }
 
+    // get "mount" query variable
+    char action[10] = "";
+    mg_http_get_var(&hm->query, "action", action, sizeof(action));
+
+    if (action[0] != 0)
+    {
+        // get "slot" and "mode" query variables
+        char slot_str[3] = "", mode_str[3] = "";
+        mg_http_get_var(&hm->query, "slot", slot_str, sizeof(slot_str));
+        mg_http_get_var(&hm->query, "mode", mode_str, sizeof(mode_str));
+
+        int drive_slot = \
+            (slot_str[0] >= '1' && slot_str[0] <= '8' && slot_str[1] == '\0') \
+            ? drive_slot = slot_str[0] - '1' : -1;
+
+        fnConfig::mount_mode_t mount_mode = (mode_str[0] == 'w' && mode_str[1] == '\0') \
+            ? fnConfig::MOUNTMODE_WRITE : fnConfig::MOUNTMODE_READ;
+
+        if (strcmp(action, "newmount") == 0)
+        {
+            // mount image to drive slot
+            if (drive_slot >=0 && drive_slot < MAX_DISK_DEVICES)
+            {
+                // update config
+                Config.store_mount(drive_slot, slot, path, mount_mode);
+                Config.save();
+
+                // umount current image, if any - close image file, reset drive slot
+                theFuji.sio_disk_image_umount(false, drive_slot);
+
+                // update drive slot
+                fujiDisk &fnDisk = *theFuji.get_disks(drive_slot);
+                fnDisk.host_slot = slot;
+                fnDisk.access_mode = (mount_mode == fnConfig::MOUNTMODE_WRITE) ? DISK_ACCESS_MODE_WRITE : DISK_ACCESS_MODE_READ;
+                strlcpy(fnDisk.filename, path, sizeof(fnDisk.filename));
+
+                // mount host (file system)
+                if (theFuji.sio_mount_host(false, slot) == 0)
+                {
+                    // mount disk image
+                    theFuji.sio_disk_image_mount(false, drive_slot);
+                }
+            }
+        }
+        else if (strcmp(action, "mount") == 0)
+        {
+            if (drive_slot >=0 && drive_slot < MAX_DISK_DEVICES)
+            {
+                // mount host (file system)
+                if (theFuji.sio_mount_host(false, slot) == 0)
+                {
+                    // mount disk image
+                    theFuji.sio_disk_image_mount(false, drive_slot);
+                }
+            }
+        }
+        else if (strcmp(action, "eject") == 0)
+        {
+            // umount image from drive slot
+            if (drive_slot >=0 && drive_slot < MAX_DISK_DEVICES)
+            {
+                Config.clear_mount(drive_slot);
+                Config.save();
+                theFuji.sio_disk_image_umount(false, drive_slot);
+            }
+        }
+        return browse_listdrives(c, slot, esc_path, enc_path);
+    }
 
     if (!fs->dir_open(path, "", 0))
     {
         FileHandler *fh = fs->filehandler_open(path);
         if (fh != nullptr)
         {
+            // file download
             return browse_sendfile(c, fs, fh, fnHttpService::get_basename(path), fs->filesize(fh));
+            fh->close();
         }
         else
         {
@@ -183,6 +257,93 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int s
     }
 
     mg_printf(c, "%s\r\n", "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n");
+    print_head(c, slot);
+    print_navi(c, slot, esc_path, enc_path);
+    mg_http_printf_chunk(
+        c,
+        "<table cellpadding=\"0\"><thead>"
+        "<tr><th>Size</th><th>Modified</th><th>Name</th></tr>"
+        "<tr><td colspan=\"3\"><hr></td></tr></thead><tbody>");
+
+    // list directory
+    fsdir_entry *dp;
+    while ((dp = fs->dir_read()) != nullptr)
+    {
+        // Debug_printf("%d %s\t%d\t%lu\n", dp->isDir, dp->filename, (int)dp->size, (unsigned long)dp->modified_time);
+        // Do not show current dir and hidden files
+        if (!strcmp(dp->filename, ".") || !strcmp(dp->filename, ".."))
+            continue;
+        print_dentry(c, dp, slot, enc_path);
+    }
+    fs->dir_close();
+
+    mg_http_printf_chunk(
+        c,
+        "</tbody><tfoot><tr><td colspan=\"3\"><hr></td></tr></tfoot>"
+        "</table></body></html>");
+    mg_http_write_chunk(c, "", 0);
+
+    return 0;
+}
+
+int fnHttpServiceBrowser::browse_listdrives(mg_connection *c, int slot, const char *esc_path, const char *enc_path)
+{
+    mg_printf(c, "%s\r\n", "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n");
+    print_head(c, slot);
+    print_navi(c, slot, esc_path, enc_path);
+    mg_http_printf_chunk(
+        c,
+        "<table cellpadding=\"0\"><thead>"
+        "<tr><th>Slot</th><th>Action</th><th>Current disk image (Mode)</th></tr>"
+        "<tr><td colspan=\"3\"><hr></td></tr></thead><tbody>");
+
+    // list drive slots
+    char disk_id;
+    int host_slot;
+    bool is_mounted;
+    for(int drive_slot = 0; drive_slot < MAX_DISK_DEVICES; drive_slot++)
+    {
+        disk_id = (char) theFuji.get_disk_id(drive_slot);
+        host_slot = Config.get_mount_host_slot(drive_slot);
+        is_mounted = (theFuji.get_disks(drive_slot)->fileh != nullptr);
+        mg_http_printf_chunk(c, "<tr>"
+                "<td>Drive Slot %d%s</td>"
+                "<td><a title=\"Mount Read-Only\" href=\"?action=newmount&slot=%d&mode=r\">[ R ]</a>"
+                "<a title=\"Mount Read-Write\" href=\"?action=newmount&slot=%d&mode=w\">[ W ]</a> "
+                "<a title=\"%s\" href=\"?action=%s&slot=%d\">[ %s ]</a></td>"
+                "<td>%s (%s)</td>"
+            "</tr>",
+            drive_slot+1,
+            // Dx: drive, if any rotation has occurred
+            (disk_id != (char) (0x31 + drive_slot)) ? " (D%h:)": "",
+            // action=newmount&slot=..
+            drive_slot+1, drive_slot+1,
+            (host_slot == HOST_SLOT_INVALID) ? "Nothing to do" : 
+                is_mounted ? "Eject current image" : "Mount current image",
+            (host_slot == HOST_SLOT_INVALID) ? "none" : is_mounted ? "eject" : "mount",
+            drive_slot+1,
+            (host_slot == HOST_SLOT_INVALID) ? "-" : is_mounted ? "E" : "M",
+            // From what host is each disk mounted on and what disk is mounted
+            (host_slot == HOST_SLOT_INVALID) ? "" :
+                (Config.get_host_name(host_slot) + " :: "+ Config.get_mount_path(drive_slot)).c_str(),
+            // Mount mode: R / W or "Empty" for empty slot
+            (host_slot == HOST_SLOT_INVALID) ? "Empty" :
+                Config.get_mount_mode(drive_slot) == fnConfig::mount_modes::MOUNTMODE_READ ? 
+                    (is_mounted ? "R" : "R-") : (is_mounted ? "W" : "W-")
+        );
+    }
+
+    mg_http_printf_chunk(
+        c,
+        "</tbody><tfoot><tr><td colspan=\"3\"><hr></td></tr></tfoot>"
+        "</table></body></html>");
+    mg_http_write_chunk(c, "", 0);
+    return 0;
+}
+
+
+void fnHttpServiceBrowser::print_head(mg_connection *c, int slot)
+{
     mg_http_printf_chunk(
         c,
         "<!DOCTYPE html><html><head><title>Host %d</title>"
@@ -191,41 +352,15 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, FileSystem *fs, int s
         "a {color: black; text-decoration: none; border-radius: .2em; padding: .1em;} "
         "a:hover {background: gold; transition: background-color .4s;}"
         "</style></head>"
-        "<body><h1><a href=\"/\" title=\"Back to Config\">[^]</a> Host %d</h1>", slot+1, slot+1);
-    
-    browse_printnavi(c, slot, esc_path, enc_path);
-    
-    mg_http_printf_chunk(
-        c,
-        "<table cellpadding=\"0\"><thead>"
-        "<tr><th>Size</th><th>Modified</th><th>Name</th></tr>"
-        "<tr><td colspan=\"3\"><hr></td></tr></thead><tbody>",
-        esc_path);
-
-	fsdir_entry *dp;
-	while ((dp = fs->dir_read()) != nullptr)
-    {
-        Debug_printf("%d %s\t%d\t%lu\n", dp->isDir, dp->filename, (int)dp->size, (unsigned long)dp->modified_time);
-        // Do not show current dir and hidden files
-        if (!strcmp(dp->filename, ".") || !strcmp(dp->filename, ".."))
-            continue;
-        browse_printdentry(c, dp, slot, enc_path);
-    }
-    mg_http_printf_chunk(
-        c,
-        "</tbody><tfoot><tr><td colspan=\"3\"><hr></td></tr></tfoot>"
-        "</table></body></html>");
-    mg_http_write_chunk(c, "", 0);
-
-    fs->dir_close();
-    return 0;
+        "<body><h1><a href=\"/\" title=\"Back to Config\">&#215;</a> Host %d</h1>", slot+1, slot+1);
+        // &#129128; &#129120; - nice wide leftwards arrow but not working in Safari
 }
 
-int fnHttpServiceBrowser::browse_printnavi(mg_connection *c, int slot, char *esc_path, char*enc_path)
+void fnHttpServiceBrowser::print_navi(mg_connection *c, int slot, const char *esc_path, const char*enc_path)
 {
-    char *p1_esc = esc_path;
-    char *p2_esc;
-    char *p_enc = enc_path;
+    const char *p1_esc = esc_path;
+    const char *p2_esc;
+    const char *p_enc = enc_path;
 
     mg_http_printf_chunk(c,
         "<h2><a href=\"/browse/host/%d\">%s</a> :: ", slot+1, theFuji.get_hosts(slot)->get_hostname()); // TODO escape hostname
@@ -246,6 +381,9 @@ int fnHttpServiceBrowser::browse_printnavi(mg_connection *c, int slot, char *esc
         if (*p2_esc == '\0' || *p_enc == '\0')
         {
             // send last path element
+            // // without link
+            // mg_http_write_chunk(c, p1_esc, p2_esc - p1_esc);
+            // as link
             mg_http_printf_chunk(c, "<a href=\"/browse/host/%d", slot+1);
             mg_http_write_chunk(c, enc_path, p_enc - enc_path);
             mg_http_printf_chunk(c, "\">");
@@ -262,13 +400,13 @@ int fnHttpServiceBrowser::browse_printnavi(mg_connection *c, int slot, char *esc
         p1_esc = p2_esc;
     }
     mg_http_printf_chunk(c, "</h2>");
-    return 0;
 }
 
-void fnHttpServiceBrowser::browse_printdentry(mg_connection *c, fsdir_entry *dp, int slot, const char *enc_path)
+void fnHttpServiceBrowser::print_dentry(mg_connection *c, fsdir_entry *dp, int slot, const char *enc_path)
 {
     char size[64], mod[64];
     const char *slash = dp->isDir ? "/" : "";
+    const char *form = dp->isDir ? "" : "?action=newmount";
     const char *sep = enc_path[strlen(enc_path)-1] == '/' ? "" : "/";
     char enc_filename[128]; // URL encoded file name
     char esc_filename[128]; // HTML escaped file name
@@ -298,8 +436,8 @@ void fnHttpServiceBrowser::browse_printdentry(mg_connection *c, fsdir_entry *dp,
     }
     strftime(mod, sizeof(mod), "%d-%b-%Y %H:%M", localtime(&dp->modified_time));
     mg_http_printf_chunk(c,
-        "<tr><td>%s</td><td>%s</td><td><a href=\"/browse/host/%d%s%s%s\">%s%s</a></td></tr>",
-        size, mod, slot+1, enc_path, sep, enc_filename, esc_filename, slash);
+        "<tr><td>%s</td><td>%s</td><td><a href=\"/browse/host/%d%s%s%s%s\">%s%s</a></td></tr>",
+        size, mod, slot+1, enc_path, sep, enc_filename, form, esc_filename, slash);
 }
 
 
@@ -316,24 +454,24 @@ int fnHttpServiceBrowser::browse_sendfile(mg_connection *c, FileSystem *fs, File
     if (task == nullptr)
     {
         Debug_println("Failed to create fnHttpSendFileTask");
-        fh->close();
         mg_http_reply(c, 400, "", "Failed to create a task\n");
+        fh->close();
         return -1;
     }
     return (taskMgr.submit_task(task) > 0) ? 1 : 0; // 1 -> do not delete the file system, if task was submitted
 }
 
 
-int fnHttpServiceBrowser::process_browse_get(mg_connection *c, int host_slot, const char *host_path, unsigned pathlen)
+int fnHttpServiceBrowser::process_browse_get(mg_connection *c, mg_http_message *hm, int host_slot, const char *host_path, unsigned pathlen)
 {
-    fujiHost *pHost = theFuji.get_hosts(host_slot);
+    fujiHost &fnHost = *theFuji.get_hosts(host_slot);
     FileSystem *fs;
     int host_type;
     bool started = false;
 
-    Debug_printf("Browse host %d (%s)\n", host_slot, pHost->get_hostname());
+    Debug_printf("Browse host %d (%s)\n", host_slot, fnHost.get_hostname());
 
-    const char *hostname = pHost->get_hostname();
+    const char *hostname = fnHost.get_hostname();
     if (hostname == nullptr || *hostname == '\0')
     {
         Debug_println("Empty Host Slot");
@@ -363,7 +501,7 @@ int fnHttpServiceBrowser::process_browse_get(mg_connection *c, int host_slot, co
     if (host_type == HOSTTYPE_LOCAL)
         started = ((FileSystemSDFAT *)fs)->start();
     else
-        started = ((FileSystemTNFS *)fs)->start(pHost->get_hostname());
+        started = ((FileSystemTNFS *)fs)->start(fnHost.get_hostname());
 
     if (!started)
     {
@@ -373,8 +511,7 @@ int fnHttpServiceBrowser::process_browse_get(mg_connection *c, int host_slot, co
         return -1;
     }
 
-
-    int result = browse_listdir(c, fs, host_slot, host_path, pathlen);
+    int result = browse_listdir(c, hm, fs, host_slot, host_path, pathlen);
 
     if (result != 1)
     {

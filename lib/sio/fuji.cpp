@@ -284,27 +284,26 @@ void sioFuji::sio_net_get_wifi_status()
 }
 
 // Mount Server
-void sioFuji::sio_mount_host()
+int sioFuji::sio_mount_host(bool siomode, int slot)
 {
     Debug_println("Fuji cmd: MOUNT HOST");
 
-    unsigned char hostSlot = cmdFrame.aux1;
+    unsigned char hostSlot = siomode ? cmdFrame.aux1 : slot;
 
     // Make sure we weren't given a bad hostSlot
     if (!_validate_host_slot(hostSlot, "sio_tnfs_mount_hosts"))
     {
-        sio_error();
-        return;
+        return _on_error(siomode);
     }
 
     if (!_fnHosts[hostSlot].mount())
-        sio_error();
+        return _on_error(siomode);
     else
-        sio_complete();
+        return _on_ok(siomode);
 }
 
 // Disk Image Mount
-void sioFuji::sio_disk_image_mount()
+int sioFuji::sio_disk_image_mount(bool siomode, int slot)
 {
     // TAPE or CASSETTE handling: this function can also mount CAS and WAV files
     // to the C: device. Everything stays the same here and the mounting
@@ -312,8 +311,8 @@ void sioFuji::sio_disk_image_mount()
     // This function opens the file, so cassette does not need to open the file.
     // Cassette needs the file pointer and file size.
 
-    uint8_t deviceSlot = cmdFrame.aux1;
-    uint8_t options = cmdFrame.aux2; // DISK_ACCESS_MODE
+    uint8_t deviceSlot = siomode ? cmdFrame.aux1 : slot;
+    uint8_t options = siomode ? cmdFrame.aux2 : _fnDisks[slot].access_mode; // DISK_ACCESS_MODE
 
     Debug_printf("Fuji cmd: MOUNT IMAGE 0x%02X 0x%02X\n", deviceSlot, options);
 
@@ -325,8 +324,7 @@ void sioFuji::sio_disk_image_mount()
     // Make sure we weren't given a bad hostSlot
     if (!_validate_device_slot(deviceSlot))
     {
-        sio_error();
-        return;
+        return _on_error(siomode);
     }
 
     // A couple of reference variables to make things much easier to read...
@@ -340,8 +338,7 @@ void sioFuji::sio_disk_image_mount()
 
     if (disk.fileh == nullptr)
     {
-        sio_error();
-        return;
+        return _on_error(siomode);
     }
 
     // We've gotten this far, so make sure our bootable CONFIG disk is disabled
@@ -354,7 +351,7 @@ void sioFuji::sio_disk_image_mount()
     // And now mount it
     disk.disk_type = disk.disk_dev.mount(disk.fileh, disk.filename, disk.disk_size);
 
-    sio_complete();
+    return _on_ok(siomode);
 }
 
 // Toggle boot config on/off, aux1=0 is disabled, aux1=1 is enabled
@@ -688,10 +685,22 @@ void sioFuji::debug_tape()
     // }
 }
 
-// Disk Image Unmount
-void sioFuji::sio_disk_image_umount()
+int sioFuji::_on_ok(bool siomode)
 {
-    uint8_t deviceSlot = cmdFrame.aux1;
+    if (siomode) sio_complete();
+    return 0;
+}
+
+int sioFuji::_on_error(bool siomode, int rc)
+{
+    if (siomode) sio_error();
+    return rc;
+}
+
+// Disk Image Unmount
+int sioFuji::sio_disk_image_umount(bool siomode, int slot)
+{
+    uint8_t deviceSlot = siomode ? cmdFrame.aux1 : slot;
 
     Debug_printf("Fuji cmd: UNMOUNT IMAGE 0x%02X\n", deviceSlot);
 
@@ -714,11 +723,10 @@ void sioFuji::sio_disk_image_umount()
     // Invalid slot
     else
     {
-        sio_error();
-        return;
+        return _on_error(siomode);
     }
 
-    sio_complete();
+    return _on_ok(siomode);
 }
 
 // Disk Image Rotate

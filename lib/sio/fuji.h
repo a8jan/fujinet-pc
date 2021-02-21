@@ -71,6 +71,9 @@ private:
     void _populate_slots_from_config();
     void _populate_config_from_slots();
 
+    int _on_ok(bool siomode);
+    int _on_error(bool siomode, int rc=-1);
+
     appkey _current_appkey;
 
 protected:
@@ -80,8 +83,8 @@ protected:
     void sio_net_scan_result();        // 0xFC
     void sio_net_set_ssid();           // 0xFB
     void sio_net_get_wifi_status();    // 0xFA
-    void sio_mount_host();             // 0xF9
-    void sio_disk_image_mount();       // 0xF8
+    int sio_mount_host(bool siomode=true, int slot=-1);         // 0xF9
+    int sio_disk_image_mount(bool siomode=true, int slot=-1);   // 0xF8
     void sio_open_directory();         // 0xF7
     void sio_read_directory_entry();   // 0xF6
     void sio_close_directory();        // 0xF5
@@ -89,7 +92,7 @@ protected:
     void sio_write_host_slots();       // 0xF3
     void sio_read_device_slots();      // 0xF2
     void sio_write_device_slots();     // 0xF1
-    void sio_disk_image_umount();      // 0xE9
+    int sio_disk_image_umount(bool siomode=true, int slot=-1);  // 0xE9
     void sio_get_adapter_config();     // 0xE8
     void sio_new_disk();               // 0xE7
     void sio_unmount_host();           // 0xE6
@@ -112,6 +115,8 @@ protected:
     void sio_process(uint32_t commanddata, uint8_t checksum) override;
 
     void shutdown() override;
+
+    friend class fnHttpServiceBrowser; // allow browser to call above functions
 
 public:
     bool boot_config = true;

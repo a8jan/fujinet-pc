@@ -170,7 +170,10 @@ void DiskTypeXEX::status(uint8_t statusbuff[4])
 void DiskTypeXEX::unmount()
 {
     if (_xex_bootloader != nullptr)
+    {
         free(_xex_bootloader);
+        _xex_bootloader = nullptr;
+    }
 
     // Call the parent unmount
     this->DiskType::unmount();

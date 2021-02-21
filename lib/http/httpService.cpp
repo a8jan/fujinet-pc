@@ -474,7 +474,7 @@ int fnHttpService::get_handler_browse(mg_connection *c, mg_http_message *hm)
         if (*s >= '1' && *s <= '8' && (pathlen == 0 || s[1] == '/'))
         {
             int host_slot = *s - '1';
-            fnHttpServiceBrowser::process_browse_get(c, host_slot, s+1, pathlen);
+            fnHttpServiceBrowser::process_browse_get(c, hm, host_slot, s+1, pathlen);
         }
         else
         {
