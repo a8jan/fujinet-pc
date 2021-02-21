@@ -52,11 +52,6 @@ UARTManager::UARTManager() : _initialized(false), _fd(-1) {};
 
 void UARTManager::end()
 {
-    // uart_driver_delete(_uart_num);
-    // if(_uart_q)
-    //     free(_uart_q);
-    // _uart_q = NULL;
-
     if (_fd >= 0)
     {
         close(_fd);

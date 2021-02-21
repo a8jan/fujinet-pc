@@ -32,6 +32,11 @@
 // External ref to fuji object.
 extern sioFuji theFuji;
 
+sioDisk::sioDisk()
+{
+    device_active = false;
+}
+
 // Read disk data and send to computer
 void sioDisk::sio_read()
 {
@@ -219,14 +224,17 @@ disktype_t sioDisk::mount(FileHandler *f, const char *filename, uint32_t disksiz
     //     // TODO left off here for tape cassette
     //     break;
     case DISKTYPE_XEX:
+        device_active = true;
         _disk = new DiskTypeXEX();
         return _disk->mount(f, disksize);
     // case DISKTYPE_ATX:
+    //     device_active = true;
     //     _disk = new DiskTypeATX();
     //     return _disk->mount(f, disksize);
     case DISKTYPE_ATR:
     case DISKTYPE_UNKNOWN:
     default:
+        device_active = true;
         _disk = new DiskTypeATR();
         return _disk->mount(f, disksize);
     }
@@ -247,6 +255,7 @@ void sioDisk::unmount()
     if (_disk != nullptr) 
     {
         _disk->unmount();
+        device_active = false;
         delete _disk;
         _disk = nullptr;
     }

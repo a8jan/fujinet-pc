@@ -30,6 +30,15 @@
 #define HELPL16 "                  | type (DUMB, VT52,"
 #define HELPL17 "                  | VT100, ANSI)"
 #define HELPL18 "AT[UN]SNIFF       | Dis/enable sniffing"
+#define HELPL19 "ATTERMVT52        | Set TERM to VT52"
+#define HELPL20 "ATTERMVT100       | Set TERM to VT100"
+#define HELPL21 "ATTERMDUMB        | Set TERM to DUMB"
+#define HELPL22 "ATTERMANSI        | Set TERM to ANSI"
+#define HELPL23 "ATCPM             | Go into CP/M"
+#define HELPL24 "ATPHONEBOOKLIST   | List Phonebook"
+#define HELPL25 "ATPHONEBOOKCLR    | Clear Phonebook"
+#define HELPL26 "ATPB<num>=<host>  | Add to Phonebook"
+
 /* Not explicitly mentioned at this time, since they are commonly known:
  * (these are sioModem class's _at_cmds enums)
  * - AT
@@ -57,6 +66,8 @@
 #define RING_INTERVAL 3000 // How often to print RING when having a new incoming connection (ms)
 #define MAX_CMD_LENGTH 256 // Maximum length for AT command
 #define TX_BUF_SIZE 256    // Buffer where to read from serial before writing to TCP (that direction is very blocking by the ESP TCP stack, so we can't do one byte a time.)
+
+#define ANSWER_TIMER_MS 1000 // milliseconds to wait before issuing CONNECT command, to simulate carrier negotiation.
 
 class sioModem : public sioDevice
 {
@@ -127,7 +138,7 @@ private:
         AT_PHONEBOOK,
         AT_ENUMCOUNT};
 
-    uint modemBaud = 2400; // Holds modem baud rate, Default 2400
+    uint modemBaud = 300; // Holds modem baud rate, Default 300
     bool DTR = false;
     bool RTS = false;
     bool XMT = false;
@@ -166,6 +177,8 @@ private:
     bool do_echo;                   // telnet echo toggle.
     string term_type;               // telnet terminal type.
     // ESP32SSHCLIENT ssh;             // ssh instance.
+    long answerTimer;
+    bool answered=false;
 
     void sio_send_firmware(uint8_t loadcommand); // $21 and $26: Booter/Relocator download; Handler download
     void sio_poll_1();                           // $3F, '?', Type 1 Poll
