@@ -164,21 +164,29 @@ void sioBus::_sio_process_cmd()
 
     if (fnUartSIO.readBytes((uint8_t *)&tempFrame, sizeof(tempFrame)) != sizeof(tempFrame))
     {
-        // Debug_println("Timeout waiting for data after CMD pin asserted");
+        Debug_println("Timeout waiting for data after CMD pin asserted");
         return;
     }
     // // Turn on the SIO indicator LED
     // fnLedManager.set(eLed::LED_SIO, true);
 
-    Debug_printf("\nCF: %02x %02x %02x %02x %02x\n",
-                 tempFrame.device, tempFrame.comnd, tempFrame.aux1, tempFrame.aux2, tempFrame.cksum);
     // Wait for CMD line to raise again
     // while (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
     //     fnSystem.yield();
     while (fnUartSIO.is_command())
-        ;
         // fnSystem.yield();
         fnSystem.delay_microseconds(500);
+
+    Debug_printf("\nCF: %02x %02x %02x %02x %02x\n",
+                 tempFrame.device, tempFrame.comnd, tempFrame.aux1, tempFrame.aux2, tempFrame.cksum);
+
+    int bytes_pending = fnUartSIO.available();
+    if (bytes_pending > 0)
+    {
+        Debug_printf("!!! Extra bytes pending (%d)\n", bytes_pending);
+        // TODO use last 5 received bytes as command frame
+        // fnUartSIO.flush_input();
+    }
 
     uint8_t ck = sio_checksum((uint8_t *)&tempFrame.commanddata, sizeof(tempFrame.commanddata)); // Calculate Checksum
     if (ck == tempFrame.checksum)

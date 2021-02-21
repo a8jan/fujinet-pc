@@ -15,9 +15,9 @@
   Debugging Macros
 */
     // Use standard printf
-    #define Debug_print(...) printf( "%s", __VA_ARGS__ )
-    #define Debug_printf(...) printf( __VA_ARGS__ )
-    #define Debug_println(...) printf( "%s\n", __VA_ARGS__ )
+    #define Debug_print(...) {printf( "%s", __VA_ARGS__ ); fflush( stdout );}
+    #define Debug_printf(...) {printf( __VA_ARGS__ ); fflush( stdout );}
+    #define Debug_println(...) {printf( "%s\n", __VA_ARGS__ ); fflush( stdout );}
 
     #define HEAP_CHECK(x) Debug_printf("HEAP CHECK %s " x "\n", true ? "PASSED":"FAILED")
 #endif
