@@ -1,7 +1,7 @@
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
 
-#ifdef __OPEN_BUILD_DEBUG__
+#ifdef __PC_BUILD_DEBUG__
 #define DEBUG
 
 #ifdef UNIT_TESTS

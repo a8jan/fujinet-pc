@@ -4,15 +4,15 @@
 # project(FujiNet_idf)
 
 
-# fujinet-open
+# fujinet-pc
 cmake_minimum_required(VERSION 3.10)
-project(fujinet-open VERSION 0.1.0)
+project(fujinet-pc VERSION 0.1.0)
 
 # C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__OPEN_BUILD_DEBUG__ -DVERBOSE_TNFS")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__PC_BUILD_DEBUG__ -DVERBOSE_TNFS")
 
 # mongoose.c some compile options: -DMG_ENABLE_LINES=1 -DMG_ENABLE_DIRECTORY_LISTING=1 -DMG_ENABLE_SSI=1
 #set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DMG_ENABLE_DIRECTORY_LISTING=1")
