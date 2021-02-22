@@ -3,11 +3,11 @@ FujiNet-PC
 
 Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platformio) port to Linux, MacOS and Windows
 
-#### If your are interested into Fujinet - A multi-function peripheral built on ESP32 hardware being developed for the Atari 8-bit systems - please visit the project at GitHub: https://github.com/FujiNetWIFI ####
+#### If your are interested into FujiNet - A multi-function peripheral built on ESP32 hardware being developed for the Atari 8-bit systems - please visit the project at GitHub: https://github.com/FujiNetWIFI ####
 
 -------------------------------------------------------------------
 
-**Warning:** This project is still in early development phase with ported components in various state of completeness and erroneousness...
+**Warning:** FujiNet-PC project is still in early development phase with ported components in various state of completeness and erroneousness...
 
 -------------------------------------------------------------------
 
