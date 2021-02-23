@@ -219,7 +219,7 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, mg_http_message *hm, 
             if (drive_slot >=0 && drive_slot < MAX_DISK_DEVICES)
             {
                 // mount host (file system)
-                if (theFuji.sio_mount_host(false, slot) == 0)
+                if (theFuji.sio_mount_host(false, theFuji.get_disks(drive_slot)->host_slot) == 0)
                 {
                     // mount disk image
                     theFuji.sio_disk_image_mount(false, drive_slot);
@@ -236,24 +236,30 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, mg_http_message *hm, 
                 theFuji.sio_disk_image_umount(false, drive_slot);
             }
         }
+        else if (strcmp(action, "download") == 0)
+        {
+            FileHandler *fh = fs->filehandler_open(path);
+            if (fh != nullptr)
+            {
+                // file download
+                return browse_sendfile(c, fs, fh, fnHttpService::get_basename(path), fs->filesize(fh));
+            }
+            else
+            {
+                Debug_printf("Couldn't open host file: %s\n", path);
+                mg_http_reply(c, 400, "", "Failed to open file.\n");
+                return -1;
+            }
+        }
         return browse_listdrives(c, slot, esc_path, enc_path);
     }
 
+    // no special action -> entering sub-directory
     if (!fs->dir_open(path, "", 0))
     {
-        FileHandler *fh = fs->filehandler_open(path);
-        if (fh != nullptr)
-        {
-            // file download
-            return browse_sendfile(c, fs, fh, fnHttpService::get_basename(path), fs->filesize(fh));
-            fh->close();
-        }
-        else
-        {
-            Debug_printf("Couldn't open host file or directory: %s\n", path);
-            mg_http_reply(c, 400, "", "Failed to open.\n");
-            return -1;
-        }
+        Debug_printf("Couldn't open host directory: %s\n", path);
+        mg_http_reply(c, 400, "", "Failed to open directory.\n");
+        return -1;
     }
 
     mg_printf(c, "%s\r\n", "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n");
@@ -290,7 +296,7 @@ int fnHttpServiceBrowser::browse_listdrives(mg_connection *c, int slot, const ch
 {
     mg_printf(c, "%s\r\n", "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n");
     print_head(c, slot);
-    print_navi(c, slot, esc_path, enc_path);
+    print_navi(c, slot, esc_path, enc_path, true);
     mg_http_printf_chunk(
         c,
         "<table cellpadding=\"0\"><thead>"
@@ -356,7 +362,7 @@ void fnHttpServiceBrowser::print_head(mg_connection *c, int slot)
         // &#129128; &#129120; - nice wide leftwards arrow but not working in Safari
 }
 
-void fnHttpServiceBrowser::print_navi(mg_connection *c, int slot, const char *esc_path, const char*enc_path)
+void fnHttpServiceBrowser::print_navi(mg_connection *c, int slot, const char *esc_path, const char*enc_path, bool download)
 {
     const char *p1_esc = esc_path;
     const char *p2_esc;
@@ -381,12 +387,12 @@ void fnHttpServiceBrowser::print_navi(mg_connection *c, int slot, const char *es
         if (*p2_esc == '\0' || *p_enc == '\0')
         {
             // send last path element
-            // // without link
+            // // (a) without link
             // mg_http_write_chunk(c, p1_esc, p2_esc - p1_esc);
-            // as link
+            // (b) as link
             mg_http_printf_chunk(c, "<a href=\"/browse/host/%d", slot+1);
             mg_http_write_chunk(c, enc_path, p_enc - enc_path);
-            mg_http_printf_chunk(c, "\">");
+            mg_http_printf_chunk(c, "%s\">", download ? "?action=download" : "");
             mg_http_write_chunk(c, p1_esc, p2_esc - p1_esc);
             mg_http_printf_chunk(c, "</a>");
             break;

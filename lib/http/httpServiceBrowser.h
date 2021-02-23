@@ -16,7 +16,7 @@ class fnHttpServiceBrowser
     static int browse_listdir(mg_connection *c, mg_http_message *hm, FileSystem *pFS, int slot, const char *host_path, unsigned pathlen);
     static int browse_listdrives(mg_connection *c, int slot, const char *esc_path, const char *enc_path);
     static void print_head(mg_connection *c, int slot);
-    static void print_navi(mg_connection *c, int slot, const char *esc_path, const char*enc_path);
+    static void print_navi(mg_connection *c, int slot, const char *esc_path, const char*enc_path, bool download = false);
     static void print_dentry(mg_connection *c, fsdir_entry *dp, int slot, const char *enc_path);
 
     static int browse_sendfile(mg_connection *c, FileSystem *fs, FileHandler *fh, const char *filename, unsigned long filesize);
