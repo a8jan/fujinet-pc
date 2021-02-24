@@ -62,7 +62,7 @@ protected:
     virtual void post_new_file() override;
 
 public:
-    const char *modelname() { return "Okimate 10"; };
+    const char *modelname() override { return "Okimate 10"; };
 };
 
 #endif

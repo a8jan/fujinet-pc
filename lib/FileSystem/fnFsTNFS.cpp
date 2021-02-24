@@ -162,9 +162,9 @@ FileHandler * FileSystemTNFS::filehandler_open(const char* path, const char* mod
         case '+':
             if (open_mode == TNFS_OPENMODE_READ) // "r+""
                 open_mode = TNFS_OPENMODE_READWRITE;
-            else if (open_mode == TNFS_OPENMODE_WRITE | TNFS_OPENMODE_WRITE_CREATE | TNFS_OPENMODE_WRITE_TRUNCATE) // "w+"
+            else if (open_mode == (TNFS_OPENMODE_WRITE | TNFS_OPENMODE_WRITE_CREATE | TNFS_OPENMODE_WRITE_TRUNCATE)) // "w+"
                 open_mode = TNFS_OPENMODE_READWRITE | TNFS_OPENMODE_WRITE_CREATE | TNFS_OPENMODE_WRITE_TRUNCATE;
-            else if (open_mode == TNFS_OPENMODE_WRITE | TNFS_OPENMODE_WRITE_CREATE) // "a+"
+            else if (open_mode == (TNFS_OPENMODE_WRITE | TNFS_OPENMODE_WRITE_CREATE)) // "a+"
                 open_mode = TNFS_OPENMODE_READWRITE | TNFS_OPENMODE_WRITE_CREATE;
             break;
         }

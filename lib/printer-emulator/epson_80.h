@@ -67,7 +67,7 @@ protected:
         };
 
 public:
-    const char *modelname() { return "Epson 80"; };
+    const char *modelname() override { return "Epson 80"; };
 };
 
 #endif

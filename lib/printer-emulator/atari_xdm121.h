@@ -47,7 +47,7 @@ protected:
 
 
 public:
-    const char *modelname() { return "Atari XDM121"; };
+    const char *modelname() override { return "Atari XDM121"; };
 };
 
 #endif

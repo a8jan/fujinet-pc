@@ -13,7 +13,7 @@ protected:
     void pdf_handle_char(uint8_t c, uint8_t aux1, uint8_t aux2) override; // need a custom one to handle sideways printing
 
 public:
-    const char *modelname() { return "Atari 822"; };
+    const char *modelname() override { return "Atari 822"; };
 };
 
 #endif // _ATARI822_H

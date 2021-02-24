@@ -68,7 +68,7 @@ protected:
     virtual void post_new_file() override;
 
 public:
-    const char *modelname() { return "Atari 1020"; };
+    const char *modelname() override { return "Atari 1020"; };
     svgPlotter() { _paper_type = SVG; };
 };
 

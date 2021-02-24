@@ -14,7 +14,7 @@ protected:
     }; // go up one line for The Print Shop
 
 public:
-    const char *modelname() { return "Epson PrintShop"; };
+    const char *modelname() override { return "Epson PrintShop"; };
 };
 
 #endif

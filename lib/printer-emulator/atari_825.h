@@ -40,7 +40,7 @@ protected:
     virtual void post_new_file() override;
 
 public:
-    const char *modelname() { return "Atari 825"; };
+    const char *modelname() override { return "Atari 825"; };
 
 private:
     const uint8_t char_widths_825[95] = {

@@ -20,6 +20,8 @@
 
 #if defined(__linux__)
 #include <linux/serial.h>
+#elif defined(__APPLE__)
+#include <IOKit/serial/ioss.h>
 #endif
 
 #include "fnUART.h"
@@ -333,20 +335,18 @@ void UARTManager::set_baudrate(uint32_t baud)
             break;
     }
 
-
     if (baud_id == B0)
     {
         // custom baud rate
-#if defined(MAC_OS_X_VERSION_10_4) && (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_4)
+#if defined(__APPLE__) && defined (IOSSIOSPEED)
         // OS X support
 
-        speed_t new_baud = static_cast<speed_t> (baud);
-        if (-1 == ioctl(fd_, IOSSIOSPEED, &new_baud, 1))
+        speed_t new_baud = (speed_t) baud;
+        if (-1 == ioctl(_fd, IOSSIOSPEED, &new_baud, 1))
             perror("IOSSIOSPEED failed");
 
 #elif defined(__linux__) && defined (TIOCSSERIAL)
         // Linux Support
-
         struct serial_struct ss;
         // configure B38400 to custom speed
         baud_id = B38400;
@@ -369,6 +369,9 @@ void UARTManager::set_baudrate(uint32_t baud)
             perror("TIOCSSERIAL failed");
 
         cfsetspeed(&tios, baud_id);
+        // Apply settings
+        if (tcsetattr(_fd, TCSANOW, &tios) != 0)
+            perror("Failed to set serial attributes");
 #else
         perror("Custom baud rate is not implemented");
 #endif
@@ -394,11 +397,11 @@ void UARTManager::set_baudrate(uint32_t baud)
         }
 #endif
         cfsetspeed(&tios, baud_id);
+        // Apply settings
+        if (tcsetattr(_fd, TCSANOW, &tios) != 0)
+            perror("Failed to set serial attributes");
     }
 
-    // Apply settings
-    if (tcsetattr(_fd, TCSANOW, &tios) != 0)
-        perror("Failed to set serial attributes");
 }
 
 bool UARTManager::is_command(void)
@@ -468,7 +471,7 @@ int UARTManager::read(void)
 /* Since the underlying Stream calls this Read() multiple times to get more than one
 *  character for ReadBytes(), we override with a single call to uart_read_bytes
 */
-size_t UARTManager::readBytes(uint8_t *buffer, size_t length)
+size_t UARTManager::readBytes(uint8_t *buffer, size_t length, bool command_mode)
 {
     int result;
     int rxbytes;
@@ -490,6 +493,11 @@ size_t UARTManager::readBytes(uint8_t *buffer, size_t length)
         }
 
         // wait for more data
+        if (command_mode && !is_command())
+        {
+            Debug_println("### UART readBytes() CMD pin deasserted while reading command ###");
+            return 1 + length; // indicate to SIO caller
+        }
         if (!waitReadable(500)) // 500 ms timeout
         {
             Debug_println("### UART readBytes() TIMEOUT ###");

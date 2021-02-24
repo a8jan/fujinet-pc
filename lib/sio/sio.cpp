@@ -75,9 +75,9 @@ uint8_t sioDevice::sio_to_peripheral(uint8_t *buf, unsigned short len)
     // Retrieve data frame from computer
     Debug_printf("<-SIO read %hu bytes\n", len);
 
-    __BEGIN_IGNORE_UNUSEDVARS
+    // __BEGIN_IGNORE_UNUSEDVARS
     size_t l = fnUartSIO.readBytes(buf, len);
-    __END_IGNORE_UNUSEDVARS
+    // __END_IGNORE_UNUSEDVARS
 
     // Wait for checksum
     while (0 == fnUartSIO.available())
@@ -161,11 +161,28 @@ void sioBus::_sio_process_cmd()
     cmdFrame_t tempFrame;
     tempFrame.commanddata = 0;
     tempFrame.checksum = 0;
+    
+    size_t rxbytes = fnUartSIO.readBytes((uint8_t *)&tempFrame, sizeof(tempFrame), true);
 
-    if (fnUartSIO.readBytes((uint8_t *)&tempFrame, sizeof(tempFrame)) != sizeof(tempFrame))
+    if (rxbytes != sizeof(tempFrame))
     {
-        Debug_println("Timeout waiting for data after CMD pin asserted");
-        return;
+        if (rxbytes == 1+sizeof(tempFrame))
+        {
+            // COMMAND deaserted during read
+            // Switch to/from hispeed SIO if we get enough failed commands
+            _command_frame_counter++;
+            if (COMMAND_FRAME_SPEED_CHANGE_THRESHOLD == _command_frame_counter)
+            {
+                _command_frame_counter = 0;
+                toggleBaudrate();
+            }
+            return;
+        }
+        else
+        {
+            Debug_println("Timeout waiting for data after CMD pin asserted");
+            return;
+        }
     }
     // // Turn on the SIO indicator LED
     // fnLedManager.set(eLed::LED_SIO, true);
@@ -174,11 +191,7 @@ void sioBus::_sio_process_cmd()
     // while (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
     //     fnSystem.yield();
     while (fnUartSIO.is_command())
-        // fnSystem.yield();
         fnSystem.delay_microseconds(500);
-
-    Debug_printf("\nCF: %02x %02x %02x %02x %02x\n",
-                 tempFrame.device, tempFrame.comnd, tempFrame.aux1, tempFrame.aux2, tempFrame.cksum);
 
     int bytes_pending = fnUartSIO.available();
     if (bytes_pending > 0)
@@ -188,9 +201,13 @@ void sioBus::_sio_process_cmd()
         // fnUartSIO.flush_input();
     }
 
+    Debug_printf("\nCF: %02x %02x %02x %02x %02x\n",
+                 tempFrame.device, tempFrame.comnd, tempFrame.aux1, tempFrame.aux2, tempFrame.cksum);
+
     uint8_t ck = sio_checksum((uint8_t *)&tempFrame.commanddata, sizeof(tempFrame.commanddata)); // Calculate Checksum
     if (ck == tempFrame.checksum)
     {
+        _command_frame_counter = 0;
         if (tempFrame.device == SIO_DEVICEID_DISK && _fujiDev != nullptr && _fujiDev->boot_config)
         {
             _activeDev = _fujiDev->bootdisk();
@@ -473,11 +490,11 @@ void sioBus::remDevice(sioDevice *p)
 int sioBus::numDevices()
 {
     int i = 0;
-    __BEGIN_IGNORE_UNUSEDVARS
+    // __BEGIN_IGNORE_UNUSEDVARS
     for (auto devicep : _daisyChain)
         i++;
     return i;
-    __END_IGNORE_UNUSEDVARS
+    // __END_IGNORE_UNUSEDVARS
 }
 
 void sioBus::changeDeviceId(sioDevice *p, int device_id)

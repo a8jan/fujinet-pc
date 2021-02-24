@@ -40,7 +40,7 @@ protected:
     virtual void post_new_file() override;
 
 public:
-    const char *modelname() { return "Atari 1029"; };
+    const char *modelname() override { return "Atari 1029"; };
 };
 
 #endif
