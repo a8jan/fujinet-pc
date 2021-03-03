@@ -251,6 +251,7 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, mg_http_message *hm, 
                 return -1;
             }
         }
+        // action "slotlist" goes here
         return browse_listdrives(c, slot, esc_path, enc_path);
     }
 
@@ -329,7 +330,7 @@ int fnHttpServiceBrowser::browse_listdrives(mg_connection *c, int slot, const ch
             (host_slot == HOST_SLOT_INVALID) ? "none" : is_mounted ? "eject" : "mount",
             drive_slot+1,
             (host_slot == HOST_SLOT_INVALID) ? "-" : is_mounted ? "E" : "M",
-            // From what host is each disk mounted on and what disk is mounted
+            // From what host is each disk mounted on and what disk is mounted - TODO escape host and path
             (host_slot == HOST_SLOT_INVALID) ? "" :
                 (Config.get_host_name(host_slot) + " :: "+ Config.get_mount_path(drive_slot)).c_str(),
             // Mount mode: R / W or "Empty" for empty slot
@@ -369,7 +370,7 @@ void fnHttpServiceBrowser::print_navi(mg_connection *c, int slot, const char *es
     const char *p_enc = enc_path;
 
     mg_http_printf_chunk(c,
-        "<h2><a href=\"/browse/host/%d\">%s</a> :: ", slot+1, theFuji.get_hosts(slot)->get_hostname()); // TODO escape hostname
+        "<h2><a href=\"/browse/host/%d\">%s</a>:", slot+1, theFuji.get_hosts(slot)->get_hostname()); // TODO escape hostname
 
     for(;;)
     {
@@ -392,9 +393,16 @@ void fnHttpServiceBrowser::print_navi(mg_connection *c, int slot, const char *es
             // (b) as link
             mg_http_printf_chunk(c, "<a href=\"/browse/host/%d", slot+1);
             mg_http_write_chunk(c, enc_path, p_enc - enc_path);
-            mg_http_printf_chunk(c, "%s\">", download ? "?action=download" : "");
+            mg_http_printf_chunk(c, "%s\">", download ? "?action=slotlist" : "");
             mg_http_write_chunk(c, p1_esc, p2_esc - p1_esc);
             mg_http_printf_chunk(c, "</a>");
+            // add [Download] link
+            if (download)
+            {
+                mg_http_printf_chunk(c, "&nbsp;&nbsp;<a href=\"/browse/host/%d", slot+1);
+                mg_http_write_chunk(c, enc_path, p_enc - enc_path);
+                mg_http_printf_chunk(c, "?action=download\" title=\"Download file\">[&#11015;]</a>");
+            }
             break;
         }
         // send path element
@@ -412,7 +420,7 @@ void fnHttpServiceBrowser::print_dentry(mg_connection *c, fsdir_entry *dp, int s
 {
     char size[64], mod[64];
     const char *slash = dp->isDir ? "/" : "";
-    const char *form = dp->isDir ? "" : "?action=newmount";
+    const char *form = dp->isDir ? "" : "?action=slotlist";
     const char *sep = enc_path[strlen(enc_path)-1] == '/' ? "" : "/";
     char enc_filename[128]; // URL encoded file name
     char esc_filename[128]; // HTML escaped file name
