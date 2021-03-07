@@ -4,6 +4,7 @@
  * Implementation
  */
 
+#include <string.h>
 #include "TNFS.h"
 #include "status_error_codes.h"
 #include "utils.h"
@@ -268,7 +269,7 @@ bool NetworkProtocolTNFS::del(EdUrlParser *url, cmdFrame_t *cmdFrame)
 
 bool NetworkProtocolTNFS::mkdir(EdUrlParser *url, cmdFrame_t *cmdFrame)
 {
-    Debug_printf("NetworkProtocolTNFS::mkdir(%s,%s)", url->hostName, url->path);
+    Debug_printf("NetworkProtocolTNFS::mkdir(%s,%s)", url->hostName.c_str(), url->path.c_str());
 
     mount(url);
 

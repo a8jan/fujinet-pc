@@ -211,7 +211,7 @@ static long guesstai(long month, long mday)
     return -1;
 }
 
-static int check(char *buf, char *monthname)
+static int check(char *buf, const char *monthname)
 {
     if ((buf[0] != monthname[0]) && (buf[0] != monthname[0] - 32))
         return 0;
@@ -222,7 +222,7 @@ static int check(char *buf, char *monthname)
     return 1;
 }
 
-static char *months[12] = {
+static const char *months[12] = {
     "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"};
 
 static int getmonth(char *buf, int len)
@@ -771,7 +771,7 @@ bool fnFTP::open_file(string path, bool stor)
 {
     if (!control->connected())
     {
-        Debug_printf("fnFTP::open_file(%s) attempted while not logged in. Aborting.\n", path);
+        Debug_printf("fnFTP::open_file(%s) attempted while not logged in. Aborting.\n", path.c_str());
         return true;
     }
 
@@ -813,13 +813,13 @@ bool fnFTP::open_directory(string path, string pattern)
 {
     if (!control->connected())
     {
-        Debug_printf("fnFTP::open_directory(%s%s) attempted while not logged in. Aborting.\n", path, pattern);
+        Debug_printf("fnFTP::open_directory(%s%s) attempted while not logged in. Aborting.\n", path.c_str(), pattern.c_str());
         return true;
     }
 
     if (get_data_port())
     {
-        Debug_printf("fnFTP::open_directory(%s%s) could not get data port, aborting.\n", path, pattern);
+        Debug_printf("fnFTP::open_directory(%s%s) could not get data port, aborting.\n", path.c_str(), pattern.c_str());
         return true;
     }
 
@@ -828,11 +828,11 @@ bool fnFTP::open_directory(string path, string pattern)
 
     if (parse_response())
     {
-        Debug_printf("fnFTP::open_directory(%s%s) Timed out waiting for 150 response.\n", path, pattern);
+        Debug_printf("fnFTP::open_directory(%s%s) Timed out waiting for 150 response.\n", path.c_str(), pattern.c_str());
         return true;
     }
 
-    Debug_printf("fnFTP::open_directory(%s%s) - %s\n", controlResponse.c_str());
+    Debug_printf("fnFTP::open_directory(%s%s) - %s\n", path.c_str(), pattern.c_str(), controlResponse.c_str());
 
     if (is_positive_preliminary_reply() && is_filesystem_related())
     {
@@ -881,7 +881,7 @@ bool fnFTP::read_directory(string &name, long &filesize)
     Debug_printf("fnFTP::read_directory(%s)\n",line.c_str());
     line = line.substr(0, line.size() - 1);
     ftpparse(&parse, (char *)line.c_str(), line.length());
-    name = string(parse.name);
+    name = string(parse.name ? parse.name : "???");
     filesize = parse.size;
     Debug_printf("Name: %s filesize: %lu\n",name.c_str(),filesize);
     return dirBuffer.eof();

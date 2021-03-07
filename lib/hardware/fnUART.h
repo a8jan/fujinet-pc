@@ -33,6 +33,7 @@ public:
     void set_port(const char *device, int command_pin, int proceed_pin);
     const char* get_port(int &command_pin, int &proceed_pin);
     bool is_command();
+    void set_proceed_line(bool level=true, bool force=false);
 
     int available();
     int peek();

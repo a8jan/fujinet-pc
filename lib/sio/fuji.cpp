@@ -58,7 +58,7 @@ using std::string;
 sioFuji theFuji; // global fuji device object
 
 //sioDisk sioDiskDevs[MAX_HOSTS];
-// sioNetwork sioNetDevs[MAX_NETWORK_DEVICES];
+sioNetwork sioNetDevs[MAX_NETWORK_DEVICES];
 
 bool _validate_host_slot(uint8_t slot, const char *dmsg = nullptr);
 bool _validate_device_slot(uint8_t slot, const char *dmsg = nullptr);
@@ -1001,12 +1001,11 @@ void sioFuji::sio_get_adapter_config()
     }
     else
     {
-        // strlcpy(cfg.hostname, fnSystem.Net.get_hostname().c_str(), sizeof(cfg.hostname));
-        strlcpy(cfg.hostname, Config.get_general_devicename().c_str(), sizeof(cfg.hostname));
+        strlcpy(cfg.hostname, fnSystem.Net.get_hostname().c_str(), sizeof(cfg.hostname));
         strlcpy(cfg.ssid, fnWiFi.get_current_ssid().c_str(), sizeof(cfg.ssid));
         fnWiFi.get_current_bssid(cfg.bssid);
-        // fnSystem.Net.get_ip4_info(cfg.localIP, cfg.netmask, cfg.gateway);
-        // fnSystem.Net.get_ip4_dns_info(cfg.dnsIP);
+        fnSystem.Net.get_ip4_info(cfg.localIP, cfg.netmask, cfg.gateway);
+        fnSystem.Net.get_ip4_dns_info(cfg.dnsIP);
     }
 
     fnWiFi.get_mac(cfg.macAddress);
@@ -1442,8 +1441,8 @@ void sioFuji::setup(sioBus *siobus)
     for (int i = 0; i < MAX_DISK_DEVICES; i++)
         _sio_bus->addDevice(&_fnDisks[i].disk_dev, SIO_DEVICEID_DISK + i);
 
-    // for (int i = 0; i < MAX_NETWORK_DEVICES; i++)
-    //     _sio_bus->addDevice(&sioNetDevs[i], SIO_DEVICEID_FN_NETWORK + i);
+    for (int i = 0; i < MAX_NETWORK_DEVICES; i++)
+        _sio_bus->addDevice(&sioNetDevs[i], SIO_DEVICEID_FN_NETWORK + i);
 
     // _sio_bus->addDevice(&_cassetteDev, SIO_DEVICEID_CASSETTE);
     // cassette()->set_buttons(Config.get_cassette_buttons());

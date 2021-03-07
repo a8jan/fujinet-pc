@@ -113,7 +113,7 @@ bool NetworkProtocolTELNET::read(unsigned short len)
 
     if (newData == nullptr)
     {
-        Debug_printf("Could not allocate %u bytes! Aborting!\n");
+        Debug_printf("Could not allocate %u bytes! Aborting!\n", len);
         return true; // error.
     }
 

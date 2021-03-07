@@ -4,7 +4,7 @@
 
 #include "../../include/debug.h"
 #include "sio.h"
-// #include "network.h"
+#include "network.h"
 // #include "cassette.h"
 
 #include "fujiHost.h"
@@ -122,7 +122,7 @@ public:
     bool boot_config = true;
     sioDisk *bootdisk();
 
-    // sioNetwork *network();
+    sioNetwork *network();
 
     // sioCassette *cassette() { return &_cassetteDev; };
     void debug_tape();

@@ -2,6 +2,10 @@
  * UDP socket implementation
  */
 
+#include <errno.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "UDP.h"
 #include "status_error_codes.h"
 #include "../tcpip/fnDNS.h"
@@ -80,7 +84,7 @@ bool NetworkProtocolUDP::read(unsigned short len)
 
     if (newData == nullptr)
     {
-        Debug_printf("Could not allocate %u bytes! Aborting!\n");
+        Debug_printf("Could not allocate %u bytes! Aborting!\n", len);
         return true; // error.
     }
 
@@ -158,7 +162,8 @@ bool NetworkProtocolUDP::status(NetworkStatus *status)
         // Only change dest if we need to.
         if (udp.remoteIP() != IPADDR_NONE)
         {
-            dest = string(inet_ntoa(addr));
+            // dest = string(inet_ntoa(addr));
+            dest = string(inet_ntoa(in_addr({.s_addr = addr})));
             port = udp.remotePort();
         }
     }

@@ -386,12 +386,12 @@ void sioBus::service()
         fnUartSIO.flush_input();
     }
 
-    // // Handle interrupts from network protocols
-    // for (int i = 0; i < 8; i++)
-    // {
-    //     if (_netDev[i] != nullptr)
-            // _netDev[i]->sio_poll_interrupt();
-    // }
+    // Handle interrupts from network protocols
+    for (int i = 0; i < 8; i++)
+    {
+        if (_netDev[i] != nullptr)
+            _netDev[i]->sio_poll_interrupt();
+    }
 
     if (idle)
         // fnSystem.yield();
@@ -413,6 +413,7 @@ void sioBus::setup()
     // // PROC PIN
     // fnSystem.set_pin_mode(PIN_PROC, gpio_mode_t::GPIO_MODE_OUTPUT_OD, SystemManager::pull_updown_t::PULL_UP);
     // fnSystem.digital_write(PIN_PROC, DIGI_HIGH);
+    fnUartSIO.set_proceed_line(true, true);
     // // MTR PIN
     // //fnSystem.set_pin_mode(PIN_MTR, PINMODE_INPUT | PINMODE_PULLDOWN); // There's no PULLUP/PULLDOWN on pins 34-39
     // fnSystem.set_pin_mode(PIN_MTR, gpio_mode_t::GPIO_MODE_INPUT);
@@ -453,10 +454,10 @@ void sioBus::addDevice(sioDevice *pDevice, int device_id)
     {
         _modemDev = (sioModem *)pDevice;
     }
-    // else if (device_id >= SIO_DEVICEID_FN_NETWORK && device_id <= SIO_DEVICEID_FN_NETWORK_LAST)
-    // {
-    //     _netDev[device_id - SIO_DEVICEID_FN_NETWORK] = (sioNetwork *)pDevice;
-    // }
+    else if (device_id >= SIO_DEVICEID_FN_NETWORK && device_id <= SIO_DEVICEID_FN_NETWORK_LAST)
+    {
+        _netDev[device_id - SIO_DEVICEID_FN_NETWORK] = (sioNetwork *)pDevice;
+    }
     // else if (device_id == SIO_DEVICEID_MIDI)
     // {
     //     _midiDev = (sioMIDIMaze *)pDevice;

@@ -1345,8 +1345,7 @@ void sioModem::modemCommand()
     // See my IP address
     case AT_IP:
         // if (fnWiFi.connected())
-        //     at_cmd_println(fnSystem.Net.get_ip4_address_str());
-            at_cmd_println("1.2.3.4");
+            at_cmd_println(fnSystem.Net.get_ip4_address_str());
         // else
         //     at_cmd_println(HELPNOWIFI);
         if (numericResultCode == true)

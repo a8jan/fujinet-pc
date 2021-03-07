@@ -7,7 +7,8 @@
 #include "utils.h"
 #include "network.h"
 #include "../hardware/fnSystem.h"
-#include "../hardware/fnWiFi.h"
+#include "../hardware/fnDummyWiFi.h"
+#include "../hardware/fnUART.h"
 #include "../network-protocol/TCP.h"
 #include "../network-protocol/UDP.h"
 #include "../network-protocol/Test.h"
@@ -22,12 +23,22 @@ using namespace std;
  * Static callback function for the interrupt rate limiting timer. It sets the interruptProceed
  * flag to true. This is set to false when the interrupt is serviced.
  */
-void onTimer(void *info)
+void* onTimer(void *info)
 {
     sioNetwork *parent = (sioNetwork *)info;
-    portENTER_CRITICAL_ISR(&parent->timerMux);
-    parent->interruptProceed = !parent->interruptProceed;
-    portEXIT_CRITICAL_ISR(&parent->timerMux);
+    pthread_mutex_t *mux_ptr = &(parent->timerMux);
+    int rate = parent->timerRate;
+    volatile bool *proceed_ptr = &(parent->interruptProceed);
+
+    while(true)
+    {
+        // portENTER_CRITICAL_ISR(&parent->timerMux);
+        pthread_mutex_lock(mux_ptr);
+        *proceed_ptr = !*proceed_ptr;
+        pthread_mutex_unlock(mux_ptr);
+        // portEXIT_CRITICAL_ISR(&parent->timerMux);
+        fnSystem.delay(rate); // = usleep * 1000
+    }
 }
 
 /**
@@ -42,6 +53,8 @@ sioNetwork::sioNetwork()
     receiveBuffer->clear();
     transmitBuffer->clear();
     specialBuffer->clear();
+
+    pthread_mutex_init(&timerMux, NULL);
 }
 
 /**
@@ -59,6 +72,9 @@ sioNetwork::~sioNetwork()
         delete transmitBuffer;
     if (specialBuffer != nullptr)
         delete specialBuffer;
+
+    timer_stop();
+    pthread_mutex_destroy(&timerMux);
 }
 
 /** SIO COMMANDS ***************************************************************/
@@ -777,10 +793,10 @@ bool sioNetwork::instantiate_protocol()
     {
         protocol = new NetworkProtocolFTP(receiveBuffer, transmitBuffer, specialBuffer);
     }
-    else if (urlParser->scheme == "HTTP" || urlParser->scheme == "HTTPS")
-    {
-        protocol = new NetworkProtocolHTTP(receiveBuffer, transmitBuffer, specialBuffer);        
-    }
+    // else if (urlParser->scheme == "HTTP" || urlParser->scheme == "HTTPS")
+    // {
+    //     protocol = new NetworkProtocolHTTP(receiveBuffer, transmitBuffer, specialBuffer);        
+    // }
     else
     {
         Debug_printf("Invalid protocol: %s\n", urlParser->scheme.c_str());
@@ -839,13 +855,21 @@ void sioNetwork::parse_and_instantiate_protocol()
  */
 void sioNetwork::timer_start()
 {
-    esp_timer_create_args_t tcfg;
-    tcfg.arg = this;
-    tcfg.callback = onTimer;
-    tcfg.dispatch_method = esp_timer_dispatch_t::ESP_TIMER_TASK;
-    tcfg.name = nullptr;
-    esp_timer_create(&tcfg, &rateTimerHandle);
-    esp_timer_start_periodic(rateTimerHandle, timerRate * 1000);
+    // esp_timer_create_args_t tcfg;
+    // tcfg.arg = this;
+    // tcfg.callback = onTimer;
+    // tcfg.dispatch_method = esp_timer_dispatch_t::ESP_TIMER_TASK;
+    // tcfg.name = nullptr;
+    // esp_timer_create(&tcfg, &rateTimerHandle);
+    // esp_timer_start_periodic(rateTimerHandle, timerRate * 1000);
+    int err;
+    if ((err = pthread_create(&rateTimerThread, NULL, onTimer, this)) != 0)
+    {
+        errno = err;
+        perror("Failed to create timer thread");
+        return;
+    }
+    rateTimerHandle = &rateTimerThread;
 }
 
 /**
@@ -853,12 +877,20 @@ void sioNetwork::timer_start()
  */
 void sioNetwork::timer_stop()
 {
-    // Delete existing timer
+    // // Delete existing timer
+    // if (rateTimerHandle != nullptr)
+    // {
+    //     Debug_println("Deleting existing rateTimer\n");
+    //     esp_timer_stop(rateTimerHandle);
+    //     esp_timer_delete(rateTimerHandle);
+    //     rateTimerHandle = nullptr;
+    // }
     if (rateTimerHandle != nullptr)
     {
-        Debug_println("Deleting existing rateTimer\n");
-        esp_timer_stop(rateTimerHandle);
-        esp_timer_delete(rateTimerHandle);
+        void *ret;
+        Debug_println("Deleting existing rateTimer");
+        pthread_cancel(rateTimerThread);
+        pthread_join(rateTimerThread, &ret);
         rateTimerHandle = nullptr;
     }
 }
@@ -974,7 +1006,12 @@ void sioNetwork::processCommaFromDevicespec()
  */
 void sioNetwork::sio_assert_interrupt()
 {
-    fnSystem.digital_write(PIN_PROC, interruptProceed == true ? DIGI_HIGH : DIGI_LOW);
+    // fnSystem.digital_write(PIN_PROC, interruptProceed == true ? DIGI_HIGH : DIGI_LOW);
+    bool level;
+    pthread_mutex_lock(&timerMux);
+    level = interruptProceed;
+    pthread_mutex_unlock(&timerMux);
+    fnUartSIO.set_proceed_line(level);
 }
 
 void sioNetwork::sio_set_translation()
@@ -985,9 +1022,9 @@ void sioNetwork::sio_set_translation()
 
 void sioNetwork::sio_set_timer_rate()
 {
-    timerRate = (cmdFrame.aux2 * 256) + cmdFrame.aux1;
+     timerRate = (cmdFrame.aux2 * 256) + cmdFrame.aux1;
     
-    // Stop extant timer
+   // Stop extant timer
     timer_stop();
     
     // Restart timer if we're running a protocol.

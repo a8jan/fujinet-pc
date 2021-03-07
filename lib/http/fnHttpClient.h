@@ -3,9 +3,9 @@
 
 #include <string>
 #include <map>
-#include "../fn_esp_http_client/fn_esp_http_client.h"
+// #include "../fn_esp_http_client/fn_esp_http_client.h"
 
-using namespace fujinet;
+// using namespace fujinet;
 
 class fnHttpClient
 {
@@ -18,8 +18,8 @@ private:
     int _buffer_len;
     int _buffer_total_read;
 
-    TaskHandle_t _taskh_consumer = nullptr;
-    TaskHandle_t _taskh_subtask = nullptr;
+    // TaskHandle_t _taskh_consumer = nullptr;
+    // TaskHandle_t _taskh_subtask = nullptr;
 
     bool _ignore_response_body = false;
     bool _transaction_begin;
@@ -27,22 +27,24 @@ private:
     int _redirect_count;
     int _max_redirects;
     bool connected = false;
-    esp_http_client_auth_type_t _auth_type;
+    // esp_http_client_auth_type_t _auth_type;
 
     uint16_t _port = 80;
     header_map_t _stored_headers;
 
-    esp_http_client_handle_t _handle = nullptr;
+    // esp_http_client_handle_t _handle = nullptr;
 
     static void _perform_subtask(void *param);
-    static esp_err_t _httpevent_handler(esp_http_client_event_t *evt);
+    // static int _httpevent_handler(esp_http_client_event_t *evt);
+    static int _httpevent_handler(void *evt); // TODO
 
     void _delete_subtask_if_running();
 
     void _flush_response();
 
     int _perform();
-    int _perform_stream(esp_http_client_method_t method, uint8_t *write_data, int write_size);
+    // int _perform_stream(esp_http_client_method_t method, uint8_t *write_data, int write_size);
+    int _perform_stream(int method, uint8_t *write_data, int write_size); // TODO enum
 
 public:
 

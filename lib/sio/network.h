@@ -3,11 +3,12 @@
 
 #include <string>
 #include <vector>
+#include <pthread.h>
 #include "sio.h"
 #include "EdUrlParser.h"
 #include "../network-protocol/Protocol.h"
 #include "networkStatus.h"
-#include "driver/timer.h"
+// #include "driver/timer.h"
 #include "../../lib/network-protocol/status_error_codes.h"
 
 /**
@@ -39,13 +40,19 @@ public:
     /**
      * The spinlock for the ESP32 hardware timers. Used for interrupt rate limiting.
      */
-    portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+    // portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+    pthread_mutex_t timerMux;
 
     /**
      * Toggled by the rate limiting timer to indicate that the PROCEED interrupt should
      * be pulsed.
      */
     bool interruptProceed = false;
+
+    /**
+     * Timer Rate for interrupt timer
+     */
+    int timerRate = 100;
 
     /**
      * Called for SIO Command 'O' to open a connection to a network protocol, allocate all buffers,
@@ -161,7 +168,9 @@ private:
     /**
      * ESP timer handle for the Interrupt rate limiting timer
      */
-    esp_timer_handle_t rateTimerHandle = nullptr;
+    // esp_timer_handle_t rateTimerHandle = nullptr;
+    pthread_t rateTimerThread;
+    pthread_t *rateTimerHandle = nullptr;
 
     /**
      * Devicespec passed to us, e.g. N:HTTP://WWW.GOOGLE.COM:80/
@@ -203,11 +212,6 @@ private:
      * The password to use for a protocol action
      */
     string password;
-
-    /**
-     * Timer Rate for interrupt timer
-     */
-    int timerRate = 100;
 
     /**
      * The channel mode for the currently open SIO device. By default, it is PROTOCOL, which passes

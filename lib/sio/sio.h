@@ -243,6 +243,8 @@ struct sio_message_t
 
 // typedef sio_message_t sio_message_t;
 
+class sioNetwork;
+
 class sioBus
 {
 private:
@@ -253,7 +255,7 @@ private:
     sioDevice *_activeDev = nullptr;
     sioModem *_modemDev = nullptr;
     sioFuji *_fujiDev = nullptr;
-    // sioNetwork *_netDev[8] = { nullptr };
+    sioNetwork *_netDev[8] = { nullptr };
     // sioMIDIMaze *_midiDev = nullptr;
     // sioCassette *_cassetteDev = nullptr;
     // sioCPM *_cpmDev = nullptr;

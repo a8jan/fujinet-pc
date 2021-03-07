@@ -206,27 +206,22 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     switch (tagid)
     {
     case FN_HOSTNAME:
-        // resultstream << fnSystem.Net.get_hostname();
-        resultstream << Config.get_general_devicename();
+        resultstream << fnSystem.Net.get_hostname();
         break;
     case FN_VERSION:
         resultstream << fnSystem.get_fujinet_version();
         break;
     case FN_IPADDRESS:
-        // resultstream << fnSystem.Net.get_ip4_address_str();
-        resultstream << "0.0.0.0";
+        resultstream << fnSystem.Net.get_ip4_address_str();
         break;
     case FN_IPMASK:
-        // resultstream << fnSystem.Net.get_ip4_mask_str();
-        resultstream << "0.0.0.0";
+        resultstream << fnSystem.Net.get_ip4_mask_str();
         break;
     case FN_IPGATEWAY:
-        // resultstream << fnSystem.Net.get_ip4_gateway_str();
-        resultstream << "0.0.0.0";
+        resultstream << fnSystem.Net.get_ip4_gateway_str();
         break;
     case FN_IPDNS:
-        // resultstream << fnSystem.Net.get_ip4_dns_str();
-        resultstream << "0.0.0.0";
+        resultstream << fnSystem.Net.get_ip4_dns_str();
         break;
     case FN_WIFISSID:
         resultstream << fnWiFi.get_current_ssid();

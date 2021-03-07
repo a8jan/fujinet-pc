@@ -371,7 +371,8 @@ bool NetworkProtocolTCP::special_accept_connection()
         {
             remoteIP = client.remoteIP();
             remotePort = client.remotePort();
-            remoteIPString = inet_ntoa(remoteIP);
+            // remoteIPString = inet_ntoa(remoteIP);
+            remoteIPString = inet_ntoa(in_addr({.s_addr = remoteIP}));
             Debug_printf("Accepted connection from %s:%u", remoteIPString, remotePort);
             return false;
         }
@@ -413,7 +414,8 @@ bool NetworkProtocolTCP::special_close_client_connection()
 
     remoteIP = client.remoteIP();
     remotePort = client.remotePort();
-    remoteIPString = inet_ntoa(remoteIP);
+    // remoteIPString = inet_ntoa(remoteIP);
+    remoteIPString = inet_ntoa(in_addr({.s_addr = remoteIP}));
 
     Debug_printf("Disconnecting client %s:%u\n", remoteIPString, remotePort);
 

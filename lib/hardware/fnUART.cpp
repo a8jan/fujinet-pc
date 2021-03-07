@@ -420,6 +420,27 @@ bool UARTManager::is_command(void)
     return ((status & _command_tiocm) != 0);
 }
 
+void UARTManager::set_proceed_line(bool level, bool force)
+{
+    int result;
+    int mbit = _proceed_tiocm;
+    static bool last_level = true;
+
+    if (!_initialized)
+        return;
+
+    if (!force && last_level == level)
+        return;
+    
+    last_level = level;
+    Debug_print(level ? "+" : "-");
+    result = level ? ioctl(_fd, TIOCMBIC, &mbit) : ioctl(_fd, TIOCMBIS, &mbit);
+    if (result < 0)
+    {
+        perror("Cannot set proceed signal");
+    }
+}
+
 timeval timeval_from_ms (const uint32_t millis)
 {
   timeval tv;

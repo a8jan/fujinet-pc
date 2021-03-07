@@ -22,7 +22,8 @@ INCLUDE (CheckIncludeFiles)
 CHECK_INCLUDE_FILES (bsd/string.h HAVE_BSD_STRING_H)
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
 
-set(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include lib/config lib/FileSystem lib/utils lib/hardware lib/tcpip lib/telnet 
+set(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include lib/config lib/FileSystem lib/utils lib/hardware 
+    lib/tcpip lib/telnet  lib/EdUrlParser lib/TNFSlib
     lib/sio lib/printer-emulator lib/mongoose lib/http lib/task)
 set(SOURCES src/main.cpp
     lib/config/fnConfig.h lib/config/fnConfig.cpp
@@ -37,7 +38,7 @@ set(SOURCES src/main.cpp
     lib/utils/cbuf.h lib/utils/cbuf.cpp
     lib/hardware/fnDummyWiFi.h lib/hardware/fnDummyWiFi.cpp
     lib/hardware/fnUART.h lib/hardware/fnUART.cpp
-    lib/hardware/fnSystem.h lib/hardware/fnSystem.cpp
+    lib/hardware/fnSystem.h lib/hardware/fnSystem.cpp lib/hardware/fnSystemNet.cpp
     lib/sio/diskType.h lib/sio/diskType.cpp
     lib/sio/diskTypeAtr.h lib/sio/diskTypeAtr.cpp
     lib/sio/diskTypeAtx.h 
@@ -46,6 +47,7 @@ set(SOURCES src/main.cpp
     lib/tcpip/fnUDP.h lib/tcpip/fnUDP.cpp
     lib/tcpip/fnTcpClient.h lib/tcpip/fnTcpClient.cpp
     lib/tcpip/fnTcpServer.h lib/tcpip/fnTcpServer.cpp
+    lib/ftp/fnFTP.h lib/ftp/fnFTP.cpp
     lib/TNFSlib/tnfslibMountInfo.h lib/TNFSlib/tnfslibMountInfo.cpp
     lib/TNFSlib/tnfslib.h lib/TNFSlib/tnfslib.cpp
     lib/printer-emulator/atari_1020.h lib/printer-emulator/atari_1020.cpp
@@ -76,6 +78,16 @@ set(SOURCES src/main.cpp
     lib/sio/fujiHost.h lib/sio/fujiHost.cpp
     lib/sio/fujiDisk.h lib/sio/fujiDisk.cpp
     lib/sio/fuji.h lib/sio/fuji.cpp
+    lib/EdUrlParser/EdUrlParser.h lib/EdUrlParser/EdUrlParser.cpp
+    lib/network-protocol/Protocol.h lib/network-protocol/Protocol.cpp
+    lib/network-protocol/Test.h lib/network-protocol/Test.cpp
+    lib/network-protocol/TCP.h lib/network-protocol/TCP.cpp
+    lib/network-protocol/UDP.h lib/network-protocol/UDP.cpp
+    lib/network-protocol/Telnet.h lib/network-protocol/Telnet.cpp
+    lib/network-protocol/FS.h lib/network-protocol/FS.cpp
+    lib/network-protocol/FTP.h lib/network-protocol/FTP.cpp
+    lib/network-protocol/TNFS.h lib/network-protocol/TNFS.cpp
+    lib/sio/networkStatus.h lib/sio/network.h lib/sio/network.cpp
     lib/sio/sio.h lib/sio/sio.cpp
     lib/mongoose/mongoose.h lib/mongoose/mongoose.c
     lib/http/httpService.h lib/http/httpService.cpp
@@ -91,5 +103,7 @@ add_executable(fujinet ${SOURCES})
 target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_libraries(fujinet bsd)
+    target_link_libraries(fujinet bsd pthread)
+else()
+    target_link_libraries(fujinet pthread)
 endif()
