@@ -416,7 +416,9 @@ void sioModem::sio_control()
         if (DTR == 0 && tcpClient.connected())
         {
             tcpClient.stop(); // Hang up if DTR drops.
-
+            CRX = false;
+            cmdMode = true;
+            
             if (listenPort > 0)
             {
                 // tcpServer.stop();
@@ -607,6 +609,7 @@ void sioModem::sio_baudlock()
 {
     sio_ack();
     baudLock = (cmdFrame.aux1 > 0 ? true : false);
+    modemBaud = sio_get_aux();
 
     Debug_printf("baudLock: %d\n", baudLock);
 
@@ -621,7 +624,7 @@ void sioModem::sio_autoanswer()
     sio_ack();
     autoAnswer = (cmdFrame.aux1 > 0 ? true : false);
 
-    Debug_printf("autoanswer: %d\n", baudLock);
+    Debug_printf("autoanswer: %d\n", autoAnswer);
 
     sio_complete();
 }
@@ -1668,8 +1671,6 @@ int sioModem::sio_handle_modem()
                     plusCount = 0;
                 }
             }
-
-            // TODO: Add Telnet processing here.
 
             // Write the buffer to TCP finally
             if (use_telnet == true)
