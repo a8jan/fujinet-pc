@@ -562,6 +562,11 @@ void sioModem::sio_stream()
 
     sio_to_computer((uint8_t *)response, sizeof(response), false);
 
+    // Debug_printf("Flush serial data\n");
+    // fnUartSIO.flush();
+    // Debug_printf("Drain delay\n"); 
+    fnSystem.delay(5); // millis TODO: UART real drain needed for macOS
+
     fnUartSIO.set_baudrate(modemBaud);
     modemActive = true;
     Debug_printf("Modem streaming at %u baud\n", modemBaud);
