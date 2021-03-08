@@ -364,8 +364,8 @@ size_t fnTcpClient::write(const uint8_t *buf, size_t size)
         FD_SET(socketFileDescriptor, &fdset);
 
         struct timeval tv;
-        tv.tv_sec = 0;
-        tv.tv_usec = FNTCP_SELECT_TIMEOUT_US;
+        tv.tv_sec = (long)(FNTCP_SELECT_TIMEOUT_US / 1000000UL);
+        tv.tv_usec = (long)(FNTCP_SELECT_TIMEOUT_US % 1000000UL);
 
         retry--;
 
