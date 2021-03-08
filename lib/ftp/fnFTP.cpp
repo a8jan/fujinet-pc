@@ -845,7 +845,7 @@ bool fnFTP::open_directory(string path, string pattern)
         return true;
     }
 
-    uint8_t buf[256];
+    uint8_t buf[256]; // apc: ??
 
     if (buf == nullptr)
     {
