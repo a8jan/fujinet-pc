@@ -69,6 +69,15 @@ void fnConfig::store_general_config_enabled(bool config_enabled)
     _dirty = true;
 }
 
+void fnConfig::store_general_boot_mode(uint8_t boot_mode)
+{
+    if (_general.boot_mode == boot_mode)
+        return;
+    
+    _general.boot_mode = boot_mode;
+    _dirty = true;
+}
+
 void fnConfig::store_general_hsioindex(int hsio_index)
 {
     if (_general.hsio_index == hsio_index)
@@ -502,6 +511,7 @@ void fnConfig::save()
     ss << "hsioindex=" << _general.hsio_index << LINETERM;
     ss << "rotationsounds=" << _general.rotation_sounds << LINETERM;
     ss << "configenabled=" << _general.config_enabled << LINETERM;
+    ss << "boot_mode=" << _general.boot_mode << LINETERM;
     if (_general.timezone.empty() == false)
         ss << "timezone=" << _general.timezone << LINETERM;
 
@@ -798,6 +808,11 @@ void fnConfig::_read_section_general(std::stringstream &ss)
             else if (strcasecmp(name.c_str(), "configenabled") == 0)
             {
                 _general.config_enabled = util_string_value_is_true(value);
+            }
+            else if (strcasecmp(name.c_str(), "boot_mode") == 0)
+            {
+                int mode = atoi(value.c_str());
+                _general.boot_mode = mode;
             }
         }
     }

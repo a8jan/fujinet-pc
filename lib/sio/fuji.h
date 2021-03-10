@@ -66,6 +66,8 @@ private:
 
     sioDisk _bootDisk; // special disk drive just for configuration
 
+    uint8_t bootMode = 0; // Boot mode 0 = CONFIG, 1 = MINI-BOOT
+
     uint8_t _countScannedSSIDs = 0;
 
     void _populate_slots_from_config();
@@ -110,6 +112,8 @@ protected:
     void sio_get_device_filename();    // 0xDA
     void sio_set_boot_config();        // 0xD9
     void sio_copy_file();              // 0xD8
+    void sio_mount_all();              // 0xD7
+    void sio_set_boot_mode();          // 0xD6
 
     void sio_status() override;
     void sio_process(uint32_t commanddata, uint8_t checksum) override;
@@ -126,6 +130,8 @@ public:
 
     // sioCassette *cassette() { return &_cassetteDev; };
     void debug_tape();
+
+    void insert_boot_device(uint8_t d);
 
     void setup(sioBus *siobus);
 
