@@ -19,6 +19,10 @@ private:
     // QueueHandle_t _uart_q;
     bool _initialized; // is UART ready?
 
+    // serial port error counter
+    int _errcount;
+    unsigned long _suspend_time;
+
     size_t _print_number(unsigned long n, uint8_t base);
 
 public:
@@ -27,6 +31,7 @@ public:
 
     void begin(int baud);
     void end();
+    void suspend(int sec=5);
     void set_baudrate(uint32_t baud);
     bool initialized() { return _initialized; }
 

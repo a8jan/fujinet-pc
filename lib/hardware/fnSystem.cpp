@@ -32,7 +32,7 @@ SystemManager fnSystem;
 uint64_t _get_start_millis()
 {
     struct timeval tv;
-    gettimeofday(&tv,NULL);
+    gettimeofday(&tv, NULL);
     return (uint64_t)(tv.tv_sec*1000ULL+tv.tv_usec/1000ULL);
 }
 uint64_t _start_millis = _get_start_millis();
@@ -133,7 +133,7 @@ uint64_t SystemManager::micros()
 {
     // return (unsigned long)(esp_timer_get_time());
     struct timeval tv;
-    gettimeofday(&tv,NULL);
+    gettimeofday(&tv, NULL);
     return (uint64_t)(tv.tv_sec*1000000ULL+tv.tv_usec) - _start_micros;
 }
 
@@ -143,7 +143,7 @@ uint64_t SystemManager::millis()
 {
     // return (unsigned long)(esp_timer_get_time() / 1000ULL);
     struct timeval tv;
-    gettimeofday(&tv,NULL);
+    gettimeofday(&tv, NULL);
     return (uint64_t)(tv.tv_sec*1000UL+tv.tv_usec/1000UL) - _start_millis;
 }
 

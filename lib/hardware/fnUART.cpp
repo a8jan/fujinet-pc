@@ -3,15 +3,13 @@
 // #include <esp_system.h>
 // #include <driver/uart.h>
 
-// C library headers
 #include <stdio.h>
 #include <string.h>
 #include "config.h"
 #ifdef HAVE_BSD_STRING_H
 #include <bsd/string.h>
 #endif
-
-// Linux headers
+#include <sys/time.h>
 #include <unistd.h> // write(), read(), close()
 #include <errno.h> // Error integer and strerror() function
 #include <termios.h> // Contains POSIX terminal control definitions
@@ -127,6 +125,9 @@ void UARTManager::begin(int baud)
     //     end();
     // }
 
+    _errcount = 0;
+    _suspend_time = 0;
+
     // Open the serial port
     if (*_device == 0)
     {
@@ -154,6 +155,7 @@ void UARTManager::begin(int baud)
     if (_fd < 0)
     {
 		perror("Failed to open serial device");
+        suspend();
 		return;
 	}
     
@@ -165,6 +167,7 @@ void UARTManager::begin(int baud)
     if(tcgetattr(_fd, &tios) != 0)
     {
         perror("Failed to get termios structure");
+        suspend();
 		return;
     }
 
@@ -236,20 +239,32 @@ void UARTManager::begin(int baud)
     if (tcsetattr(_fd, TCSANOW, &tios) != 0)
     {
         perror("Failed to set serial attributes");
+        suspend();
 		return;
     }
+
 
     Debug_printf("### UART initialized ###\n");
     // Set initialized.
     _initialized=true;
 }
 
+
+void UARTManager::suspend(int sec)
+{
+    Debug_println("Suspending serial port");
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    _suspend_time = tv.tv_sec + sec;
+    end();
+}
+
 /* Discards anything in the input buffer
 */
 void UARTManager::flush_input()
-{        
-    // uart_flush_input(_uart_num);
-    tcflush(_fd, TCIFLUSH);
+{
+    if (_initialized)
+        tcflush(_fd, TCIFLUSH);
 }
 
 /* Clears input buffer and flushes out transmit buffer waiting at most
@@ -257,21 +272,19 @@ void UARTManager::flush_input()
 */
 void UARTManager::flush()
 {
-    // uart_wait_tx_done(_uart_num, MAX_FLUSH_WAIT_TICKS);
-    tcdrain(_fd);
+    if (_initialized)
+        tcdrain(_fd);
 }
 
 /* Returns number of bytes available in receive buffer or -1 on error
 */
 int UARTManager::available()
 {
-    // size_t result;
-    // if(ESP_FAIL == uart_get_buffered_data_len(_uart_num, &result))
-    //     return -1;
-    // return result;
     int result;
+    if (!_initialized)
+        return 0;
 	if (ioctl(_fd, FIONREAD, &result) < 0)
-        return -1;
+        return 0;
     return result;
 }
 
@@ -286,9 +299,12 @@ int UARTManager::peek()
 */
 void UARTManager::set_baudrate(uint32_t baud)
 {
-    termios tios;
     Debug_printf("set_baudrate: %d\n", baud);
 
+    if (!_initialized)
+        return;
+
+    termios tios;
     tcgetattr(_fd, &tios);
     // tios.c_cflag &= ~CSTOPB;
     // cfmakeraw(&tios);
@@ -409,13 +425,32 @@ bool UARTManager::is_command(void)
     int status;
 
     if (! _initialized)
-        return false;
+    {
+        // is serial port suspended ?
+        if (_suspend_time != 0)
+        {
+            struct timeval tv;
+            gettimeofday(&tv, NULL);
+            if (_suspend_time > tv.tv_sec)
+                return false;
+            // try to re-open serial port
+            begin(19200); // TODO current speed
+        }
+        if (! _initialized)
+            return false;
+    }
 
     if (ioctl(_fd, TIOCMGET, &status) < 0)
     {
-        perror("Cannot retrieve serial port status");
+        // handle serial port errors
+        _errcount++;
+        if(_errcount == 1)
+            perror("Cannot retrieve serial port status");
+        else if (_errcount > 1000)
+            suspend();
         return false;
     }
+    _errcount = 0;
 
     return ((status & _command_tiocm) != 0);
 }
@@ -494,6 +529,9 @@ int UARTManager::read(void)
 */
 size_t UARTManager::readBytes(uint8_t *buffer, size_t length, bool command_mode)
 {
+    if (!_initialized)
+        return 0;
+
     int result;
     int rxbytes;
     for (rxbytes=0; rxbytes<length;)
@@ -538,6 +576,9 @@ size_t UARTManager::write(uint8_t c)
 
 size_t UARTManager::write(const uint8_t *buffer, size_t size)
 {
+    if (!_initialized)
+        return 0;
+
     int result;
     int txbytes;
     fd_set writefds;
@@ -640,7 +681,7 @@ size_t UARTManager::_print_number(unsigned long n, uint8_t base)
     char *str = &buf[sizeof(buf) - 1];
 
     if (!_initialized)
-        return -1;
+        return 0;
 
     *str = '\0';
 
@@ -663,7 +704,7 @@ size_t UARTManager::print(const char *str)
 //     int z = strlen(str);
 
     if (!_initialized)
-        return -1;
+        return 0;
 
 //     return uart_write_bytes(_uart_num, str, z);;
     return write(str);
@@ -672,7 +713,7 @@ size_t UARTManager::print(const char *str)
 size_t UARTManager::print(std::string str)
 {
     if (!_initialized)
-        return -1;
+        return 0;
 
     return print(str.c_str());
 }
@@ -680,7 +721,7 @@ size_t UARTManager::print(std::string str)
 size_t UARTManager::print(int n, int base)
 {
     if (!_initialized)
-        return -1;
+        return 0;
 
     return print((long) n, base);
 }
@@ -688,7 +729,7 @@ size_t UARTManager::print(int n, int base)
 size_t UARTManager::print(unsigned int n, int base)
 {
     if (!_initialized)
-        return -1;
+        return 0;
 
     return print((unsigned long) n, base);
 }
@@ -696,7 +737,7 @@ size_t UARTManager::print(unsigned int n, int base)
 size_t UARTManager::print(long n, int base)
 {
     if (!_initialized)
-        return -1;
+        return 0;
 
     if(base == 0) {
         return write(n);
@@ -716,7 +757,7 @@ size_t UARTManager::print(long n, int base)
 size_t UARTManager::print(unsigned long n, int base)
 {
     if (!_initialized)
-        return -1;
+        return 0;
 
     if(base == 0) {
         return write(n);
