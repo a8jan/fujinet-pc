@@ -476,6 +476,8 @@ void sioFuji::sio_copy_file()
 // Mount all
 void sioFuji::sio_mount_all()
 {
+    bool nodisks = true; // Check at the end if no disks are in a slot and disable config
+
     for (int i = 0; i < 8; i++)
     {
         fujiDisk &disk = _fnDisks[i];
@@ -487,6 +489,8 @@ void sioFuji::sio_mount_all()
 
         if (disk.host_slot != 0xFF)
         {
+            nodisks = false; // We have a disk in a slot
+
             if (host.mount() == false)
             {
                 sio_error();
@@ -514,6 +518,11 @@ void sioFuji::sio_mount_all()
             // And now mount it
             disk.disk_type = disk.disk_dev.mount(disk.fileh, disk.filename, disk.disk_size);
         }
+    }
+
+    if (nodisks){
+        // No disks in a slot, disable config
+        boot_config = false;
     }
 
     sio_complete();
