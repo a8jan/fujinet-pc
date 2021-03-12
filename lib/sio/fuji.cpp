@@ -520,7 +520,7 @@ void sioFuji::sio_mount_all()
         }
     }
 
-    if (nodisks){
+    if (nodisks) {
         // No disks in a slot, disable config
         boot_config = false;
     }
@@ -1510,7 +1510,6 @@ void sioFuji::insert_boot_device(uint8_t d)
 
     _bootDisk.mount(fBoot, boot_atr, 0);
 
-    _bootDisk.is_config_device = true;
     _bootDisk.device_active = false;
 }
 
@@ -1546,10 +1545,6 @@ sioDisk *sioFuji::bootdisk()
 
 void sioFuji::sio_process(uint32_t commanddata, uint8_t checksum)
 {
-    cmdFrame.commanddata = commanddata;
-    cmdFrame.checksum = checksum;
-
-    Debug_println("sioFuji::sio_process() called");
 
     switch (cmdFrame.comnd)
     {

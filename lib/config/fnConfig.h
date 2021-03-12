@@ -233,7 +233,7 @@ private:
     const char * _serial_hsio_mode_names[SERIAL_HSIO_INVALID] = {
         "disabled",
         "sio2pc",
-        "pokey"
+        "pokey" 
     };
 
     struct host_info

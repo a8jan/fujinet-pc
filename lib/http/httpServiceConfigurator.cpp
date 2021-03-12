@@ -425,7 +425,7 @@ int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t 
         }
         else if (i->first.compare("serialproceed") == 0)
         {
-            config_serial(std::string(), std::string(), i->second);
+            config_serial(std::string(), std::string(), i->second); 
         }
     }
 
