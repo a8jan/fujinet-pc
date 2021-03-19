@@ -65,6 +65,14 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_DRIVE6HOST,
         FN_DRIVE7HOST,
         FN_DRIVE8HOST,
+        FN_DRIVE1BROWSER,
+        FN_DRIVE2BROWSER,
+        FN_DRIVE3BROWSER,
+        FN_DRIVE4BROWSER,
+        FN_DRIVE5BROWSER,
+        FN_DRIVE6BROWSER,
+        FN_DRIVE7BROWSER,
+        FN_DRIVE8BROWSER,
         FN_DRIVE1MOUNT,
         FN_DRIVE2MOUNT,
         FN_DRIVE3MOUNT,
@@ -146,6 +154,14 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_DRIVE6HOST",
         "FN_DRIVE7HOST",
         "FN_DRIVE8HOST",
+        "FN_DRIVE1BROWSER",
+        "FN_DRIVE2BROWSER",
+        "FN_DRIVE3BROWSER",
+        "FN_DRIVE4BROWSER",
+        "FN_DRIVE5BROWSER",
+        "FN_DRIVE6BROWSER",
+        "FN_DRIVE7BROWSER",
+        "FN_DRIVE8BROWSER",
         "FN_DRIVE1MOUNT",
         "FN_DRIVE2MOUNT",
         "FN_DRIVE3MOUNT",
@@ -355,13 +371,30 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     case FN_DRIVE6HOST:
     case FN_DRIVE7HOST:
     case FN_DRIVE8HOST:
-	/* From what host is each disk is mounted on each Drive Slot? */
-	drive_slot = tagid - FN_DRIVE1HOST;
-	host_slot = Config.get_mount_host_slot(drive_slot);
+        /* From what host is each disk is mounted on each Drive Slot? */
+        drive_slot = tagid - FN_DRIVE1HOST;
+        host_slot = Config.get_mount_host_slot(drive_slot);
         if (host_slot != HOST_SLOT_INVALID) {
-	    resultstream << Config.get_host_name(host_slot);
+            resultstream << Config.get_host_name(host_slot);
         } else {
             resultstream << "";
+        }
+        break;
+    case FN_DRIVE1BROWSER:
+    case FN_DRIVE2BROWSER:
+    case FN_DRIVE3BROWSER:
+    case FN_DRIVE4BROWSER:
+    case FN_DRIVE5BROWSER:
+    case FN_DRIVE6BROWSER:
+    case FN_DRIVE7BROWSER:
+    case FN_DRIVE8BROWSER:
+    	/* Link to browse the files */
+	    drive_slot = tagid - FN_DRIVE1BROWSER;
+	    host_slot = Config.get_mount_host_slot(drive_slot);
+        if (host_slot != HOST_SLOT_INVALID) {
+	        resultstream << "/browse/host/" << host_slot+1 << Config.get_mount_path(drive_slot) << "?action=slotlist";
+        } else {
+            resultstream << "#";
         }
         break;
     case FN_DRIVE1MOUNT:
@@ -376,8 +409,8 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
 	drive_slot = tagid - FN_DRIVE1MOUNT;
 	host_slot = Config.get_mount_host_slot(drive_slot);
         if (host_slot != HOST_SLOT_INVALID) {
-	    resultstream << Config.get_mount_path(drive_slot);
-	    resultstream << " (" << (Config.get_mount_mode(drive_slot) == fnConfig::mount_modes::MOUNTMODE_READ ? "R" : "W") << ")";
+	        resultstream << Config.get_mount_path(drive_slot);
+	        resultstream << " (" << (Config.get_mount_mode(drive_slot) == fnConfig::mount_modes::MOUNTMODE_READ ? "R" : "W") << ")";
         } else {
             resultstream << "(Empty)";
         }
@@ -390,10 +423,10 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     case FN_HOST6:
     case FN_HOST7:
     case FN_HOST8:
-	/* What TNFS host is mounted on each Host Slot? */
-	host_slot = tagid - FN_HOST1;
+	    /* What TNFS host is mounted on each Host Slot? */
+	    host_slot = tagid - FN_HOST1;
         if (Config.get_host_type(host_slot) != fnConfig::host_types::HOSTTYPE_INVALID) {
-	    resultstream << Config.get_host_name(host_slot);
+	        resultstream << Config.get_host_name(host_slot);
         } else {
             resultstream << "(Empty)";
         }
@@ -425,7 +458,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
            for the TNFS host mounted on each Host Slot? */
 	host_slot = tagid - FN_HOST1PREFIX;
         if (Config.get_host_type(host_slot) != fnConfig::host_types::HOSTTYPE_INVALID) {
-	    resultstream << theFuji.get_host_prefix(host_slot);
+	        resultstream << theFuji.get_host_prefix(host_slot);
         } else {
             resultstream << "";
         }
