@@ -740,6 +740,9 @@ void sioNetwork::sio_poll_interrupt()
 {
     if (protocol != nullptr)
     {
+        if (protocol->interruptEnable == false)
+            return;
+            
         protocol->fromInterrupt = true;
         protocol->status(&status);
         protocol->fromInterrupt = false;
