@@ -67,7 +67,6 @@ int SystemManager::_net::get_ip4_info(uint8_t ip4address[4], uint8_t ip4mask[4],
 
 int SystemManager::_net::get_ip4_dns_info(uint8_t ip4dnsprimary[4])
 {
-    return 0;
     // esp_netif_dns_info_t dnsinfo;
     // esp_err_t e = esp_netif_get_dns_info(fnWiFi.get_adapter_handle(), ESP_NETIF_DNS_MAIN, &dnsinfo);
     // if(e == ESP_OK)
