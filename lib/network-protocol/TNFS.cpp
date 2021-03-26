@@ -225,7 +225,7 @@ uint8_t NetworkProtocolTNFS::special_inquiry(uint8_t cmd)
         return NetworkProtocolFS::special_inquiry(cmd);
     }
 
-    Debug_printf("NetworkProtocolTNFS:::special_inquiry(%u) - 0x%02x\n",ret);
+    Debug_printf("NetworkProtocolTNFS:::special_inquiry(%u) - 0x%02x\n", cmd, ret);
 
     return ret;
 }
