@@ -328,6 +328,10 @@ int sioFuji::sio_disk_image_mount(bool siomode, int slot)
     {
         return _on_error(siomode);
     }
+    if (!_validate_host_slot(_fnDisks[deviceSlot].host_slot))
+    {
+        return _on_error(siomode);
+    }
 
     // A couple of reference variables to make things much easier to read...
     fujiDisk &disk = _fnDisks[deviceSlot];
