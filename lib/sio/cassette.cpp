@@ -1,5 +1,6 @@
 #include "cassette.h"
 #include "fnSystem.h"
+#include "fnUART.h"
 #include "led.h"
 #include "../../include/debug.h"
 
@@ -19,7 +20,7 @@
 #define CASSETTE_FILE "/test" // basic program
 
 // copied from fuUART.cpp - figure out better way
-#define UART2_RX 33
+#define UART2_RX (33)
 #define ESP_INTR_FLAG_DEFAULT 0
 #define BOXLEN 5
 
@@ -28,10 +29,11 @@ unsigned long delta = 0;
 unsigned long boxcar[BOXLEN];
 uint8_t boxidx = 0;
 
-static void IRAM_ATTR gpio_isr_handler(void *arg)
+// static void IRAM_ATTR gpio_isr_handler(void *arg)
+static void gpio_isr_handler(void *arg)
 {
-    uint32_t gpio_num = (uint32_t)arg;
-    if (gpio_num == UART2_RX)
+    // uint32_t gpio_num = (uint32_t)arg;
+    // if (gpio_num == UART2_RX)
     {
         unsigned long now = fnSystem.micros();
         boxcar[boxidx++] = now - last; // interval between current and last ISR call
@@ -136,7 +138,7 @@ void sioCassette::mount_cassette_file(FILE *f, size_t fz)
     filesize = fz;
     
 #ifdef DEBUG
-    Debug_printf("Cassette image filesize = %u\n", fz);
+    Debug_printf("Cassette image filesize = %u\n", (unsigned)fz);
 #endif
 
     tape_offset = 0;
@@ -145,11 +147,17 @@ void sioCassette::mount_cassette_file(FILE *f, size_t fz)
 
 #ifdef DEBUG
     if (tape_flags.FUJI)
+    {
         Debug_println("FUJI File Found");
+    }
     else if (cassetteMode == cassette_mode_t::playback)
+    {
         Debug_println("Not a FUJI File");
+    }
     else
+    {
         Debug_println("A File for Recording");
+    }
 #endif
 
     _mounted = true;
@@ -166,14 +174,14 @@ void sioCassette::sio_enable_cassette()
     if (cassetteMode == cassette_mode_t::record && tape_offset == 0)
     {
         fnUartSIO.end();
-        fnSystem.set_pin_mode(UART2_RX, gpio_mode_t::GPIO_MODE_INPUT);
+        // fnSystem.set_pin_mode(UART2_RX, gpio_mode_t::GPIO_MODE_INPUT);
 
-        //change gpio intrrupt type for one pin
-        gpio_set_intr_type((gpio_num_t)UART2_RX, GPIO_INTR_ANYEDGE);
-        //install gpio isr service
-        gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
-        //hook isr handler for specific gpio pin
-        gpio_isr_handler_add((gpio_num_t)UART2_RX, gpio_isr_handler, (void *)UART2_RX);
+        // //change gpio intrrupt type for one pin
+        // gpio_set_intr_type((gpio_num_t)UART2_RX, GPIO_INTR_ANYEDGE);
+        // //install gpio isr service
+        // gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+        // //hook isr handler for specific gpio pin
+        // gpio_isr_handler_add((gpio_num_t)UART2_RX, gpio_isr_handler, (void *)UART2_RX);
 
 #ifdef DEBUG
         Debug_println("stopped hardware UART");
@@ -288,7 +296,7 @@ size_t sioCassette::send_tape_block(size_t offset)
 #ifdef DEBUG
         //print_str(35,132,2,Yellow,window_bg, (char*) atari_sector_buffer);
         //sprintf_P((char*)atari_sector_buffer,PSTR("Block %u / %u "),offset/BLOCK_LEN+1,(FileInfo.vDisk->size-1)/BLOCK_LEN+1);
-        Debug_printf("Block %u of %u \r\n", offset / BLOCK_LEN + 1, filesize / BLOCK_LEN + 1);
+        Debug_printf("Block %u of %u \r\n", (unsigned)(offset / BLOCK_LEN + 1), (unsigned)(filesize / BLOCK_LEN + 1));
 #endif
         //read block
         //r = faccess_offset(FILE_ACCESS_READ, offset, BLOCK_LEN);
@@ -379,7 +387,7 @@ size_t sioCassette::send_FUJI_tape_block(size_t offset)
     {
         // looking for a data header while handling baud changes along the way
 #ifdef DEBUG
-        Debug_printf("Offset: %u\r\n", offset);
+        Debug_printf("Offset: %u\r\n", (unsigned)offset);
 #endif
         fseek(_file, offset, SEEK_SET);
         fread(atari_sector_buffer, 1, sizeof(struct tape_FUJI_hdr), _file);
@@ -415,17 +423,17 @@ size_t sioCassette::send_FUJI_tape_block(size_t offset)
 #endif
 
     // TO DO : turn on LED
-    fnLedManager.set(eLed::LED_SIO, true);
+    // fnLedManager.set(eLed::LED_SIO, true);
     while (gap--)
     {
         fnSystem.delay_microseconds(999); // shave off a usec for the MOTOR pin check
         if (has_pulldown() && !motor_line() && gap > 1000)
         {
-            fnLedManager.set(eLed::LED_SIO, false);
+            // fnLedManager.set(eLed::LED_SIO, false);
             return starting_offset;
         }
     }
-    fnLedManager.set(eLed::LED_SIO, false);
+    // fnLedManager.set(eLed::LED_SIO, false);
 
 #ifdef DEBUG
     // wait until after delay for new line so can see it in timestamp
@@ -566,7 +574,7 @@ size_t sioCassette::receive_FUJI_tape_block(size_t offset)
     offset += fwrite(atari_sector_buffer, 1, BLOCK_LEN + 4, _file);
 
 #ifdef DEBUG
-    Debug_printf("file offset: %d\n", offset);
+    Debug_printf("file offset: %d\n", (unsigned)offset);
 #endif
     return offset;
 }

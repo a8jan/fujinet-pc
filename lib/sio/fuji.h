@@ -5,7 +5,7 @@
 #include "../../include/debug.h"
 #include "sio.h"
 #include "network.h"
-// #include "cassette.h"
+#include "cassette.h"
 
 #include "fujiHost.h"
 #include "fujiDisk.h"

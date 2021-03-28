@@ -73,6 +73,7 @@ set(SOURCES src/main.cpp
     lib/telnet/libtelnet.h lib/telnet/libtelnet.c
     lib/modem-sniffer/modem-sniffer.h lib/modem-sniffer/modem-sniffer.cpp
     lib/sio/modem.h lib/sio/modem.cpp
+    lib/sio/cassette.h lib/sio/cassette.cpp
     lib/sio/apetime.h lib/sio/apetime.cpp
     lib/sio/disk.h lib/sio/disk.cpp
     lib/sio/fujiHost.h lib/sio/fujiHost.cpp

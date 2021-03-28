@@ -8,7 +8,7 @@
 // #include "fnDNS.h"
 #include "utils.h"
 // #include "midimaze.h"
-// #include "cassette.h"
+#include "cassette.h"
 // #include "siocpm.h"
 // #include "printer.h"
 #include "../hardware/fnUART.h"
