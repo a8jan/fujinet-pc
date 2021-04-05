@@ -247,6 +247,7 @@ void UARTManager::begin(int baud)
     Debug_printf("### UART initialized ###\n");
     // Set initialized.
     _initialized=true;
+    _baud = 19200;
 }
 
 
@@ -417,7 +418,7 @@ void UARTManager::set_baudrate(uint32_t baud)
         if (tcsetattr(_fd, TCSANOW, &tios) != 0)
             perror("Failed to set serial attributes");
     }
-
+    _baud = baud;
 }
 
 bool UARTManager::is_command(void)
@@ -476,7 +477,7 @@ void UARTManager::set_proceed_line(bool level, bool force)
     }
 }
 
-timeval timeval_from_ms (const uint32_t millis)
+timeval timeval_from_ms(const uint32_t millis)
 {
   timeval tv;
   tv.tv_sec = millis / 1000;
@@ -582,13 +583,14 @@ size_t UARTManager::write(const uint8_t *buffer, size_t size)
     int result;
     int txbytes;
     fd_set writefds;
-    timeval timeout_tv(timeval_from_ms(1000));
+    timeval timeout_tv(timeval_from_ms(500));
 
     for (txbytes=0; txbytes<size;)
     {
         FD_ZERO(&writefds);
         FD_SET(_fd, &writefds);
 
+        // Debug_printf("select(%lu)\n", timeout_tv.tv_sec*1000+timeout_tv.tv_usec/1000);
         int result = select(_fd + 1, NULL, &writefds, NULL, &timeout_tv);
 
         if (result < 0) 
@@ -602,6 +604,7 @@ size_t UARTManager::write(const uint8_t *buffer, size_t size)
             perror("write - select error");
             break;
         }
+
         // Timeout
         if (result == 0)
         {
@@ -609,8 +612,8 @@ size_t UARTManager::write(const uint8_t *buffer, size_t size)
             break;
         }
 
-
-        if (result > 0) {
+        if (result > 0) 
+        {
             // Make sure our file descriptor is in the ready to write list
             if (FD_ISSET(_fd, &writefds))
             {
@@ -631,6 +634,7 @@ size_t UARTManager::write(const uint8_t *buffer, size_t size)
                 }
                 if (txbytes < size)
                 {
+                    timeout_tv = timeval_from_ms(1000 + result * 12500 / _baud);
                     continue;
                 }
             }

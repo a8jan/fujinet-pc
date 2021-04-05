@@ -11,6 +11,7 @@ class UARTManager
 private:
     // uart_port_t _uart_num;
     char _device[64]; // device name or path
+    uint32_t _baud;
     int _command_pin;
     int _proceed_pin;
     int _command_tiocm;

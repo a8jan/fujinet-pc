@@ -58,6 +58,7 @@ void sioDevice::sio_to_computer(uint8_t *buf, uint16_t len, bool err)
 
     // Write data frame
     fnUartSIO.write(buf, len);
+    fnUartSIO.flush();
     // Write checksum
     fnUartSIO.write(sio_checksum(buf, len));
 
