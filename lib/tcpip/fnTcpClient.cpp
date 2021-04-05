@@ -165,7 +165,7 @@ private:
 
 public:
     fnTcpClientSocketHandle(int fd) : _sockfd(fd) {}
-    ~fnTcpClientSocketHandle() { close(_sockfd); }
+    ~fnTcpClientSocketHandle() { ::close(_sockfd); }
 
     int fd() { return _sockfd; }
 };
@@ -214,7 +214,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     if (res < 0 && errno != EINPROGRESS)
     {
         Debug_printf("connect on fd %d, errno: %d, \"%s\"\n", sockfd, errno, strerror(errno));
-        close(sockfd);
+        ::close(sockfd);
         return 0;
     }
 
@@ -233,14 +233,14 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     if (res < 0)
     {
         Debug_printf("select on fd %d, errno: %d, \"%s\"\n", sockfd, errno, strerror(errno));
-        close(sockfd);
+        ::close(sockfd);
         return 0;
     }
     // Timeout reached
     else if (res == 0)
     {
         Debug_printf("select returned due to timeout %d ms for fd %d\n", timeout, sockfd);
-        close(sockfd);
+        ::close(sockfd);
         return 0;
     }
     // Success
@@ -254,14 +254,14 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         {
             // Failed to retrieve SO_ERROR
             Debug_printf("getsockopt on fd %d, errno: %d, \"%s\"\n", sockfd, errno, strerror(errno));
-            close(sockfd);
+            ::close(sockfd);
             return 0;
         }
         // Retrieved SO_ERROR and found that we have an error condition
         if (sockerr != 0)
         {
             Debug_printf("socket error on fd %d, errno: %d, \"%s\"\n", sockfd, sockerr, strerror(sockerr));
-            close(sockfd);
+            ::close(sockfd);
             return 0;
         }
     }
@@ -536,12 +536,21 @@ uint8_t fnTcpClient::connected()
     if (_connected)
     {
         uint8_t dummy;
-        int res = recv(fd(), &dummy, 0, MSG_DONTWAIT);
+        // int res = recv(fd(), &dummy, 0, MSG_DONTWAIT);  // returns always 0 on Linux
+        int res = recv(fd(), &dummy, 1, MSG_PEEK | MSG_DONTWAIT);
 
         // Since the move to ESP-IDF, recv() has started returning 0 with errno 0
         // Seems to work otherwise, so changed the if() below:
-        //if (res <= 0)
-        if (res < 0)
+        if (res > 0)
+        {
+            _connected = true;
+        }
+        else if (res == 0)
+        {
+            Debug_printf("fnTcpClient disconnected\n");
+            _connected = false;
+        }
+        else
         {
             switch (errno)
             {
@@ -555,17 +564,13 @@ uint8_t fnTcpClient::connected()
             case ECONNREFUSED:
             case ECONNABORTED:
                 _connected = false;
-                Debug_printf("Disconnected: res %d, errno %d\n", res, errno);
+                Debug_printf("fnTcpClient disconnected: res %d, errno %d\n", res, errno);
                 break;
             default:
-                Debug_printf("Unexpected: res %d, errno %d\n", res, errno);
+                Debug_printf("fnTcpClient unexpected: res %d, errno %d\n", res, errno);
                 _connected = true;
                 break;
             }
-        }
-        else
-        {
-            _connected = true;
         }
     }
     return _connected;
@@ -634,4 +639,13 @@ int fnTcpClient::fd() const
         return -1;
     else
         return _clientSocketHandle->fd();
+}
+
+int fnTcpClient::close()
+{
+    stop();
+    int _fd = fd();
+    if (_fd >= 0)
+        return ::close(_fd);
+    return -1;
 }
