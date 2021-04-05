@@ -90,6 +90,9 @@ void main_setup()
         e = nvs_flash_init();
     }
     ESP_ERROR_CHECK(e);
+
+    // Enable GPIO Interrupt Service Routine
+    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
 */
 
     fnSystem.check_hardware_ver();
