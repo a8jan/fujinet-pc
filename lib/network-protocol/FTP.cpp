@@ -202,10 +202,7 @@ bool NetworkProtocolFTP::status_file(NetworkStatus *status)
     status->rxBytesWaiting = ftp->data_available() > 65535 ? 65535 : ftp->data_available();
     status->connected = ftp->data_connected();
     fserror_to_error();
-    status->error = error; //ftp->data_connected() > 0 ? error : NETWORK_ERROR_END_OF_FILE;
-
-    // Debug_printf("NetworkProtocolFTP::status_file - BW: %u C: %u E: %u\n",
-    //     status->rxBytesWaiting, status->connected ,status->error);
+    status->error = error;
 
     NetworkProtocol::status(status);
     return false;

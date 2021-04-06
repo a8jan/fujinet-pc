@@ -910,11 +910,10 @@ bool fnFTP::read_directory(string &name, long &filesize, bool &is_dir)
 
     getline(dirBuffer, line);
 
-    Debug_printf("fnFTP::read_directory - %s\n",line.c_str());
-
     if (line.empty())
         return true;
 
+    Debug_printf("fnFTP::read_directory - %s\n",line.c_str());
     line = line.substr(0, line.size() - 1);
     ftpparse(&parse, (char *)line.c_str(), line.length());
     name = string(parse.name ? parse.name : "???");

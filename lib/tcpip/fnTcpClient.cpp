@@ -165,9 +165,15 @@ private:
 
 public:
     fnTcpClientSocketHandle(int fd) : _sockfd(fd) {}
-    ~fnTcpClientSocketHandle() { ::close(_sockfd); }
+    ~fnTcpClientSocketHandle() { close(); }
 
     int fd() { return _sockfd; }
+    int close()
+    {
+        int res = (_sockfd >= 0) ? ::close(_sockfd) : -1;
+        _sockfd = -1;
+        return res;
+    }
 };
 
 fnTcpClient::fnTcpClient(int fd)
@@ -536,11 +542,8 @@ uint8_t fnTcpClient::connected()
     if (_connected)
     {
         uint8_t dummy;
-        // int res = recv(fd(), &dummy, 0, MSG_DONTWAIT);  // returns always 0 on Linux
         int res = recv(fd(), &dummy, 1, MSG_PEEK | MSG_DONTWAIT);
 
-        // Since the move to ESP-IDF, recv() has started returning 0 with errno 0
-        // Seems to work otherwise, so changed the if() below:
         if (res > 0)
         {
             _connected = true;
@@ -643,9 +646,7 @@ int fnTcpClient::fd() const
 
 int fnTcpClient::close()
 {
+    int res = (_clientSocketHandle != nullptr) ? _clientSocketHandle->close() : -1;
     stop();
-    int _fd = fd();
-    if (_fd >= 0)
-        return ::close(_fd);
-    return -1;
+    return res;
 }
