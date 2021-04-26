@@ -991,7 +991,6 @@ bool fnFTP::parse_response()
 {
     char respBuf[384];  // room for control message incl. file path and file size
     int num_read = 0;
-    int c;
     bool multi_line = false;
 
     controlResponse.clear();

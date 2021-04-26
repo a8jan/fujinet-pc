@@ -798,10 +798,10 @@ bool sioNetwork::instantiate_protocol()
     {
         protocol = new NetworkProtocolFTP(receiveBuffer, transmitBuffer, specialBuffer);
     }
-    // else if (urlParser->scheme == "HTTP" || urlParser->scheme == "HTTPS")
-    // {
-    //     protocol = new NetworkProtocolHTTP(receiveBuffer, transmitBuffer, specialBuffer);        
-    // }
+    else if (urlParser->scheme == "HTTP" || urlParser->scheme == "HTTPS")
+    {
+        protocol = new NetworkProtocolHTTP(receiveBuffer, transmitBuffer, specialBuffer);        
+    }
     // else if (urlParser->scheme == "SSH")
     // {
     //     protocol = new NetworkProtocolSSH(receiveBuffer, transmitBuffer, specialBuffer);

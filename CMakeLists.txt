@@ -88,13 +88,16 @@ set(SOURCES src/main.cpp
     lib/network-protocol/FS.h lib/network-protocol/FS.cpp
     lib/network-protocol/FTP.h lib/network-protocol/FTP.cpp
     lib/network-protocol/TNFS.h lib/network-protocol/TNFS.cpp
+    lib/network-protocol/HTTP.h lib/network-protocol/HTTP.cpp
     lib/sio/networkStatus.h lib/sio/network.h lib/sio/network.cpp
     lib/sio/sio.h lib/sio/sio.cpp
     lib/mongoose/mongoose.h lib/mongoose/mongoose.c
+    lib/webdav/WebDAV.h lib/webdav/WebDAV.cpp
     lib/http/httpService.h lib/http/httpService.cpp
     lib/http/httpServiceParser.h lib/http/httpServiceParser.cpp
     lib/http/httpServiceConfigurator.h lib/http/httpServiceConfigurator.cpp
     lib/http/httpServiceBrowser.h lib/http/httpServiceBrowser.cpp
+    lib/http/mgHttpClient.h lib/http/mgHttpClient.cpp
     lib/task/fnTask.h lib/task/fnTask.cpp
     lib/task/fnTaskManager.h lib/task/fnTaskManager.cpp
 )
@@ -104,7 +107,7 @@ add_executable(fujinet ${SOURCES})
 target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_libraries(fujinet bsd pthread)
+    target_link_libraries(fujinet bsd pthread expat)
 else()
-    target_link_libraries(fujinet pthread)
+    target_link_libraries(fujinet pthread expat)
 endif()

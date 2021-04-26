@@ -2,7 +2,7 @@
 #define NETWORKPROTOCOLHTTP_H
 
 #include "FS.h"
-#include "../http/fnHttpClient.h"
+#include "../http/mgHttpClient.h"
 #include "../webdav/WebDAV.h"
 #include <expat.h>
 
@@ -177,7 +177,7 @@ private:
     /**
      * The fnHTTPClient object used by the adaptor for HTTP calls
      */
-    fnHttpClient *client;
+    mgHttpClient *client;
 
     /**
      * result code returned by an HTTP verb

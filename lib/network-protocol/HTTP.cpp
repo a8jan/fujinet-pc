@@ -2,6 +2,7 @@
  * HTTP implementation
  */
 
+#include <string.h>
 #include "HTTP.h"
 #include "status_error_codes.h"
 #include "../webdav/WebDAV.h"
@@ -145,12 +146,12 @@ bool NetworkProtocolHTTP::open_dir_handle()
     if (client != nullptr)
     {
         delete client;
-        client = new fnHttpClient();
+        client = new mgHttpClient();
         client->begin(opened_url->toString());
     }
 
     // client->begin already called in mount()
-    resultCode = client->PROPFIND(fnHttpClient::webdav_depth::DEPTH_1, "<?xml version=\"1.0\"?>\r\n<D:propfind xmlns:D=\"DAV:\">\r\n<D:prop>\r\n<D:displayname />\r\n<D:getcontentlength /></D:prop>\r\n</D:propfind>\r\n");
+    resultCode = client->PROPFIND(mgHttpClient::webdav_depth::DEPTH_1, "<?xml version=\"1.0\"?>\r\n<D:propfind xmlns:D=\"DAV:\">\r\n<D:prop>\r\n<D:displayname />\r\n<D:getcontentlength /></D:prop>\r\n</D:propfind>\r\n");
 
     if (resultCode > 399)
     {
@@ -193,7 +194,7 @@ bool NetworkProtocolHTTP::open_dir_handle()
     if (client != nullptr)
     {
         delete client;
-        client = new fnHttpClient();
+        client = new mgHttpClient();
         client->begin(opened_url->toString());
     }
 
@@ -211,7 +212,7 @@ bool NetworkProtocolHTTP::mount(EdUrlParser *url)
     else if (url->scheme == "HTTPS")
         url->scheme = "https";
 
-    client = new fnHttpClient();
+    client = new mgHttpClient();
 
     // fileSize = 65535;
 
@@ -471,7 +472,7 @@ bool NetworkProtocolHTTP::write_file_handle_get_header(uint8_t *buf, unsigned sh
             else if (requestedHeader[i] == 0x0a)
                 requestedHeader[i] = 0x00;
 
-        Debug_printf("collect_headers[%u,%u] = \"%s\"\n", collect_headers_count, len, requestedHeader);
+        Debug_printf("collect_headers[%lu,%u] = \"%s\"\n", collect_headers_count, len, requestedHeader);
 
         // Add result to header array.
         collect_headers[collect_headers_count++] = requestedHeader;
@@ -543,7 +544,7 @@ bool NetworkProtocolHTTP::stat()
     delete client;
 
     // Temporarily use client to do the HEAD request
-    client = new fnHttpClient();
+    client = new mgHttpClient();
     client->begin(opened_url->toString());
     resultCode = client->HEAD();
     fserror_to_error();
@@ -559,7 +560,7 @@ bool NetworkProtocolHTTP::stat()
         delete client;
 
         // Recreate it for the rest of resolve()
-        client = new fnHttpClient();
+        client = new mgHttpClient();
         ret = !client->begin(opened_url->toString());
         resultCode = 0; // so GET will actually happen.
     }
@@ -609,7 +610,7 @@ bool NetworkProtocolHTTP::parseDir(char *buf, unsigned short len)
 
     if (p == nullptr)
     {
-        Debug_printf("NetworkProtocolHTTP::parseDir(%p,%u) - could not create expat parser. Aborting.\n");
+        Debug_printf("NetworkProtocolHTTP::parseDir - could not create expat parser. Aborting.\n");
         return true;
     }
 
@@ -666,7 +667,7 @@ bool NetworkProtocolHTTP::del(EdUrlParser *url, cmdFrame_t *cmdFrame)
 
 bool NetworkProtocolHTTP::mkdir(EdUrlParser *url, cmdFrame_t *cmdFrame)
 {
-    Debug_printf("NetworkProtocolHTTP::mkdir(%s,%s)", url->hostName, url->path);
+    Debug_printf("NetworkProtocolHTTP::mkdir(%s,%s)", url->hostName.c_str(), url->path.c_str());
 
     mount(url);
 
