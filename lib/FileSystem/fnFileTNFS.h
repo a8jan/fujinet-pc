@@ -13,6 +13,9 @@ protected:
     tnfsMountInfo *_mountinfo = nullptr;
     int _handle = -1;
 
+private:
+    uint8_t _bad_fd_recovery();
+
 public:
     FileHandlerTNFS(tnfsMountInfo *mountinfo, int handle);
     virtual ~FileHandlerTNFS() override;
