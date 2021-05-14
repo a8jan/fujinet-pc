@@ -13,6 +13,7 @@
 #include "../hardware/fnSystem.h"
 
 bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t datalen);
+uint8_t _tnfs_session_recovery(tnfsMountInfo *m_info, uint8_t command);
 
 int _tnfs_adjust_with_full_path(tnfsMountInfo *m_info, char *buffer, const char *source, int bufflen);
 
@@ -1206,6 +1207,9 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
 {
     fnUDP udp;
 
+    // Keep copy of 1st payload byte
+    uint8_t payload_0 = pkt.payload[0];
+
     // Set our session ID
     pkt.session_idl = TNFS_LOBYTE_FROM_UINT16(m_info->session);
     pkt.session_idh = TNFS_HIBYTE_FROM_UINT16(m_info->session);
@@ -1264,12 +1268,7 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
                     else
                     {
                         // Check in case the server asks us to wait and try again
-                        if (pkt.payload[0] != TNFS_RESULT_TRY_AGAIN)
-                        {
-                            Debug_printf("_tnfs_transaction completed in %u ms\n", (unsigned)(fnSystem.millis() - ms_start));
-                            return true;
-                        }
-                        else
+                        if (pkt.payload[0] == TNFS_RESULT_TRY_AGAIN)
                         {
                             // Server should tell us how long it wants us to wait
                             uint16_t backoffms = TNFS_UINT16_FROM_LOHI_BYTEPTR(pkt.payload + 1);
@@ -1279,6 +1278,33 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
                             // vTaskDelay(backoffms / portTICK_PERIOD_MS);
                             fnSystem.delay(backoffms);
                         }
+                        // Check for invalid (expired) session
+                        else if (pkt.payload[0] == TNFS_RESULT_INVALID_HANDLE \
+                                 && pkt.command != TNFS_CMD_MOUNT \
+                                 && pkt.command != TNFS_CMD_UNMOUNT)
+                        {
+                            Debug_printf("_tnfs_transaction - Invalid session ID\n");
+                            // Recovery - start new session with server, i.e. remount
+                            uint8_t res = _tnfs_session_recovery(m_info, pkt.command);
+                            if (res != TNFS_RESULT_SUCCESS)
+                            {
+                                // update the result byte (TNFS_RESULT_INVALID_HANDLE or TNFS_RESULT_BAD_FILENUM)
+                                pkt.payload[0] = res;
+                                return true;
+                            }
+                            // retry the command using new session
+                            pkt.session_idl = TNFS_LOBYTE_FROM_UINT16(m_info->session);
+                            pkt.session_idh = TNFS_HIBYTE_FROM_UINT16(m_info->session);
+                            pkt.payload[0] = payload_0; // restore first byte of payload
+                            retry = -1; // reset retry counter, will be checked later
+                            // get out of packet receive loop
+                            break;
+                        }
+                        else
+                        {
+                            Debug_printf("_tnfs_transaction completed in %u ms\n", (unsigned)(fnSystem.millis() - ms_start));
+                            return true;
+                        }
                     }
                 }
                 // fnSystem.yield();
@@ -1286,18 +1312,52 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
 
             } while ((fnSystem.millis() - ms_start) < m_info->timeout_ms);
 
-            Debug_printf("Timeout after %d milliseconds. Retrying\n", m_info->timeout_ms);
+            if (retry != -1)
+                Debug_printf("Timeout after %d milliseconds. Retrying\n", m_info->timeout_ms);
         }
 
-        // Make sure we wait before retrying
-        // vTaskDelay(m_info->min_retry_ms / portTICK_PERIOD_MS);
-        fnSystem.delay(m_info->min_retry_ms);
+        if (retry != -1)
+            // Make sure we wait before retrying
+            // vTaskDelay(m_info->min_retry_ms / portTICK_PERIOD_MS);
+            fnSystem.delay(m_info->min_retry_ms);
         retry++;
     }
 
     Debug_println("Retry attempts failed");
 
     return false;
+}
+
+
+// Re-mount using provided tnfsMountInfo*
+// Returns TNFS result code
+uint8_t _tnfs_session_recovery(tnfsMountInfo *m_info, uint8_t command)
+{
+    m_info->session = TNFS_INVALID_SESSION; // prevent umount call
+    if (tnfs_mount(m_info) != TNFS_RESULT_SUCCESS)
+    {
+        Debug_printf("_tnfs_session_recovery - remount failed\n");
+        return TNFS_RESULT_INVALID_HANDLE;
+    }
+    // re-mount succeeded, check the command
+    switch (command)
+    {
+    case TNFS_CMD_OPENDIR:
+    case TNFS_CMD_MKDIR:
+    case TNFS_CMD_RMDIR:
+    case TNFS_CMD_OPENDIRX:
+    case TNFS_CMD_STAT:
+    case TNFS_CMD_UNLINK:
+    case TNFS_CMD_CHMOD:
+    case TNFS_CMD_RENAME:
+    case TNFS_CMD_OPEN:
+    case TNFS_CMD_SIZE:
+    case TNFS_CMD_FREE:
+        // session was recovered and specified command can be retried within new session
+        return TNFS_RESULT_SUCCESS;
+    }
+    // all other commands requires file descriptor or handle (which is lost with expired session)
+    return TNFS_RESULT_BAD_FILENUM;
 }
 
 // Copies to buffer while ensuring that we start with a '/'
