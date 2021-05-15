@@ -24,7 +24,9 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DI
 
 set(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include lib/config lib/FileSystem lib/utils lib/hardware 
     lib/tcpip lib/telnet  lib/EdUrlParser lib/TNFSlib
-    lib/sio lib/printer-emulator lib/mongoose lib/http lib/task)
+    lib/sio lib/printer-emulator lib/mongoose lib/http lib/task
+    components/libsmb2/include)
+
 set(SOURCES src/main.cpp
     lib/config/fnConfig.h lib/config/fnConfig.cpp
     lib/FileSystem/fnFS.h lib/FileSystem/fnFS.cpp

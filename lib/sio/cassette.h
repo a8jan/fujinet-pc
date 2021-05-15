@@ -4,6 +4,7 @@
 //#include <driver/ledc.h>
 #include "sio.h"
 //#include "../tcpip/fnUDP.h"
+#include "../../include/pinmap.h"
 
 #define CASSETTE_BAUD 600
 #define BLOCK_LEN 128
