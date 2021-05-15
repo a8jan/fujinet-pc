@@ -17,6 +17,7 @@
 #include "../network-protocol/FTP.h"
 #include "../network-protocol/HTTP.h"
 #include "../network-protocol/SSH.h"
+#include "../network-protocol/SMB.h"
 
 using namespace std;
 
@@ -805,6 +806,10 @@ bool sioNetwork::instantiate_protocol()
     // else if (urlParser->scheme == "SSH")
     // {
     //     protocol = new NetworkProtocolSSH(receiveBuffer, transmitBuffer, specialBuffer);
+    // }
+    // else if (urlParser->scheme == "SMB")
+    // {
+    //     protocol = new NetworkProtocolSMB(receiveBuffer, transmitBuffer, specialBuffer);
     // }
     else
     {

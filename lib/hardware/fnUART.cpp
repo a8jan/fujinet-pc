@@ -24,6 +24,7 @@
 
 #include "fnUART.h"
 #include "../../include/debug.h"
+// #include "../../include/pinmap.h"
 
 // #define UART_DEBUG UART_NUM_0
 // #define UART_SIO   UART_NUM_2
@@ -35,13 +36,6 @@
 #define MAX_READ_WAIT_TICKS 200
 #define MAX_WRITE_BYTE_TICKS 100
 #define MAX_WRITE_BUFFER_TICKS 1000
-
-#define UART0_RX 3
-#define UART0_TX 1
-#define UART1_RX 9
-#define UART1_TX 10
-#define UART2_RX 33
-#define UART2_TX 21
 
 // UARTManager fnUartDebug(UART_DEBUG);
 UARTManager fnUartSIO;
