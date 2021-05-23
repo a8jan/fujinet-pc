@@ -20,6 +20,16 @@
 #define FNTCP_SELECT_TIMEOUT_US (1000000)
 #define FNTCP_FLUSH_BUFFER_SIZE (1024)
 
+// MSG_NOSIGNAL does not exists on older macOS
+#ifndef MSG_NOSIGNAL
+# if defined(__APPLE__) || defined(__MACH__)
+#  define USE_SO_NOSIGPIPE
+#  define FN_MSG_NOSIGNAL 0
+# endif
+#else
+# define FN_MSG_NOSIGNAL MSG_NOSIGNAL
+#endif
+
 class fnTcpClientRxBuffer
 {
 private:
@@ -204,6 +214,13 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         Debug_printf("socket: %d\n", errno);
         return 0;
     }
+#ifdef USE_SO_NOSIGPIPE
+    // set SO_NOSIGPIPE on macOS without MSG_NOSIGNAL
+    {
+        int set = 1;
+        setSocketOption(SO_NOSIGPIPE, (char *)&set, sizeof(int));
+    }
+#endif
     // Add O_NONBLOCK to our socket file descriptor
     fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
 
@@ -383,7 +400,7 @@ size_t fnTcpClient::write(const uint8_t *buf, size_t size)
         // (Otherwise we timed-out and should retry the loop)
         if (FD_ISSET(socketFileDescriptor, &fdset))
         {
-            res = send(socketFileDescriptor, (void *)buf, bytesRemaining, MSG_DONTWAIT | MSG_NOSIGNAL); // MSG_NOSIGNAL - don't shoot me
+            res = send(socketFileDescriptor, (void *)buf, bytesRemaining, MSG_DONTWAIT | FN_MSG_NOSIGNAL);
             // We succeeded sending some bytes
             if (res > 0)
             {
