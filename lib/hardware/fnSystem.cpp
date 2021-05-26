@@ -15,6 +15,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <sched.h>
+#include <sys/utsname.h>
 
 #include "../../include/debug.h"
 #include "../../include/version.h"
@@ -329,6 +330,20 @@ const char *SystemManager::get_fujinet_version(bool shortVersionOnly)
         return FN_VERSION_FULL;
     else
         return FN_VERSION_FULL " " FN_VERSION_DATE;
+}
+
+const char *SystemManager::get_uname()
+{
+    struct utsname uts;
+
+    if (uname(&uts) == -1)
+        return "Unknown";
+
+    if (snprintf(_uname_string, sizeof(_uname_string), "%s %s %s", uts.sysname, uts.release, uts.machine) >= sizeof(_uname_string))
+    {
+        strcpy(_uname_string+sizeof(_uname_string)-4, "...");
+    }
+    return _uname_string;
 }
 
 int SystemManager::get_cpu_rev()

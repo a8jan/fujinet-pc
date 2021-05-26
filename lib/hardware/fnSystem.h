@@ -26,6 +26,7 @@ private:
     char _uptime_string[18];
     char _currenttime_string[40];
     int _hardware_version = 0; // unknown
+    char _uname_string[128];
 
 public:
     class _net
@@ -107,6 +108,8 @@ public:
     void update_hostname(const char *hostname);
 
     const char *get_fujinet_version(bool shortVersionOnly = false);
+
+    const char *get_uname();
 
     int get_sio_voltage();
     void yield();

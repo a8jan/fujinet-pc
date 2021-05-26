@@ -311,78 +311,24 @@
 					<div class="deth">DNS server</div>
 					<div class="det"><%FN_IPDNS%></div>
 				</div>
-				<div class="detline alt">
-					<div class="deth">WiFi SSID</div>
-					<div class="det"><%FN_WIFISSID%></div>
-				</div>
-				<div class="detline">
-					<div class="deth">WiFi BSSID</div>
-					<div class="det"><%FN_WIFIBSSID%></div>
-				</div>
-				<div class="detline alt">
-					<div class="deth">WiFi MAC address</div>
-					<div class="det"><%FN_WIFIMAC%></div>
-				</div>
-				<div class="detline">
-					<div class="deth">WiFi details</div>
-					<div class="det small"></div>
-				</div>
 			</div>
 			<div class="flexchild">
 				<header>HARD<span id="logowob"></span>WARE</header>
 				<div class="detline">
-					<div class="deth">SPIFFS size</div>
-					<div class="det ra">
-						<script>writeLocaleNumber(<%FN_SPIFFS_SIZE%>)</script>
-					</div>
+					<div class="deth">System</div>
+					<div class="det"><%FN_UNAME%></div>
 				</div>
 				<div class="detline alt">
-					<div class="deth">SPIFFS used</div>
-					<div class="det ra">
-						<script>writeLocaleNumber(<%FN_SPIFFS_USED%>)</script>
-					</div>
-				</div>
-				<div class="detline">
-					<div class="deth">SD size</div>
-					<div class="det ra">
-						<script>writeLocaleNumber(<%FN_SD_SIZE%>)</script>
-					</div>
-				</div>
-				<div class="detline alt">
-					<div class="deth">SD used</div>
-					<div class="det ra">
-						<script>writeLocaleNumber(<%FN_SD_USED%>)</script>
-					</div>
-				</div>
-				<div class="detline">
 					<div class="deth">Uptime</div>
 					<div class="det">
 						<script>writeUptimeString(<%FN_UPTIME%>)</script>
 					</div>
 				</div>
-				<div class="detline alt">
+				<div class="detline">
 					<div class="deth">Current time</div>
 					<div class="det"><%FN_CURRENTTIME%></div>
 				</div>
-				<div class="detline">
-					<div class="deth">Free heap</div>
-					<div class="det ra">
-						<script>writeLocaleNumber(<%FN_HEAPSIZE%>)</script>
-					</div>
-				</div>
 				<div class="detline alt">
-					<div class="deth">SOC SDK</div>
-					<div class="det"><%FN_SYSSDK%></div>
-				</div>
-				<div class="detline">
-					<div class="deth">CPU revision</div>
-					<div class="det"><%FN_SYSCPUREV%></div>
-				</div>
-				<div class="detline alt">
-					<div class="deth">SIO voltage</div>
-					<div class="det"><%FN_SIOVOLTS%></div>
-				</div>
-				<div class="detline">
 					<div class="deth">HSIO Index:Baud</div>
 					<div class="det"><%FN_SIO_HSTEXT%>:
 						<script>writeLocaleNumber(<%FN_SIO_HSBAUD%>)</script>

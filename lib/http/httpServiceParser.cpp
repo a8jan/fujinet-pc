@@ -35,6 +35,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_WIFIBSSID,
         FN_WIFIMAC,
         FN_WIFIDETAIL,
+        FN_UNAME,
         FN_SPIFFS_SIZE,
         FN_SPIFFS_USED,
         FN_SD_SIZE,
@@ -124,6 +125,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_WIFIBSSID",
         "FN_WIFIMAC",
         "FN_WIFIDETAIL",
+        "FN_UNAME",
         "FN_SPIFFS_SIZE",
         "FN_SPIFFS_USED",
         "FN_SD_SIZE",
@@ -252,6 +254,9 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         break;
     case FN_WIFIDETAIL:
         resultstream << fnWiFi.get_current_detail_str();
+        break;
+    case FN_UNAME:
+        resultstream << fnSystem.get_uname();
         break;
     case FN_SPIFFS_SIZE:
         resultstream << fnSPIFFS.total_bytes();
