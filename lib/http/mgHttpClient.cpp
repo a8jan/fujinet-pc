@@ -261,9 +261,9 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
             // Response received. Print it
             struct mg_http_message *hm = (struct mg_http_message *) ev_data;
             printf("Status: %.*s\n", (int)hm->uri.len, hm->uri.ptr);
-            printf("Received: %lu\n", hm->message.len);
+            printf("Received: %lu\n", (unsigned long)hm->message.len);
             printf("Header0: %.*s = %.*s\n", (int)hm->headers[0].name.len, hm->headers[0].name.ptr, (int)hm->headers[0].value.len, hm->headers[0].value.ptr);
-            printf("Body: %lu bytes\n", hm->body.len);
+            printf("Body: %lu bytes\n", (unsigned long)hm->body.len);
 
             // update buffer details
             client->_buffer_pos = 0;
@@ -440,7 +440,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
 */
 int mgHttpClient::_perform()
 {
-    Debug_printf("%08lx _perform\n", fnSystem.millis());
+    Debug_printf("%08lx _perform\n", (unsigned long)fnSystem.millis());
 
     _buffer_len = 0;
     _buffer_total_read = 0;
@@ -496,7 +496,7 @@ int mgHttpClient::_perform()
     int status = 200; // TODO
     int length = 0;
 
-    Debug_printf("%08lx _perform status = %d, length = %d, chunked = %d\n", fnSystem.millis(), status, length, chunked ? 1 : 0);
+    Debug_printf("%08lx _perform status = %d, length = %d, chunked = %d\n", (unsigned long)fnSystem.millis(), status, length, chunked ? 1 : 0);
     return status;
 }
 

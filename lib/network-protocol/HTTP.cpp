@@ -465,7 +465,7 @@ bool NetworkProtocolHTTP::write_file_handle_get_header(uint8_t *buf, unsigned sh
 
         // Remove EOL, make NUL delimited.
         for (int i = 0; i < len; i++)
-            if (requestedHeader[i] == 0x9B)
+            if ((unsigned char)requestedHeader[i] == 0x9B)
                 requestedHeader[i] = 0x00;
             else if (requestedHeader[i] == 0x0D)
                 requestedHeader[i] = 0x00;
