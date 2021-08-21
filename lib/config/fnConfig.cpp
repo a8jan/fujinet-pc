@@ -218,6 +218,15 @@ void fnConfig::clear_host(uint8_t num)
     }
 }
 
+void fnConfig::store_interface_url(const char *url)
+{
+    if (_general.interface_url.compare(url) == 0)
+        return;
+
+    _general.interface_url = url;
+    // _dirty = true;
+}
+
 std::string fnConfig::get_mount_path(uint8_t num, mount_type_t mounttype)
 {
     // Handle disk slots

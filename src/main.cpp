@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "debug.h"
 
@@ -62,7 +63,7 @@ void sighandler(int signum)
 }
 
 // Initial setup
-void main_setup()
+void main_setup(int argc, char *argv[])
 {
 #ifdef DEBUG
     // fnUartDebug.begin(DEBUG_SPEED);
@@ -111,6 +112,19 @@ void main_setup()
     // Load our stored configuration
     Config.load();
 
+    // program arguments
+    int opt;
+    while ((opt = getopt(argc, argv, "u:")) != -1) {
+        switch (opt) {
+            case 'u':
+                Config.store_interface_url(optarg);
+                break;
+            default: /* '?' */
+                fprintf(stderr, "Usage: %s [-u URL]\n", argv[0]);
+                exit(EXIT_FAILURE);
+        }
+    }
+    
     if ( Config.get_bt_status() )
     {
         // // Start SIO2BT mode if we were in it last shutdown
@@ -211,10 +225,10 @@ extern "C"
 }
 */
 
-int main(int, char**) 
+int main(int argc, char *argv[])
 {
     // Call our setup routine
-    main_setup();
+    main_setup(argc, argv);
     // Enter service loop
     fn_service_loop(nullptr);
 }

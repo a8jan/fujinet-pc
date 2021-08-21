@@ -100,6 +100,8 @@ public:
     bool get_general_boot_mode() { return _general.boot_mode; }
     void store_general_boot_mode(uint8_t boot_mode);
     void store_midimaze_host(const char host_ip[64]);
+    std::string get_interface_url() { return _general.interface_url; };
+    void store_interface_url(const char *url);
 
     const char * get_network_sntpserver() { return _network.sntpserver; };
 
@@ -296,6 +298,7 @@ private:
         bool rotation_sounds = true;
         bool config_enabled = true;
         int boot_mode = 0;
+        std::string interface_url = "http://0.0.0.0:8000";
     };
 
     struct serial_info

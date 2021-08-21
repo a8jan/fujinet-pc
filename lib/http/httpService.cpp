@@ -17,6 +17,7 @@
 // #include "fnWiFi.h"
 #include "fnDummyWiFi.h"
 // #include "keys.h"
+#include "fnConfig.h"
 
 #include "../../lib/modem-sniffer/modem-sniffer.h"
 #include "../../lib/sio/modem.h"
@@ -555,7 +556,7 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
 
 struct mg_mgr * fnHttpService::start_server(serverstate &srvstate)
 {
-    static const char *s_listening_address = "http://0.0.0.0:8000"; // or "http://localhost:8000";
+    std::string s_listening_address = Config.get_interface_url();
 
     static struct mg_mgr s_mgr;
 
@@ -570,11 +571,11 @@ struct mg_mgr * fnHttpService::start_server(serverstate &srvstate)
     // Set filesystem where we expect to find our static files
     srvstate._FS = &fnSPIFFS;
 
-    Debug_printf("Starting web server %s\n", s_listening_address);
+    Debug_printf("Starting web server %s\n", s_listening_address.c_str());
 
     mg_mgr_init(&s_mgr);
 
-    if ((c = mg_http_listen(&s_mgr, s_listening_address, cb, &s_mgr)) != nullptr)
+    if ((c = mg_http_listen(&s_mgr, s_listening_address.c_str(), cb, &s_mgr)) != nullptr)
     {
         srvstate.hServer = &s_mgr;
     }
