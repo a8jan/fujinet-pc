@@ -18,6 +18,7 @@
 #include "fnDummyWiFi.h"
 // #include "keys.h"
 #include "fnConfig.h"
+#include "fnSystem.h"
 
 #include "../../lib/modem-sniffer/modem-sniffer.h"
 #include "../../lib/sio/modem.h"
@@ -543,6 +544,13 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
         {
             // browse handler
             get_handler_browse(c, hm);
+        }
+        else if (mg_http_match_uri(hm, "/restart"))
+        {
+            // load restart page into browser
+            send_file(c, "restart.html");
+            // keep running for a while to transfer restart.html page
+            fnSystem.reboot(500); // deferred restart
         }
         else
         // default handler, serve static content of www firectory

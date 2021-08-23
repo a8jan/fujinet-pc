@@ -196,6 +196,16 @@ void fn_service_loop(void *param)
         SIO.service();
 
         taskMgr.service();
+
+        if (fnSystem.check_deferred_reboot())
+        {
+            // stop the web server first
+            // web server is tested by script in restart.html to check if the program is running again
+            fnHTTPD.stop();
+            // exit the program with special exit code (75)
+            // to indicate the proigram should be started again
+            fnSystem.reboot();
+        }
     }
 }
 

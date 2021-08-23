@@ -27,6 +27,7 @@ private:
     char _currenttime_string[40];
     int _hardware_version = 0; // unknown
     char _uname_string[128];
+    uint64_t _reboot_at = 0;
 
 public:
     class _net
@@ -89,7 +90,8 @@ public:
     int digital_read(uint8_t pin);
     // void digital_write(uint8_t pin, uint8_t val);
 
-    void reboot();
+    void reboot(uint32_t delay_ms = 0);
+    bool check_deferred_reboot();
     uint32_t get_cpu_frequency();
     uint32_t get_free_heap_size();
     uint32_t get_psram_size();

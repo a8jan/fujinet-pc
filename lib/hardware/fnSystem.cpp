@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <sched.h>
 #include <sys/utsname.h>
+#include <sysexits.h>
 
 #include "../../include/debug.h"
 #include "../../include/version.h"
@@ -249,11 +250,28 @@ void SystemManager::reboot()
     esp_restart();
 }
 */
-void SystemManager::reboot()
+void SystemManager::reboot(uint32_t delay_ms)
 {
-    Debug_println("SystemManager::reboot - exiting ...");
-    SIO.shutdown();
-    exit(0);
+    if (delay_ms == 0)
+    {
+        // reboot now
+        // from sysexits.h
+        // #define EX_TEMPFAIL     75      /* temp failure; user is invited to retry */
+        Debug_println("SystemManager::reboot - exiting program with EX_TEMPFAIL code ...");
+        SIO.shutdown();
+        exit(EX_TEMPFAIL);
+    }
+    else
+    {
+        // deferred reboot
+        Debug_printf("SystemManager::reboot - reboot in %d ms\n", delay_ms);
+        _reboot_at = millis() + delay_ms;
+    }
+}
+
+bool SystemManager::check_deferred_reboot()
+{
+    return _reboot_at && millis() >= _reboot_at;
 }
 
 /* Size of available heap. Size of largest contiguous block may be smaller.

@@ -319,20 +319,24 @@
 					<div class="det"><%FN_UNAME%></div>
 				</div>
 				<div class="detline alt">
-					<div class="deth">Uptime</div>
+					<div class="deth">Current time</div>
+					<div class="det"><%FN_CURRENTTIME%></div>
+				</div>
+				<div class="detline">
+					<div class="deth">FujiNet uptime</div>
 					<div class="det">
 						<script>writeUptimeString(<%FN_UPTIME%>)</script>
 					</div>
-				</div>
-				<div class="detline">
-					<div class="deth">Current time</div>
-					<div class="det"><%FN_CURRENTTIME%></div>
 				</div>
 				<div class="detline alt">
 					<div class="deth">HSIO Index:Baud</div>
 					<div class="det"><%FN_SIO_HSTEXT%>:
 						<script>writeLocaleNumber(<%FN_SIO_HSBAUD%>)</script>
 					</div>
+				</div>
+				<div class="detline">
+					<div class="deth">Restart FujiNet</div>
+					<div class="det"><input type="button" id="restartButton" value="Restart" onclick="restartButton()"></div>
 				</div>
 			</div>
 		</div>
