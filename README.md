@@ -21,12 +21,14 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 - APETIME protocol
 - TNFS File System to access image files over network
 - Web interface to control program's settings, browse TNFS hosts and mount disk images
+- FujiNet network device (N:) with support for various network protocols:
+  TCP, UDP, TNFS, HTTP, FTP, Telnet
 - Compiles and runs on Linux and macOS
 
 #### Not (yet) working
 
-- FujiNet network device (N:) with support for various network protocols
 - CP/M emulation
+- SSH and SMB support for N:
 - SAM voice synthesizer
 - MIDIMaze support
 - Windows port
