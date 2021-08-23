@@ -69,7 +69,8 @@ cp /your/dir/some/image.atr sd
 By default fujinet web interface is available on port 8000 listening on all available IP addresses. This can be changed with `-u <URL>` parameter. For example:
 
 ```sh
-# to limit the web interface only for machine which is running fujinet and to listen on non-default port 9001
+# to limit the web interface only for machine which is running fujinet 
+# and to listen on non-default port 9001
 ./run-fujinet -u http://localhost:9001
 
 # "http://" part can be omitted, "0.0.0.0" indicates all available addresses
