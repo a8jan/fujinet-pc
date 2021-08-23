@@ -58,10 +58,20 @@ mkdir sd # lowercase sd
 cp /your/dir/some/image.atr sd
 
 # start fujinet
-./fujinet
+./run-fujinet
 
 # visit http://localhost:8000 and configure serial port
+
 
 # connect SIO2PC/USB and boot the Atari from FujiNet
 ```
 
+By default fujinet web interface is available on port 8000 listening on all available IP addresses. This can be changed with `-u <URL>` parameter. For example:
+
+```sh
+# to limit the web interface only for machine which is running fujinet and to listen on non-default port 9001
+./run-fujinet -u http://localhost:9001
+
+# "http://" part can be omitted, "0.0.0.0" indicates all available addresses
+./run-fujinet -u 0.0.0.0:8080
+```
