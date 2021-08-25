@@ -28,9 +28,9 @@ function restartButton() {
 	var btn = document.getElementById("restartButton");
 	if (btn.value == "Confirm")
 		window.location.assign("/restart");
-	if (btn.value == "Restart")
+	if (btn.value == "Restart...")
 		btn.value = "Confirm";
 		setTimeout(function(){
-			btn.value = "Restart";
+			btn.value = "Restart...";
 		}, 2000);
 }
