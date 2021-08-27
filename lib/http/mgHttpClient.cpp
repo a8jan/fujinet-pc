@@ -3,10 +3,8 @@
 
 #include <cstdlib>
 #include <string.h>
-extern "C"
-{
+
 #include "mongoose.h"
-}
 #include "../../include/debug.h"
 #include "mgHttpClient.h"
 #include "fnSystem.h"

@@ -2,11 +2,7 @@
 #define HTTPSERVICEBROWSER_H
 
 #include "fnFS.h"
-
-extern "C"
-{
 #include "mongoose.h"
-}
 
 class fnHttpServiceBrowser
 {
