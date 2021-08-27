@@ -22,8 +22,7 @@ const char *webdav_depths[] = {"0", "1", "infinity"};
 
 mgHttpClient::mgHttpClient()
 {
-    // _buffer = (char *)malloc(DEFAULT_HTTP_BUF_SIZE);
-    _buffer = nullptr;
+    _buffer = nullptr; //(char *)malloc(DEFAULT_HTTP_BUF_SIZE);
 }
 
 // Close connection, destroy any resoruces
@@ -35,7 +34,10 @@ mgHttpClient::~mgHttpClient()
         mg_mgr_free(_handle);
         // esp_http_client_cleanup(_handle);
 
-    // free(_buffer);
+    if (_buffer) {
+        printf("mgHttpClient buffer free\n");
+        free(_buffer);
+    }
 }
 
 // Start an HTTP client session to the given URL
@@ -235,6 +237,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
     // mgHttpClient *client = (mgHttpClient *)evt->user_data;
     mgHttpClient *client = (mgHttpClient *)user_data;
     client->_progressed = true;
+    printf("mgHttpClient event: %d\n", ev);
     switch (ev)
     {
         case MG_EV_CONNECT:
@@ -248,7 +251,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
             {
                 struct mg_tls_opts opts = {};
                 opts.ca = "ca.pem";
-                opts.srvname = host.ptr;
+                opts.srvname = host;
                 mg_tls_init(c, &opts);
             }
 
@@ -268,7 +271,17 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
             // update buffer details
             client->_buffer_pos = 0;
             client->_buffer_len = hm->body.len;
-            client->_buffer = hm->body.ptr;
+            if (client->_buffer) {
+                // ... should not be the case
+                printf("mgHttpClient buffer realloc(%d)\n", client->_buffer_len);
+                client->_buffer = (char *)realloc(client->_buffer, client->_buffer_len);
+            }
+            else {
+                printf("mgHttpClient buffer malloc(%d)\n", client->_buffer_len);
+                client->_buffer = (char *)malloc(client->_buffer_len);
+            }
+            client->_buffer_len = hm->body.len;
+            memcpy(client->_buffer, hm->body.ptr, client->_buffer_len);
 
             c->is_closing = 1;          // Tell mongoose to close this connection
             client->_processed = true;  // Tell event loop to stop
@@ -279,10 +292,6 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
             client->_processed = true;  // Error, tell event loop to stop
             break;
         }
-        // default:
-        // {
-        //     printf("Event: %d\n", ev);
-        // }
     }
     // switch (evt->event_id)
     // {

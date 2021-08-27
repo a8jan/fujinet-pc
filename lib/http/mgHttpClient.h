@@ -16,7 +16,7 @@ private:
 
     std::string _url;
 
-    const char *_buffer; // Will point to mongoose received data
+    char *_buffer; // Will be allocated to hold message received by mongoose
     int _buffer_pos;
     int _buffer_len;
     int _buffer_total_read;

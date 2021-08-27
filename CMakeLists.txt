@@ -12,11 +12,12 @@ project(fujinet-pc VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__PC_BUILD_DEBUG__ -DVERBOSE_TNFS")
+# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__PC_BUILD_DEBUG__ -DVERBOSE_TNFS")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__PC_BUILD_DEBUG__")
 
 # mongoose.c some compile options: -DMG_ENABLE_LINES=1 -DMG_ENABLE_DIRECTORY_LISTING=1 -DMG_ENABLE_SSI=1
 #set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DMG_ENABLE_DIRECTORY_LISTING=1")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMG_ENABLE_DIRECTORY_LISTING=1")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMG_ENABLE_OPENSSL=1 -DMG_ENABLE_LOG=0")
 
 INCLUDE (CheckIncludeFiles)
 CHECK_INCLUDE_FILES (bsd/string.h HAVE_BSD_STRING_H)
@@ -109,7 +110,7 @@ add_executable(fujinet ${SOURCES})
 target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_libraries(fujinet bsd pthread expat)
+    target_link_libraries(fujinet bsd pthread expat ssl crypto)
 else()
-    target_link_libraries(fujinet pthread expat)
+    target_link_libraries(fujinet pthread expat ssl crypto)
 endif()
