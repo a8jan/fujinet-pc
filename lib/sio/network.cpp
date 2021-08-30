@@ -8,7 +8,8 @@
 #include "network.h"
 #include "../hardware/fnSystem.h"
 #include "../hardware/fnDummyWiFi.h"
-#include "../hardware/fnUART.h"
+// #include "../hardware/fnUART.h"
+#include "fnSioCom.h"
 #include "../network-protocol/TCP.h"
 #include "../network-protocol/UDP.h"
 #include "../network-protocol/Test.h"
@@ -1025,7 +1026,7 @@ void sioNetwork::sio_assert_interrupt()
     pthread_mutex_lock(&timerMux);
     level = interruptProceed;
     pthread_mutex_unlock(&timerMux);
-    fnUartSIO.set_proceed_line(level);
+    fnSioCom.set_proceed_line(level);
 }
 
 void sioNetwork::sio_set_translation()

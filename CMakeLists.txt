@@ -25,7 +25,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DI
 
 set(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include lib/config lib/FileSystem lib/utils lib/hardware 
     lib/tcpip lib/telnet  lib/EdUrlParser lib/TNFSlib
-    lib/sio lib/printer-emulator lib/mongoose lib/http lib/task
+    lib/siocom lib/sio lib/printer-emulator lib/mongoose lib/http lib/task
     components/libsmb2/include)
 
 set(SOURCES src/main.cpp
@@ -92,6 +92,10 @@ set(SOURCES src/main.cpp
     lib/network-protocol/FTP.h lib/network-protocol/FTP.cpp
     lib/network-protocol/TNFS.h lib/network-protocol/TNFS.cpp
     lib/network-protocol/HTTP.h lib/network-protocol/HTTP.cpp
+    lib/siocom/sioport.h lib/siocom/sioport.cpp
+    lib/siocom/serialsio.h lib/siocom/serialsio.cpp
+    lib/siocom/netsio.h lib/siocom/netsio.cpp
+    lib/siocom/fnSioCom.h lib/siocom/fnSioCom.cpp
     lib/sio/networkStatus.h lib/sio/network.h lib/sio/network.cpp
     lib/sio/sio.h lib/sio/sio.cpp
     lib/mongoose/mongoose.h lib/mongoose/mongoose.c

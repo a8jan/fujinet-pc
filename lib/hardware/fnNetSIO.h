@@ -1,78 +1,71 @@
-/* Basically a simplified copy of the ESP Arduino library in HardwareSerial.h/HardwareSerial.cpp
-*/
-#ifndef FNUART_H
-#define FNUART_H
-
+#ifndef FNNETSIO_H
+#define FNNETSIO_H
 
 #include <string>
-// #include <driver/uart.h>
+#include "fnDNS.h"
 
-class UARTManager
+class NetSIOManager
 {
 private:
-    // uart_port_t _uart_num;
-    char _device[64]; // device name or path
+    char _host[64];
+    in_addr_t _ip;
+    uint16_t _port;
+
     uint32_t _baud;
     int _command_pin;
     int _proceed_pin;
     int _command_tiocm;
     int _proceed_tiocm;
     int _fd;
-    // QueueHandle_t _uart_q;
     bool _initialized; // is UART ready?
+    bool _command_asserted;
+    bool _byte_pending;
+    uint8_t _byte;
 
     // serial port error counter
     int _errcount;
     unsigned long _suspend_time;
+    unsigned long _alive_time;
+    unsigned long _expire_time;
 
     size_t _print_number(unsigned long n, uint8_t base);
 
 public:
-    // UARTManager(int uart_num);
-    UARTManager();
+    NetSIOManager(void);
 
     void begin(int baud);
     void end();
     void suspend(int sec=5);
+    void set_baudrate(uint32_t baud);
     bool initialized() { return _initialized; }
 
     void set_port(const char *device, int command_pin, int proceed_pin);
     const char* get_port(int &command_pin, int &proceed_pin);
-
-    void set_baudrate(uint32_t baud);
-    uint32_t get_baudrate() { return _baud; };
-
     bool is_command();
-    void set_proceed_line(bool level);
+    void set_proceed_line(bool level=true, bool force=false);
 
+    int handle_netsio();
     int available();
+    int peek();
     void flush();
     void flush_input();
 
     bool waitReadable(uint32_t timeout_ms);
+    bool waitWritable(uint32_t timeout_ms);
 
     int read();
     size_t readBytes(uint8_t *buffer, size_t length, bool command_mode=false);
     size_t readBytes(char *buffer, size_t length) { return readBytes((uint8_t *)buffer, length); };
 
-    size_t write(uint8_t);
-    size_t write(const uint8_t *buffer, size_t size);
-    size_t write(const char *s);
+    ssize_t write(uint8_t);
+    ssize_t write(const uint8_t *buffer, size_t size);
+    ssize_t write(const char *s);
 
     size_t write(unsigned long n) { return write((uint8_t)n); };
     size_t write(long n) { return write((uint8_t)n); };
     size_t write(unsigned int n) { return write((uint8_t)n); };
     size_t write(int n) { return write((uint8_t)n); };
 
-    // size_t printf(const char *format, ...);
-
-    // //size_t println(const char *format, ...);
-    // size_t println(const char *str);
-    // size_t println() { return print("\n"); };
-    // size_t println(std::string str);
-    // size_t println(int num, int base = 10);
-
-    // //size_t print(const char *format, ...);
     size_t print(const char *str);
     size_t print(std::string str);
     size_t print(int n, int base = 10);
@@ -81,7 +74,6 @@ public:
     size_t print(unsigned long n, int base = 10);
 };
 
-// extern UARTManager fnUartDebug;
-// extern UARTManager fnSioCom;
+extern NetSIOManager fnUartSIO;
 
-#endif //FNUART_H
+#endif //FNNETSIO_H

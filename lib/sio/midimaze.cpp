@@ -31,7 +31,7 @@ void sioMIDIMaze::sio_enable_midimaze()
     udpMIDI.begin(MIDIMAZE_PORT);
 
     // Change baud rate
-    fnUartSIO.set_baudrate(MIDI_BAUD);
+    fnSioCom.set_baudrate(MIDI_BAUD);
     midimazeActive = true;
 #ifdef DEBUG
     Debug_println("MIDIMAZE mode enabled");
@@ -42,7 +42,7 @@ void sioMIDIMaze::sio_disable_midimaze()
 {
     ledc_stop(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_1, 0);
     udpMIDI.stop();
-    fnUartSIO.set_baudrate(SIO_STANDARD_BAUDRATE);
+    fnSioCom.set_baudrate(SIO_STANDARD_BAUDRATE);
     midimazeActive = false;
 }
 
@@ -54,7 +54,7 @@ void sioMIDIMaze::sio_handle_midimaze()
     {
         udpMIDI.read(buf_net, MIDIMAZE_BUFFER_SIZE);
         // Send to Atari UART
-        fnUartSIO.write(buf_net, packetSize);
+        fnSioCom.write(buf_net, packetSize);
 #ifdef DEBUG
         Debug_print("MIDI-IN: ");
         util_dump_bytes(buf_net, packetSize);
@@ -62,7 +62,7 @@ void sioMIDIMaze::sio_handle_midimaze()
     }
 
     // Read the data until there's a pause in the incoming stream
-    if (fnUartSIO.available())
+    if (fnSioCom.available())
     {
         while (true)
         {
@@ -75,17 +75,17 @@ void sioMIDIMaze::sio_handle_midimaze()
                 sio_disable_midimaze();
                 return;
             }
-            if (fnUartSIO.available())
+            if (fnSioCom.available())
             {
                 // Collect bytes read in our buffer
-                buf_midi[buf_midi_index] = (char)fnUartSIO.read();
+                buf_midi[buf_midi_index] = (char)fnSioCom.read();
                 if (buf_midi_index < MIDIMAZE_BUFFER_SIZE - 1)
                     buf_midi_index++;
             }
             else
             {
                 fnSystem.delay_microseconds(MIDIMAZE_PACKET_TIMEOUT);
-                if (!fnUartSIO.available())
+                if (!fnSioCom.available())
                     break;
             }
         }

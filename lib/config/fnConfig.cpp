@@ -227,6 +227,30 @@ void fnConfig::store_interface_url(const char *url)
     // _dirty = true;
 }
 
+void fnConfig::store_netsio_enabled(bool enabled) {
+    if (_netsio.netsio_enabled == enabled)
+        return;
+
+    _netsio.netsio_enabled = enabled;
+    _dirty = true;
+}
+
+void fnConfig::store_netsio_host(const char *host) {
+    if (_netsio.host.compare(host) == 0)
+        return;
+
+    _netsio.host = host;
+    _dirty = true;
+}
+
+void fnConfig::store_netsio_port(int port) {
+    if (_netsio.port == port)
+        return;
+
+    _netsio.port = port;
+    _dirty = true;
+}
+
 std::string fnConfig::get_mount_path(uint8_t num, mount_type_t mounttype)
 {
     // Handle disk slots
@@ -617,6 +641,12 @@ void fnConfig::save()
     ss << "play_record=" << ((_cassette.button) ? "1 Record" : "0 Play") << LINETERM;
     ss << "pulldown=" << ((_cassette.pulldown) ? "1 Pulldown Resistor" : "0 B Button Press") << LINETERM;
 
+    // NETSIO
+    ss << LINETERM << "[NetSIO]" << LINETERM;
+    ss << "enabled=" << _netsio.netsio_enabled << LINETERM;
+    ss << "host=" << _netsio.host << LINETERM;
+    ss << "port=" << _netsio.port << LINETERM;
+
     // Write the results out
     FILE *fout = fnSPIFFS.file_open(CONFIG_FILENAME, "w");
     std::string result = ss.str();
@@ -777,6 +807,9 @@ New behavior: copy from SD first if available, then read SPIFFS.
         case SECTION_SERIAL:
             _read_section_serial(ss);
             break;
+        case SECTION_NETSIO:
+            _read_section_netsio(ss);
+            break;
         case SECTION_UNKNOWN:
             break;
         }
@@ -874,7 +907,6 @@ void fnConfig::_read_section_serial(std::stringstream &ss)
         }
     }
 }
-
 
 void fnConfig::_read_section_wifi(std::stringstream &ss)
 {
@@ -1136,6 +1168,35 @@ void fnConfig::_read_section_phonebook(std::stringstream &ss, int index)
     }
 }
 
+void fnConfig::_read_section_netsio(std::stringstream &ss)
+{
+    std::string line;
+    // Read lines until one starts with '[' which indicates a new section
+    while (_read_line(ss, line, '[') >= 0)
+    {
+        std::string name;
+        std::string value;
+        if (_split_name_value(line, name, value))
+        {
+            if (strcasecmp(name.c_str(), "enabled") == 0)
+            {
+                _netsio.netsio_enabled = util_string_value_is_true(value);
+            }
+            else if (strcasecmp(name.c_str(), "host") == 0)
+            {
+                _netsio.host = value;
+            }
+            else if (strcasecmp(name.c_str(), "port") == 0)
+            {
+                int port = atoi(value.c_str());
+                if (port <= 0 || port > 65535) 
+                    port = CONFIG_DEFAULT_NETSIO_PORT;
+                _netsio.port = port;
+            }
+        }
+    }
+}
+
 /*
 Looks for [SectionNameX] where X is an integer
 Returns which SectionName was found and sets index to X if X is an integer
@@ -1234,6 +1295,10 @@ fnConfig::section_match fnConfig::_find_section_in_line(std::string &line, int &
             else if (strncasecmp("Serial", s1.c_str(), 6) == 0)
             {
                 return SECTION_SERIAL;
+            }
+            else if (strncasecmp("NetSIO", s1.c_str(), 6) == 0)
+            {
+                return SECTION_NETSIO;
             }
         }
     }

@@ -56,7 +56,7 @@ void sioCPM::sio_handle_cpm()
 
 void sioCPM::init_cpm()
 {
-    fnUartSIO.set_baudrate(9600);
+    fnSioCom.set_baudrate(9600);
     Status = Debug = 0;
     Break = Step = -1;
     RAM = (uint8_t *)malloc(MEMSIZE);

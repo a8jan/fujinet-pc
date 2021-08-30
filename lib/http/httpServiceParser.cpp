@@ -110,6 +110,8 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_SERIALCOMMAND,
         FN_SERIALPROCEED,
         FN_SIO_HSTEXT,
+        FN_NETSIO_ENABLED,
+        FN_NETSIO_HOST,
         FN_LASTTAG
     };
 
@@ -199,7 +201,9 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_SERIALPORT",
         "FN_SERIALCOMMAND",
         "FN_SERIALPROCEED",
-        "FN_SIO_HSTEXT"
+        "FN_SIO_HSTEXT",
+        "FN_NETSIO_ENABLED",
+        "FN_NETSIO_HOST",
     };
 
     stringstream resultstream;
@@ -367,6 +371,12 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         break;
     case FN_BOOT_MODE:
         resultstream << Config.get_general_boot_mode();
+        break;
+    case FN_NETSIO_ENABLED:
+        resultstream << Config.get_netsio_enabled();
+        break;
+    case FN_NETSIO_HOST:
+        resultstream << Config.get_netsio_host();
         break;
     case FN_DRIVE1HOST:
     case FN_DRIVE2HOST:

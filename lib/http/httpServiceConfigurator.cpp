@@ -11,7 +11,8 @@
 
 #include "httpServiceConfigurator.h"
 #include "fnConfig.h"
-#include "fnUART.h"
+// #include "fnUART.h"
+#include "fnSioCom.h"
 #include "printerlist.h"
 #include "utils.h"
 
@@ -328,29 +329,57 @@ void fnHttpServiceConfigurator::config_serial(std::string port, std::string comm
     const char *devname;
     int command_pin;
     int proceed_pin;
-    devname = fnUartSIO.get_port(command_pin, proceed_pin);
+    devname = fnSioCom.get_serial_port(command_pin, proceed_pin);
 
     // update settings
     if (!port.empty())
     {
         Config.store_serial_port(port.c_str());
-        // re-set serial port
-        fnUartSIO.end();
-        fnUartSIO.set_port(Config.get_serial_port().c_str(), command_pin, proceed_pin);
-        fnUartSIO.begin(SIO.getBaudrate());
+        if (!fnSioCom.get_netsio_enabled()) 
+        {
+            // re-set serial port
+            fnSioCom.end();
+            fnSioCom.set_serial_port(Config.get_serial_port().c_str(), command_pin, proceed_pin);
+            fnSioCom.begin();
+        }
     }
     if (!command.empty())
     {
         Config.store_serial_command((fnConfig::serial_command_pin)atoi(command.c_str()));
-        fnUartSIO.set_port(nullptr, Config.get_serial_command(), proceed_pin);
+        fnSioCom.set_serial_port(nullptr, Config.get_serial_command(), proceed_pin);
     }
     if (!proceed.empty())
     {
         Config.store_serial_proceed((fnConfig::serial_proceed_pin)atoi(proceed.c_str()));
-        fnUartSIO.set_port(nullptr, command_pin, Config.get_serial_proceed());
+        fnSioCom.set_serial_port(nullptr, command_pin, Config.get_serial_proceed());
     }
     Config.save();
 }
+
+void fnHttpServiceConfigurator::config_netsio(std::string enable_netsio, std::string netsio_host_port)
+{
+    Debug_printf("Set NetSIO: %s, %s\n", enable_netsio.c_str(), netsio_host_port.c_str());
+
+    // Store our change in Config
+    if (!netsio_host_port.empty())
+    {
+        Config.store_netsio_host(netsio_host_port.c_str());
+        fnSioCom.set_netsio_host(Config.get_netsio_host().c_str(), Config.get_netsio_port());
+        // TODO parse netsio_host_port, detect if host part is followed by :port
+        // int port;
+        // ...
+        // Config.store_netsio_port()
+    }
+    if (!enable_netsio.empty())
+    {
+        Config.store_netsio_enabled(util_string_value_is_true(enable_netsio));
+    }
+    // Save change
+    Config.save();
+
+    fnSioCom.swicth_sio_mode(Config.get_netsio_enabled());
+}
+
 
 int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t postlen)
 {
@@ -426,6 +455,14 @@ int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t 
         else if (i->first.compare("serialproceed") == 0)
         {
             config_serial(std::string(), std::string(), i->second);
+        }
+        else if (i->first.compare("netsio_enable") == 0)
+        {
+            config_netsio(i->second, std::string());
+        }
+        else if (i->first.compare("netsio_host") == 0)
+        {
+            config_netsio(std::string(), i->second);
         }
     }
 

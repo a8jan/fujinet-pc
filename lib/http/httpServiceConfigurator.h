@@ -20,6 +20,7 @@ class fnHttpServiceConfigurator
     static void config_enable_config(std::string enable_config);
     static void config_boot_mode(std::string boot_mode);
     static void config_serial(std::string port, std::string command, std::string proceed);
+    static void config_netsio(std::string enable_netsio, std::string netsio_host_port);
 
 public:
     static char * url_decode(char * dst, const char * src, size_t dstsize);

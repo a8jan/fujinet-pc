@@ -29,3 +29,4 @@ selectListValue("select_play_record", current_play_record);
 selectListValue("select_pulldown", current_pulldown);
 selectListValue("select_serialcommand", current_serialcommand);
 selectListValue("select_serialproceed", current_serialproceed);
+selectListValue("select_netsio_enable", current_netsio_enabled);

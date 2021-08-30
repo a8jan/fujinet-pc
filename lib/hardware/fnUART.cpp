@@ -4,7 +4,6 @@
 // #include <driver/uart.h>
 
 #include <stdio.h>
-#include <string.h>
 #include "config.h"
 #ifdef HAVE_BSD_STRING_H
 #include <bsd/string.h>
@@ -38,11 +37,15 @@
 #define MAX_WRITE_BUFFER_TICKS 1000
 
 // UARTManager fnUartDebug(UART_DEBUG);
-UARTManager fnUartSIO;
+// UARTManager fnUartSIO;
 
 // Constructor
 // UARTManager::UARTManager(uart_port_t uart_num) : _uart_num(uart_num), _uart_q(NULL) {}
-UARTManager::UARTManager() : _initialized(false), _fd(-1) {};
+UARTManager::UARTManager() : 
+    _initialized(false),
+    _fd(-1),
+    _device{0}
+{};
 
 void UARTManager::end()
 {
@@ -50,6 +53,7 @@ void UARTManager::end()
     {
         close(_fd);
         _fd  = -1;
+        Debug_printf("### UART stopped ###\n");
     }
     _initialized = false;
 }
@@ -114,10 +118,10 @@ const char* UARTManager::get_port(int &command_pin, int &proceed_pin)
 
 void UARTManager::begin(int baud)
 {
-    // if(_uart_q)
-    // {
-    //     end();
-    // }
+    if(_initialized)
+    {
+        end();
+    }
 
     _errcount = 0;
     _suspend_time = 0;
@@ -201,7 +205,7 @@ void UARTManager::begin(int baud)
 // #endif
 
     // Set in/out baud rate to be 19200
-    cfsetspeed(&tios, B19200);
+//    cfsetspeed(&tios, B19200); // TODO !
 
 //     // setup char len
 //     tios.c_cflag |= CS8;
@@ -241,7 +245,7 @@ void UARTManager::begin(int baud)
     Debug_printf("### UART initialized ###\n");
     // Set initialized.
     _initialized=true;
-    _baud = 19200;
+    set_baudrate(baud);
 }
 
 
@@ -281,13 +285,6 @@ int UARTManager::available()
 	if (ioctl(_fd, FIONREAD, &result) < 0)
         return 0;
     return result;
-}
-
-/* NOT IMPLEMENTED
-*/
-int UARTManager::peek()
-{
-    return 0;
 }
 
 /* Changes baud rate
@@ -429,7 +426,7 @@ bool UARTManager::is_command(void)
             if (_suspend_time > tv.tv_sec)
                 return false;
             // try to re-open serial port
-            begin(19200); // TODO current speed
+            begin(_baud);
         }
         if (! _initialized)
             return false;
@@ -450,21 +447,22 @@ bool UARTManager::is_command(void)
     return ((status & _command_tiocm) != 0);
 }
 
-void UARTManager::set_proceed_line(bool level, bool force)
+void UARTManager::set_proceed_line(bool level)
 {
+    static int last_level = -1; // 0,1 or -1 for unknown
+    int new_level = level ? 0 : 1;
     int result;
-    int mbit = _proceed_tiocm;
-    static bool last_level = true;
 
     if (!_initialized)
         return;
-
-    if (!force && last_level == level)
+    if (last_level == new_level)
         return;
-    
-    last_level = level;
+
     Debug_print(level ? "+" : "-");
-    result = level ? ioctl(_fd, TIOCMBIC, &mbit) : ioctl(_fd, TIOCMBIS, &mbit);
+    last_level = new_level;
+
+    unsigned long request = level ? TIOCMBIC : TIOCMBIS;
+    result = ioctl(_fd, request, &_proceed_tiocm);
     if (result < 0)
     {
         perror("Cannot set proceed signal");
@@ -533,10 +531,17 @@ size_t UARTManager::readBytes(uint8_t *buffer, size_t length, bool command_mode)
     {
         result = ::read(_fd, &buffer[rxbytes], length-rxbytes);
         Debug_printf("read: %d\n", result);
-        if (result < 0 && errno != EAGAIN)
+        if (result < 0)
         {
-            Debug_printf("### UART readBytes() ERROR %d %s ###\n", errno, strerror(errno));
-            break;
+            if (errno == EAGAIN)
+            {
+                result = 0;
+            }
+            else
+            {
+                Debug_printf("### UART readBytes() ERROR %d %s ###\n", errno, strerror(errno));
+                break;
+            }
         }
 
         rxbytes += result;
