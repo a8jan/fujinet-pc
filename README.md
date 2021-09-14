@@ -1,13 +1,13 @@
 FujiNet-PC   
 =========
 
-Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platformio) port to Linux, MacOS and Windows
+Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platformio) port to Linux, macOS and Windows
 
 #### If your are interested into FujiNet - A multi-function peripheral built on ESP32 hardware being developed for the Atari 8-bit systems - please visit the project at GitHub: https://github.com/FujiNetWIFI ####
 
 -------------------------------------------------------------------
 
-**Warning:** FujiNet-PC project is still in early development phase with ported components in various state of completeness and erroneousness...
+**Warning:** FujiNet-PC is still work in progress with ported components in various state of completeness and erroneousness...
 
 -------------------------------------------------------------------
 
@@ -37,8 +37,58 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 
 ### Build instructions
 
+#### Dependencies
+
+##### libbsd
+
+BSD variants of string manipulation functions are used in FN code. On some systems the [library](https://libbsd.freedesktop.org/wiki/) which contains these functions must be installed manually.
+
+For Debian, Ubuntu and derivates:
+
 ```sh
-# get source
+sudo apt install libbsd-dev
+```
+
+On macOS, no need to install libbsd.
+
+
+##### libexpat
+
+[Expat](https://libexpat.github.io/) is XML parser library.
+
+Debian, Ubuntu and derivates:
+
+```sh
+sudo apt install libexpat-dev
+```
+
+<!-- macOS:
+
+```sh
+brew install expat
+``` -->
+
+##### libssl
+
+For HTTP**S** protocol the SSL libraries are required ([OpenSSL](https://www.openssl.org/)).
+
+Debian, Ubuntu and derivates:
+
+```sh
+sudo apt install libssl-dev
+```
+
+macOS:
+
+```sh
+brew install openssl
+```
+
+#### Build
+
+
+```sh
+# get the source code
 git clone https://github.com/a8jan/fujinet-pc.git
 
 # enter build directory
@@ -58,7 +108,11 @@ mkdir sd # lowercase sd
 
 # and put some disk image(s) to sd directory (optional)
 cp /your/dir/some/image.atr sd
+```
 
+#### Run
+
+```sh
 # start fujinet
 ./run-fujinet
 
