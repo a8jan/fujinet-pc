@@ -12,7 +12,7 @@ project(fujinet-pc VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__PC_BUILD_DEBUG__ -DVERBOSE_TNFS")
+# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__PC_BUILD_DEBUG__ -DVERBOSE_TNFS -DVERBOSE_SIO")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__PC_BUILD_DEBUG__")
 
 # mongoose.c some compile options: -DMG_ENABLE_LINES=1 -DMG_ENABLE_DIRECTORY_LISTING=1 -DMG_ENABLE_SSI=1
@@ -111,10 +111,12 @@ set(SOURCES src/main.cpp
 
 add_executable(fujinet ${SOURCES})
 
-target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS})
+set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
+find_package(OpenSSL REQUIRED)
+
+target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+target_link_libraries(fujinet pthread expat OpenSSL::SSL OpenSSL::Crypto)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_libraries(fujinet bsd pthread expat ssl crypto)
-else()
-    target_link_libraries(fujinet pthread expat ssl crypto)
+    target_link_libraries(fujinet bsd)
 endif()
