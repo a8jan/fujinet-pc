@@ -35,14 +35,24 @@ uint32_t SioCom::get_baudrate()
     return _sioPort->get_baudrate(); 
 }
 
-bool SioCom::is_command() 
+bool SioCom::command_asserted() 
 {
-    return _sioPort->is_command();
+    return _sioPort->command_asserted();
 }
 
-void SioCom::set_proceed_line(bool level)
+bool SioCom::motor_asserted() 
 {
-    _sioPort->set_proceed_line(level);
+    return _sioPort->motor_asserted();
+}
+
+void SioCom::set_proceed(bool level)
+{
+    _sioPort->set_proceed(level);
+}
+
+void SioCom::set_interrupt(bool level)
+{
+    _sioPort->set_interrupt(level);
 }
 
 int SioCom::available() 
@@ -185,6 +195,17 @@ void SioCom::set_netsio_host(const char *host, int port)
 const char* SioCom::get_netsio_host(int &port) 
 {
     return _netSio.get_host(port);
+}
+
+void SioCom::netsio_late_sync(uint8_t c)
+{
+    _netSio.set_sync_ack_byte(c);
+}
+
+void SioCom::netsio_write_size(int write_size)
+{
+    if (_netsio_enabled)
+        _netSio.set_sync_write_size(write_size + 1); // data + checksum byte
 }
 
 void SioCom::set_sio_mode(bool enable_netsio)

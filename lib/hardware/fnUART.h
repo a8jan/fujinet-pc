@@ -40,10 +40,12 @@ public:
     const char* get_port(int &command_pin, int &proceed_pin);
 
     void set_baudrate(uint32_t baud);
-    uint32_t get_baudrate() { return _baud; };
+    uint32_t get_baudrate() { return _baud; }
 
-    bool is_command();
-    void set_proceed_line(bool level);
+    bool command_asserted();
+    bool motor_asserted() { return false; } // not pin available
+    void set_proceed(bool level);
+    void set_interrupt(bool level) {} // not pin available
 
     int available();
     void flush();
@@ -53,16 +55,16 @@ public:
 
     int read();
     size_t readBytes(uint8_t *buffer, size_t length, bool command_mode=false);
-    size_t readBytes(char *buffer, size_t length) { return readBytes((uint8_t *)buffer, length); };
+    size_t readBytes(char *buffer, size_t length) { return readBytes((uint8_t *)buffer, length); }
 
     size_t write(uint8_t);
     size_t write(const uint8_t *buffer, size_t size);
     size_t write(const char *s);
 
-    size_t write(unsigned long n) { return write((uint8_t)n); };
-    size_t write(long n) { return write((uint8_t)n); };
-    size_t write(unsigned int n) { return write((uint8_t)n); };
-    size_t write(int n) { return write((uint8_t)n); };
+    size_t write(unsigned long n) { return write((uint8_t)n); }
+    size_t write(long n) { return write((uint8_t)n); }
+    size_t write(unsigned int n) { return write((uint8_t)n); }
+    size_t write(int n) { return write((uint8_t)n); }
 
     // size_t printf(const char *format, ...);
 

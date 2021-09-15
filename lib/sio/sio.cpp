@@ -77,6 +77,8 @@ uint8_t sioDevice::sio_to_peripheral(uint8_t *buf, unsigned short len)
     // Retrieve data frame from computer
     Debug_printf("<-SIO read %hu bytes\n", len);
 
+    fnSioCom.netsio_write_size(len); // set hint for NetSIO
+
     // __BEGIN_IGNORE_UNUSEDVARS
     size_t l = fnSioCom.readBytes(buf, len);
     // __END_IGNORE_UNUSEDVARS
@@ -89,7 +91,7 @@ uint8_t sioDevice::sio_to_peripheral(uint8_t *buf, unsigned short len)
     uint8_t ck_tst = sio_checksum(buf, len);
 
 #ifdef VERBOSE_SIO
-    Debug_printf("RECV <%u> BYTES, checksum: %hu\n\t", l, ck_rcv);
+    Debug_printf("RECV <%lu> BYTES, checksum: %hu\n\t", (unsigned long)l, ck_rcv);
     for (int i = 0; i < len; i++)
         Debug_printf("%02x ", buf[i]);
     Debug_print("\n");
@@ -123,6 +125,19 @@ void sioDevice::sio_ack()
     fnSystem.delay_microseconds(DELAY_T5); //?
     fnSioCom.flush();
     Debug_println("ACK!");
+}
+
+// SIO ACK, delayed for NetSIO sync
+void sioDevice::sio_late_ack()
+{
+    if (fnSioCom.get_netsio_enabled())
+    {
+        fnSioCom.netsio_late_sync('A');
+        Debug_println("ACK! +");
+    } else
+    {
+        sio_ack();
+    }
 }
 
 // SIO COMPLETE
@@ -192,7 +207,7 @@ void sioBus::_sio_process_cmd()
     // Wait for CMD line to raise again
     // while (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
     //     fnSystem.yield();
-    while (fnSioCom.is_command())
+    while (fnSioCom.command_asserted())
         fnSystem.delay_microseconds(500);
 
     int bytes_pending = fnSioCom.available();
@@ -362,7 +377,7 @@ void sioBus::service()
 
     // Go process a command frame if the SIO CMD line is asserted
     //if (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
-    if (fnSioCom.is_command())
+    if (fnSioCom.command_asserted())
     {
 
 #ifdef DEBUG
@@ -417,7 +432,7 @@ void sioBus::setup()
     // // PROC PIN
     // fnSystem.set_pin_mode(PIN_PROC, gpio_mode_t::GPIO_MODE_OUTPUT_OD, SystemManager::pull_updown_t::PULL_UP);
     // fnSystem.digital_write(PIN_PROC, DIGI_HIGH);
-    fnSioCom.set_proceed_line(true);
+    fnSioCom.set_proceed(false);
     // // MTR PIN
     // //fnSystem.set_pin_mode(PIN_MTR, PINMODE_INPUT | PINMODE_PULLDOWN); // There's no PULLUP/PULLDOWN on pins 34-39
     // fnSystem.set_pin_mode(PIN_MTR, gpio_mode_t::GPIO_MODE_INPUT);

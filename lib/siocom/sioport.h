@@ -16,13 +16,14 @@ class SioPort
 public:
     virtual void begin(int baud) = 0;
     virtual void end() = 0;
-    // virtual void suspend(int sec=5) = 0;
 
     virtual void set_baudrate(uint32_t baud) = 0;
     virtual uint32_t get_baudrate() = 0;
 
-    virtual bool is_command() = 0;
-    virtual void set_proceed_line(bool level) = 0;
+    virtual bool command_asserted() = 0;
+    virtual bool motor_asserted() = 0;
+    virtual void set_proceed(bool level) = 0;
+    virtual void set_interrupt(bool level) = 0;
 
     virtual int available() = 0;
     virtual void flush() = 0;

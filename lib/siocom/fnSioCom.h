@@ -33,8 +33,10 @@ public:
     void set_baudrate(uint32_t baud);
     uint32_t get_baudrate();
 
-    bool is_command();
-    void set_proceed_line(bool level);
+    bool command_asserted();
+    bool motor_asserted();
+    void set_proceed(bool level);
+    void set_interrupt(bool level);
 
     int available();
     void flush();
@@ -69,6 +71,8 @@ public:
     // specific to NetSioPort
     void set_netsio_host(const char *host, int port);
     const char* get_netsio_host(int &port);
+    void netsio_late_sync(uint8_t c);
+    void netsio_write_size(int write_size);
 
     void set_sio_mode(bool enable_netsio);
     bool get_netsio_enabled() {return _netsio_enabled;}

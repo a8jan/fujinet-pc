@@ -412,7 +412,7 @@ void UARTManager::set_baudrate(uint32_t baud)
     _baud = baud;
 }
 
-bool UARTManager::is_command(void)
+bool UARTManager::command_asserted(void)
 {
     int status;
 
@@ -447,7 +447,7 @@ bool UARTManager::is_command(void)
     return ((status & _command_tiocm) != 0);
 }
 
-void UARTManager::set_proceed_line(bool level)
+void UARTManager::set_proceed(bool level)
 {
     static int last_level = -1; // 0,1 or -1 for unknown
     int new_level = level ? 0 : 1;
@@ -552,7 +552,7 @@ size_t UARTManager::readBytes(uint8_t *buffer, size_t length, bool command_mode)
         }
 
         // wait for more data
-        if (command_mode && !is_command())
+        if (command_mode && !command_asserted())
         {
             Debug_println("### UART readBytes() CMD pin deasserted while reading command ###");
             return 1 + length; // indicate to SIO caller
