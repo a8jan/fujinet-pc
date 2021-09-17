@@ -58,6 +58,12 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_PULLDOWN,
         FN_CONFIG_ENABLED,
         FN_BOOT_MODE,
+        FN_SERIALPORT,
+        FN_SERIALCOMMAND,
+        FN_SERIALPROCEED,
+        FN_SIO_HSTEXT,
+        FN_NETSIO_ENABLED,
+        FN_NETSIO_HOST,
         FN_DRIVE1HOST,
         FN_DRIVE2HOST,
         FN_DRIVE3HOST,
@@ -106,12 +112,6 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_HOST6PREFIX,
         FN_HOST7PREFIX,
         FN_HOST8PREFIX,
-        FN_SERIALPORT,
-        FN_SERIALCOMMAND,
-        FN_SERIALPROCEED,
-        FN_SIO_HSTEXT,
-        FN_NETSIO_ENABLED,
-        FN_NETSIO_HOST,
         FN_LASTTAG
     };
 
@@ -150,6 +150,12 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_PULLDOWN",
         "FN_CONFIG_ENABLED",
         "FN_BOOT_MODE",
+        "FN_SERIALPORT",
+        "FN_SERIALCOMMAND",
+        "FN_SERIALPROCEED",
+        "FN_SIO_HSTEXT",
+        "FN_NETSIO_ENABLED",
+        "FN_NETSIO_HOST",
         "FN_DRIVE1HOST",
         "FN_DRIVE2HOST",
         "FN_DRIVE3HOST",
@@ -197,13 +203,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_HOST5PREFIX",
         "FN_HOST6PREFIX",
         "FN_HOST7PREFIX",
-        "FN_HOST8PREFIX",
-        "FN_SERIALPORT",
-        "FN_SERIALCOMMAND",
-        "FN_SERIALPROCEED",
-        "FN_SIO_HSTEXT",
-        "FN_NETSIO_ENABLED",
-        "FN_NETSIO_HOST",
+        "FN_HOST8PREFIX"
     };
 
     stringstream resultstream;
