@@ -626,12 +626,12 @@ size_t NetSioPort::read(uint8_t *buffer, size_t length, bool command_mode)
             break;
         }
 
-        // wait for more data
-        if (command_mode && !command_asserted())
-        {
-            Debug_println("### NetSIO read()) CMD pin deasserted while reading command ###");
-            return 1 + length; // indicate to SIO caller
-        }
+        // // wait for more data
+        // if (command_mode && !command_asserted())
+        // {
+        //     Debug_println("### NetSIO read()) CMD pin deasserted while reading command ###");
+        //     return 1 + length; // indicate to SIO caller
+        // }
     }
     return rxbytes;
 }

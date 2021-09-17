@@ -59,7 +59,6 @@ void sioDevice::sio_to_computer(uint8_t *buf, uint16_t len, bool err)
 
     // Write data frame
     fnSioCom.write(buf, len);
-    fnSioCom.flush();
     // Write checksum
     fnSioCom.write(sio_checksum(buf, len));
 
@@ -130,10 +129,10 @@ void sioDevice::sio_ack()
 // SIO ACK, delayed for NetSIO sync
 void sioDevice::sio_late_ack()
 {
-    if (fnSioCom.get_netsio_enabled())
+    if (fnSioCom.get_sio_mode() == SioCom::sio_mode::NETSIO)
     {
         fnSioCom.netsio_late_sync('A');
-        Debug_println("ACK! +");
+        Debug_println("ACK+!");
     } else
     {
         sio_ack();
@@ -420,31 +419,14 @@ void sioBus::setup()
 {
     Debug_println("SIO SETUP");
 
-    // Set up UART
-    fnSioCom.set_serial_port(Config.get_serial_port().c_str(), Config.get_serial_command(), Config.get_serial_proceed());
-    fnSioCom.set_netsio_host(Config.get_netsio_host().c_str(), Config.get_netsio_port());
-    fnSioCom.set_sio_mode(Config.get_netsio_enabled());
+    // Setup SIO ports: serial UART and NetSIO
+    fnSioCom.set_serial_port(Config.get_serial_port().c_str(), Config.get_serial_command(), Config.get_serial_proceed()); // UART
+    fnSioCom.set_netsio_host(Config.get_netsio_host().c_str(), Config.get_netsio_port()); // NetSIO
+    fnSioCom.set_sio_mode(Config.get_netsio_enabled() ? SioCom::sio_mode::NETSIO : SioCom::sio_mode::SERIAL);
     fnSioCom.begin(_sioBaud);
 
-    // // INT PIN
-    // fnSystem.set_pin_mode(PIN_INT, gpio_mode_t::GPIO_MODE_OUTPUT_OD, SystemManager::pull_updown_t::PULL_UP);
-    // fnSystem.digital_write(PIN_INT, DIGI_HIGH);
-    // // PROC PIN
-    // fnSystem.set_pin_mode(PIN_PROC, gpio_mode_t::GPIO_MODE_OUTPUT_OD, SystemManager::pull_updown_t::PULL_UP);
-    // fnSystem.digital_write(PIN_PROC, DIGI_HIGH);
+    fnSioCom.set_interrupt(false);
     fnSioCom.set_proceed(false);
-    // // MTR PIN
-    // //fnSystem.set_pin_mode(PIN_MTR, PINMODE_INPUT | PINMODE_PULLDOWN); // There's no PULLUP/PULLDOWN on pins 34-39
-    // fnSystem.set_pin_mode(PIN_MTR, gpio_mode_t::GPIO_MODE_INPUT);
-    // // CMD PIN
-    // //fnSystem.set_pin_mode(PIN_CMD, PINMODE_INPUT | PINMODE_PULLUP); // There's no PULLUP/PULLDOWN on pins 34-39
-    // fnSystem.set_pin_mode(PIN_CMD, gpio_mode_t::GPIO_MODE_INPUT);
-    // // CKI PIN
-    // //fnSystem.set_pin_mode(PIN_CKI, PINMODE_OUTPUT);
-    // fnSystem.set_pin_mode(PIN_CKI, gpio_mode_t::GPIO_MODE_OUTPUT_OD);
-    // fnSystem.digital_write(PIN_CKI, DIGI_LOW);
-    // // CKO PIN
-    // fnSystem.set_pin_mode(PIN_CKO, gpio_mode_t::GPIO_MODE_INPUT);
 
     // // Create a message queue
     // qSioMessages = xQueueCreate(4, sizeof(sio_message_t));
