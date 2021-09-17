@@ -530,7 +530,7 @@ size_t UARTManager::readBytes(uint8_t *buffer, size_t length, bool command_mode)
     for (rxbytes=0; rxbytes<length;)
     {
         result = ::read(_fd, &buffer[rxbytes], length-rxbytes);
-        Debug_printf("read: %d\n", result);
+        // Debug_printf("read: %d\n", result);
         if (result < 0)
         {
             if (errno == EAGAIN)
@@ -551,12 +551,12 @@ size_t UARTManager::readBytes(uint8_t *buffer, size_t length, bool command_mode)
             break;
         }
 
-        // wait for more data
-        if (command_mode && !command_asserted())
-        {
-            Debug_println("### UART readBytes() CMD pin deasserted while reading command ###");
-            return 1 + length; // indicate to SIO caller
-        }
+        // // wait for more data
+        // if (command_mode && !command_asserted())
+        // {
+        //     Debug_println("### UART readBytes() CMD pin deasserted while reading command ###");
+        //     return 1 + length; // indicate to SIO caller
+        // }
         if (!waitReadable(500)) // 500 ms timeout
         {
             Debug_println("### UART readBytes() TIMEOUT ###");
@@ -618,7 +618,7 @@ size_t UARTManager::write(const uint8_t *buffer, size_t size)
             {
                 // This will write some
                 result = ::write(_fd, &buffer[txbytes], size-txbytes);
-                Debug_printf("write: %d\n", result);
+                // Debug_printf("write: %d\n", result);
                 if (result < 1)
                 {
                     Debug_printf("### UART write() ERROR %d ###\n", errno);
