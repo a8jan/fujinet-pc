@@ -472,7 +472,7 @@ bool NetworkProtocolHTTP::write_file_handle_get_header(uint8_t *buf, unsigned sh
             else if (requestedHeader[i] == 0x0a)
                 requestedHeader[i] = 0x00;
 
-        Debug_printf("collect_headers[%lu,%u] = \"%s\"\n", collect_headers_count, len, requestedHeader);
+        Debug_printf("collect_headers[%lu,%u] = \"%s\"\n", (unsigned long)collect_headers_count, len, requestedHeader);
 
         // Add result to header array.
         collect_headers[collect_headers_count++] = requestedHeader;
