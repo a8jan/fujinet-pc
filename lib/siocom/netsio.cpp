@@ -58,6 +58,7 @@ void NetSioPort::begin(int baud)
     _resume_time = 0;
 
     _command_asserted = false;
+    _motor_asserted = false;
     rxbuffer_flush();
 
     int suspend_ms = _errcount < 3 ? 1000 : 5000;
