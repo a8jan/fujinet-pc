@@ -68,7 +68,7 @@ void NetSioPort::begin(int baud)
 
     if (_fd < 0)
     {
-        Debug_printf("Failed to create NetSIO socket: %d, \"%s\"\n", errno, strerror(errno));
+        Debug_printf("socket error %d: %s\n", errno, strerror(errno));
         _errcount++;
         suspend(suspend_ms);
 		return;
@@ -92,7 +92,7 @@ void NetSioPort::begin(int baud)
     if (connect(_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
         // should not happen (UDP)
-        Debug_printf("Failed to connect NetSIO socket: %d, \"%s\"\n", errno, strerror(errno));
+        Debug_printf("connect error %d: %s\n", errno, strerror(errno));
         _errcount++;
         suspend(suspend_ms);
 		return;
@@ -161,17 +161,13 @@ int NetSioPort::ping(int count, int interval_ms, int timeout_ms, bool fast)
             ping = NETSIO_PING_REQUEST;
             result = send(_fd, &ping, 1, 0);
             t1 = fnSystem.micros();
-            // Debug_printf("%lu NETSIO PING SEND\n", t1);
             do 
             {
                 wait_ms = timeout_ms - (fnSystem.micros() - t1) / 1000;
-                // Debug_printf("wait_ms %d\n", wait_ms);
                 if (result == 1 && wait_sock_readable(wait_ms))
                 {
                     t2 = fnSystem.micros();
                     result = recv(_fd, &ping, 1, 0);
-                    if (result == 1)
-                        // Debug_printf("%lu NETSIO PING RECV %02x\n", t2, ping);
                     if (result == 1 && ping == NETSIO_PING_RESPONSE) 
                         rtt = (int)(t2 - t1);
                 }
@@ -300,7 +296,7 @@ int NetSioPort::handle_netsio()
     if (received > 0)
     {
 #ifdef VERBOSE_SIO
-        Debug_printf("NETSIO RECV <%i> BYTES\n\t", received);
+        Debug_printf("NetSIO RECV <%i> BYTES\n\t", received);
         for (int i = 0; i < received; i++)
             Debug_printf("%02x ", rxbuf[i]);
         Debug_print("\n");
@@ -364,7 +360,7 @@ int NetSioPort::handle_netsio()
                 if (received >= 5)
                 {
                     _baud_peer = rxbuf[1] | (rxbuf[2] << 8) | (rxbuf[3] << 16) | (rxbuf[4] << 24);
-                    // Debug_printf("_baud_peer = %d\n", _baud_peer)
+                    Debug_printf("NetSIO peer baudrate: %d\n", _baud_peer);
                 }
                 break;
 
@@ -413,7 +409,7 @@ bool NetSioPort::wait_sock_readable(uint32_t timeout_ms)
                 // TODO adjust timeout_tv
                 continue;
             }
-            Debug_printf("NetSioPort::wait_sock_readable - select error: %d, \"%s\"\n", errno, strerror(errno));
+            Debug_printf("NetSIO wait_sock_readable() select error %d: %s\n", errno, strerror(errno));
             return false;
         }
 
@@ -424,7 +420,7 @@ bool NetSioPort::wait_sock_readable(uint32_t timeout_ms)
         // this shouldn't happen, if result > 0 our fd has to be in the list!
         if (!FD_ISSET(_fd, &readfds))
         {
-            Debug_println("NetSioPort::wait_sock_readable - unexpected select result");
+            Debug_println("NetSIO wait_sock_readable() unexpected select result");
             return false;
         }
         break;
@@ -452,7 +448,7 @@ bool NetSioPort::wait_sock_writable(uint32_t timeout_ms)
                 // TODO adjust timeout_tv
                 continue;
             }
-            Debug_printf("NetSioPort::wait_sock_writable - select error: %d, \"%s\"\n", errno, strerror(errno));
+            Debug_printf("NetSIO wait_sock_writable() select error %d: %s\n", errno, strerror(errno));
             return false;
         }
 
@@ -463,7 +459,7 @@ bool NetSioPort::wait_sock_writable(uint32_t timeout_ms)
         // this shouldn't happen, if result > 0 our fd has to be in the list!
         if (!FD_ISSET(_fd, &writefds)) 
         {
-            Debug_println("NetSioPort::wait_sock_writable - unexpected select result");
+            Debug_println("NetSIO wait_sock_writable() unexpected select result");
             return false;
         }
         break;
@@ -475,14 +471,14 @@ ssize_t NetSioPort::write_sock(const uint8_t *buffer, size_t size, uint32_t time
 {
     if (!wait_sock_writable(timeout_ms))
     {
-        Debug_println("NetSioPort::write_sock - TIMEOUT");
+        Debug_println("NetSIO write_sock() TIMEOUT");
         return -1;
     }
 
     ssize_t result = send(_fd, buffer, size, 0);
     if (result < 0)
     {
-        Debug_printf("NetSioPort::write_sock - send error: %d, \"%s\"\n", errno, strerror(errno));
+        Debug_printf("NetSIO write_sock() send error %d: %s\n", errno, strerror(errno));
     }
     return result;
 }
@@ -533,7 +529,7 @@ int NetSioPort::available()
 */
 void NetSioPort::set_baudrate(uint32_t baud)
 {
-    Debug_printf("set_baudrate: %d\n", baud);
+    Debug_printf("NetSIO set_baudrate: %d\n", baud);
 
     if (!_initialized)
         return;
@@ -606,7 +602,7 @@ int NetSioPort::read(void)
 {
     if (!wait_for_data(500))
     {
-        Debug_println("NetSioPort::read - TIMEOUT");
+        Debug_println("NetSIO read() - TIMEOUT");
         return -1;
     }
     return rxbuffer_get();
