@@ -22,8 +22,8 @@
 #endif
 
 #include "fnUART.h"
+#include "sioport.h" // SIOPORT_DEFAULT_BAUD
 #include "../../include/debug.h"
-// #include "../../include/pinmap.h"
 
 // #define UART_DEBUG UART_NUM_0
 // #define UART_SIO   UART_NUM_2
@@ -44,7 +44,8 @@
 UARTManager::UARTManager() : 
     _initialized(false),
     _fd(-1),
-    _device{0}
+    _device{0},
+    _baud(SIOPORT_DEFAULT_BAUD)
 {};
 
 void UARTManager::end()
@@ -142,21 +143,20 @@ void UARTManager::begin(int baud)
 
         // successfull probe
         if (*_device != 0)
-            Debug_printf("Setting up serial port (%s)\n", _device);
+            Debug_printf("Setting up serial port %s\n", _device);
     }
     else
     {
-        Debug_printf("Setting up serial port (%s)\n", _device);
+        Debug_printf("Setting up serial port %s\n", _device);
         _fd = open(_device, O_RDWR | O_NOCTTY | O_NONBLOCK);
     }
 
     if (_fd < 0)
     {
-		perror("Failed to open serial device");
+        Debug_printf("Failed to open serial port, error %d: %s\n", errno, strerror(errno));
         suspend();
 		return;
 	}
-    
 
     // Create new termios struct
     struct termios tios;
@@ -164,7 +164,7 @@ void UARTManager::begin(int baud)
     // Read in existing settings
     if(tcgetattr(_fd, &tios) != 0)
     {
-        perror("Failed to get termios structure");
+        Debug_printf("tcgetattr error %d: %s\n", errno, strerror(errno));
         suspend();
 		return;
     }
@@ -189,54 +189,13 @@ void UARTManager::begin(int baud)
     // tios.c_oflag &= ~OXTABS; // Prevent conversion of tabs to spaces (NOT PRESENT ON LINUX)
     // tios.c_oflag &= ~ONOEOT; // Prevent removal of C-d chars (0x004) in output (NOT PRESENT ON LINUX)
 
-
-
-//     // set up raw mode / no echo / binary
-//     tios.c_cflag |= (tcflag_t)  (CLOCAL | CREAD);
-//     tios.c_lflag &= (tcflag_t) ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL | ISIG | IEXTEN); //|ECHOPRT
-
-//     tios.c_oflag &= (tcflag_t) ~(OPOST);
-//     tios.c_iflag &= (tcflag_t) ~(INLCR | IGNCR | ICRNL | IGNBRK);
-// #ifdef IUCLC
-//     tios.c_iflag &= (tcflag_t) ~IUCLC;
-// #endif
-// #ifdef PARMRK
-//     tios.c_iflag &= (tcflag_t) ~PARMRK;
-// #endif
-
-    // Set in/out baud rate to be 19200
-//    cfsetspeed(&tios, B19200); // TODO !
-
-//     // setup char len
-//     tios.c_cflag |= CS8;
-//     // setup stopbits
-//     tios.c_cflag &= (tcflag_t) ~(CSTOPB);
-//     // setup parity
-//     tios.c_cflag &= (tcflag_t) ~(PARENB | PARODD);
-
-//     // setup flow control
-//     // software xon/xoff
-// #ifdef IXANY
-//     tios.c_iflag &= (tcflag_t) ~(IXON | IXOFF | IXANY);
-// #else
-//     tios.c_iflag &= (tcflag_t) ~(IXON | IXOFF);
-// #endif
-//     // hardware rts/cts
-// #ifdef CRTSCTS
-//     tios.c_cflag &= (unsigned long) ~(CRTSCTS);
-// #elif defined CNEW_RTSCTS
-//     tios.c_cflag &= (unsigned long) ~(CNEW_RTSCTS);
-// #else
-// #error "OS Support seems wrong."
-// #endif
-
     tios.c_cc[VTIME] = 0;
     tios.c_cc[VMIN] = 0;
 
     // Apply settings
     if (tcsetattr(_fd, TCSANOW, &tios) != 0)
     {
-        perror("Failed to set serial attributes");
+        Debug_printf("tcsetattr error %d: %s\n", errno, strerror(errno));
         suspend();
 		return;
     }
@@ -291,18 +250,17 @@ int UARTManager::available()
 */
 void UARTManager::set_baudrate(uint32_t baud)
 {
-    Debug_printf("set_baudrate: %d\n", baud);
+    Debug_printf("UART set_baudrate: %d\n", baud);
 
     if (!_initialized)
         return;
 
-    termios tios;
-    tcgetattr(_fd, &tios);
-    // tios.c_cflag &= ~CSTOPB;
-    // cfmakeraw(&tios);
+    if (baud == 0)
+        baud = 19200;
 
-    // tios.c_cc[VTIME] = 0;
-    // tios.c_cc[VMIN] = 0;
+    termios tios;
+    if(tcgetattr(_fd, &tios) != 0)
+        Debug_printf("tcgetattr error %d: %s\n", errno, strerror(errno));
 
     int baud_id = B0;  // B0 to indicate custom speed
 
@@ -351,7 +309,7 @@ void UARTManager::set_baudrate(uint32_t baud)
 
         speed_t new_baud = (speed_t) baud;
         if (-1 == ioctl(_fd, IOSSIOSPEED, &new_baud, 1))
-            perror("IOSSIOSPEED failed");
+            Debug_printf("IOSSIOSPEED error %d: %s\n", errno, strerror(errno));
 
 #elif defined(__linux__) && defined (TIOCSSERIAL)
         // Linux Support
@@ -360,7 +318,7 @@ void UARTManager::set_baudrate(uint32_t baud)
         baud_id = B38400;
         if (-1 == ioctl(_fd, TIOCGSERIAL, &ss)) 
         {
-            perror("TIOCGSERIAL failed");
+            Debug_printf("TIOCGSERIAL error %d: %s\n", errno, strerror(errno));
             return;
         }
         ss.flags &= ~ASYNC_SPD_MASK;
@@ -374,14 +332,14 @@ void UARTManager::set_baudrate(uint32_t baud)
         }
 
         if (-1 == ioctl(_fd, TIOCSSERIAL, &ss))
-            perror("TIOCSSERIAL failed");
+            Debug_printf("TIOCSSERIAL error %d: %s\n", errno, strerror(errno));
 
         cfsetspeed(&tios, baud_id);
         // Apply settings
         if (tcsetattr(_fd, TCSANOW, &tios) != 0)
-            perror("Failed to set serial attributes");
+            Debug_printf("tcsetattr error %d: %s\n", errno, strerror(errno));
 #else
-        perror("Custom baud rate is not implemented");
+        Debug_println("Custom baud rate is not implemented");
 #endif
     }
     else
@@ -396,18 +354,18 @@ void UARTManager::set_baudrate(uint32_t baud)
             // reset special handling of B38400 back to 38400
             if (-1 == ioctl(_fd, TIOCGSERIAL, &ss))
             {
-                perror("TIOCGSERIAL failed");
+                Debug_printf("TIOCGSERIAL error %d: %s\n", errno, strerror(errno));
                 return;
             }
             ss.flags &= ~ASYNC_SPD_MASK;
             if (-1 == ioctl(_fd, TIOCSSERIAL, &ss))
-                perror("TIOCSSERIAL failed");
+                Debug_printf("TIOCSSERIAL error %d: %s\n", errno, strerror(errno));
         }
 #endif
         cfsetspeed(&tios, baud_id);
         // Apply settings
         if (tcsetattr(_fd, TCSANOW, &tios) != 0)
-            perror("Failed to set serial attributes");
+            Debug_printf("tcsetattr error %d: %s\n", errno, strerror(errno));
     }
     _baud = baud;
 }
@@ -437,7 +395,7 @@ bool UARTManager::command_asserted(void)
         // handle serial port errors
         _errcount++;
         if(_errcount == 1)
-            perror("Cannot retrieve serial port status");
+            Debug_printf("UART command_asserted() TIOCMGET error %d: %s\n", errno, strerror(errno));
         else if (_errcount > 1000)
             suspend();
         return false;
@@ -464,9 +422,7 @@ void UARTManager::set_proceed(bool level)
     unsigned long request = level ? TIOCMBIC : TIOCMBIS;
     result = ioctl(_fd, request, &_proceed_tiocm);
     if (result < 0)
-    {
-        perror("Cannot set proceed signal");
-    }
+        Debug_printf("UART set_proceed() ioctl error %d: %s\n", errno, strerror(errno));
 }
 
 timeval timeval_from_ms(const uint32_t millis)
@@ -489,9 +445,9 @@ bool UARTManager::waitReadable(uint32_t timeout_ms)
 
     if (result < 0) 
     {
-        if (errno != EINTR) 
+        if (errno != EINTR)
         {
-            perror("waitReadable - select error");
+            Debug_printf("UART waitReadable() select error %d: %s\n", errno, strerror(errno));
         }
         return false;
     }
@@ -503,7 +459,7 @@ bool UARTManager::waitReadable(uint32_t timeout_ms)
     // This shouldn't happen, if result > 0 our fd has to be in the list!
     if (!FD_ISSET (_fd, &readfds)) 
     {
-        Debug_println("waitReadable - unexpected select result");
+        Debug_println("UART waitReadable() unexpected select result");
     }
     // Data available to read.
     return true;
@@ -539,7 +495,7 @@ size_t UARTManager::readBytes(uint8_t *buffer, size_t length, bool command_mode)
             }
             else
             {
-                Debug_printf("### UART readBytes() ERROR %d %s ###\n", errno, strerror(errno));
+                Debug_printf("UART readBytes() read error %d: %s\n", errno, strerror(errno));
                 break;
             }
         }
@@ -559,7 +515,7 @@ size_t UARTManager::readBytes(uint8_t *buffer, size_t length, bool command_mode)
         // }
         if (!waitReadable(500)) // 500 ms timeout
         {
-            Debug_println("### UART readBytes() TIMEOUT ###");
+            Debug_println("UART readBytes() TIMEOUT");
             break;
         }
     }
@@ -600,14 +556,14 @@ size_t UARTManager::write(const uint8_t *buffer, size_t size)
                 continue;
             }
             // Otherwise there was some error
-            perror("write - select error");
+            Debug_printf("UART write() select error %d: %s\n", errno, strerror(errno));
             break;
         }
 
         // Timeout
         if (result == 0)
         {
-            Debug_println("### UART write() TIMEOUT ###");
+            Debug_println("UART write() TIMEOUT");
             break;
         }
 
@@ -621,7 +577,7 @@ size_t UARTManager::write(const uint8_t *buffer, size_t size)
                 // Debug_printf("write: %d\n", result);
                 if (result < 1)
                 {
-                    Debug_printf("### UART write() ERROR %d ###\n", errno);
+                    Debug_printf("UART write() write error %d: %s\n", errno, strerror(errno));
                     break;
                 }
 
@@ -638,7 +594,7 @@ size_t UARTManager::write(const uint8_t *buffer, size_t size)
                 }
             }
             // This shouldn't happen, if r > 0 our fd has to be in the list!
-            Debug_println("write - unexpected select result");
+            Debug_println("UART write() unexpected select result");
         }
     }
     return txbytes;
