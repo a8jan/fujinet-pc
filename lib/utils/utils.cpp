@@ -6,6 +6,10 @@
 #ifdef HAVE_BSD_STRING_H
 #include <bsd/string.h>
 #endif
+// #ifdef DEBUG
+#include <cstdarg>
+#include <sys/time.h>
+// #endif
 
 #include "utils.h"
 #include "../../include/debug.h"
@@ -576,4 +580,39 @@ void util_replaceAll(std::string &str, const std::string &from, const std::strin
         str.replace(start_pos, from.length(), to);
         start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
     }
+}
+
+// helper function for Debug_print* macros on fujinet-pc
+void util_debug_printf(const char *fmt, ...)
+{
+    static bool print_ts = true;
+    va_list argp;
+
+    if (print_ts) 
+    {
+        // printf("DEBUG > ");
+        timeval tv;
+        tm tm;
+        char buffer[32];
+
+        gettimeofday(&tv, NULL);
+        localtime_r(&tv.tv_sec, &tm);
+        size_t endpos = strftime(buffer, sizeof(buffer), "%H:%M:%S", &tm);
+        snprintf(buffer + endpos, sizeof(buffer) - endpos, ".%03d", (int)(tv.tv_usec / 1000));
+        printf("%s > ", buffer);
+    }
+
+    va_start(argp, fmt);
+    if (fmt != nullptr)
+    {
+        print_ts = fmt[strlen(fmt)-1] == '\n';
+        vprintf(fmt, argp);
+    }
+    else
+    {
+        const char *s = va_arg(argp, const char*);
+        print_ts = s[strlen(s)-1] == '\n';
+        printf("%s", s);
+    }
+    va_end(argp);
 }

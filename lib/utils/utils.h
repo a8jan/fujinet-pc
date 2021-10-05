@@ -74,4 +74,7 @@ void util_sam_say(const char *p,
 
 void util_replaceAll(std::string& str, const std::string& from, const std::string& to);
 
+// helper function for Debug_print* macros on fujinet-pc
+void util_debug_printf(const char *fmt, ...);
+
 #endif // _FN_UTILS_H

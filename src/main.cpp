@@ -172,7 +172,8 @@ void main_setup(int argc, char *argv[])
 
 #ifdef DEBUG
     unsigned long endms = fnSystem.millis();
-    Debug_printf("Available heap: %u\nSetup complete @ %lu (%lums)\n", fnSystem.get_free_heap_size(), endms, endms - startms);
+    Debug_printf("Available heap: %u\n", fnSystem.get_free_heap_size());
+    Debug_printf("Setup complete @ %lu (%lums)\n", endms, endms - startms);
 #endif
 }
 

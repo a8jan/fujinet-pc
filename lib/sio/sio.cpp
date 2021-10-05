@@ -217,7 +217,7 @@ void sioBus::_sio_process_cmd()
         // fnSioCom.flush_input();
     }
 
-    Debug_printf("\nCF: %02x %02x %02x %02x %02x\n",
+    Debug_printf("CF: %02x %02x %02x %02x %02x\n",
                  tempFrame.device, tempFrame.comnd, tempFrame.aux1, tempFrame.aux2, tempFrame.cksum);
 
     uint8_t ck = sio_checksum((uint8_t *)&tempFrame.commanddata, sizeof(tempFrame.commanddata)); // Calculate Checksum
@@ -381,6 +381,7 @@ void sioBus::service()
 
 #ifdef DEBUG
         unsigned long startms = fnSystem.millis();
+        Debug_print("\n");
 #endif
 
         _sio_process_cmd();
