@@ -1,8 +1,8 @@
 # Windows
 
-## Get Windows
+Currently, on Windows it is possible to install WSL to get Ubuntu inside Windows. FujiNet-PC compiles and it can run in WSL Ubuntu.
 
-https://www.microsoft.com/en-us/windows/get-windows-10
+**WIP warning:** FujiNet-PC does not compile natively on Windows yet. Don't use instructions below!
 
 ## MSYS2
 
@@ -23,3 +23,4 @@ $ pacman -Su git
 $ pacman -Su cmake
 ```
 
+## TODO ...
