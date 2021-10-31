@@ -248,7 +248,11 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
             if (mg_url_is_ssl(client->_url.c_str()))
             {
                 struct mg_tls_opts opts = {};
+#ifdef SKIP_SERVER_CERT_VERIFY                
+                opts.ca = nullptr; // disable certificate checking 
+#else
                 opts.ca = "ca.pem";
+#endif
                 opts.srvname = host;
                 mg_tls_init(c, &opts);
             }
