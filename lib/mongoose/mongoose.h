@@ -838,6 +838,7 @@ bool mg_http_match_uri(const struct mg_http_message *, const char *glob);
 int mg_http_upload(struct mg_connection *, struct mg_http_message *hm,
                    const char *dir);
 void mg_http_bauth(struct mg_connection *, const char *user, const char *pass);
+void mg_http_bauth_mgstr(struct mg_connection *, struct mg_str u, struct mg_str p);
 struct mg_str mg_http_get_header_var(struct mg_str s, struct mg_str v);
 size_t mg_http_next_multipart(struct mg_str, size_t, struct mg_http_part *);
 

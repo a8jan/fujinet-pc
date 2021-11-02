@@ -40,6 +40,10 @@ private:
     // esp_http_client_handle_t _handle = nullptr;
     struct mg_mgr *_handle;
 
+    // mongoose does not keep this for us, we will store it here
+    int _status_code;
+    int _content_length;
+
     // static void _perform_subtask(void *param);
     // static esp_err_t _httpevent_handler(esp_http_client_event_t *evt);
     static void _httpevent_handler(struct mg_connection *c, int ev, void *ev_data, void *user_data);

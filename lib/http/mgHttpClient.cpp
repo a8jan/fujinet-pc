@@ -32,7 +32,7 @@ mgHttpClient::~mgHttpClient()
         mg_mgr_free(_handle);
         // esp_http_client_cleanup(_handle);
 
-    if (_buffer) {
+    if (_buffer != nullptr) {
         printf("mgHttpClient buffer free\n");
         free(_buffer);
     }
@@ -235,17 +235,19 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
     // mgHttpClient *client = (mgHttpClient *)evt->user_data;
     mgHttpClient *client = (mgHttpClient *)user_data;
     client->_progressed = true;
-    printf("mgHttpClient event: %d\n", ev);
     switch (ev)
     {
         case MG_EV_CONNECT:
         {
-            printf("Connected\n");
+#ifdef VERBOSE_HTTP
+            Debug_printf("mgHttpClient: Connected\n");
+#endif
             // Connected to server.
             // extract host name from URL
-            struct mg_str host = mg_url_host(client->_url.c_str());
+            const char *url = client->_url.c_str();
+            struct mg_str host = mg_url_host(url);
             // If url is https://, tell client connection to use TLS
-            if (mg_url_is_ssl(client->_url.c_str()))
+            if (mg_url_is_ssl(url))
             {
                 struct mg_tls_opts opts = {};
 #ifdef SKIP_SERVER_CERT_VERIFY                
@@ -257,42 +259,114 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
                 mg_tls_init(c, &opts);
             }
 
+            client->_status_code = -1;
             // Send request
-            mg_printf(c, "GET %s HTTP/1.0\r\nHost: %.*s\r\n\r\n", mg_url_uri(client->_url.c_str()), (int) host.len, host.ptr);
+            mg_printf(c, "GET %s HTTP/1.0\r\n"
+                         "Host: %.*s\r\n",
+                         mg_url_uri(url), (int)host.len, host.ptr);
+            if (mg_url_user(url).len != 0) {
+                mg_str u = mg_url_user(url);
+                mg_str p = mg_url_pass(url);
+                mg_http_bauth_mgstr(c, u, p);
+            }
+            mg_printf(c, "\r\n");
             break;
         }
         case MG_EV_HTTP_MSG:
         {
             // Response received. Print it
             struct mg_http_message *hm = (struct mg_http_message *) ev_data;
-            printf("Status: %.*s\n", (int)hm->uri.len, hm->uri.ptr);
-            printf("Received: %lu\n", (unsigned long)hm->message.len);
-            printf("Header0: %.*s = %.*s\n", (int)hm->headers[0].name.len, hm->headers[0].name.ptr, (int)hm->headers[0].value.len, hm->headers[0].value.ptr);
-            printf("Body: %lu bytes\n", (unsigned long)hm->body.len);
+#ifdef VERBOSE_HTTP
+            Debug_printf("mgHttpClient: HTTP response\n");
+            Debug_printf("  Status: %.*s\n", (int)hm->uri.len, hm->uri.ptr);
+            Debug_printf("  Received: %lu\n", (unsigned long)hm->message.len);
+            // Debug_printf("Header0: %.*s = %.*s\n", (int)hm->headers[0].name.len, hm->headers[0].name.ptr, (int)hm->headers[0].value.len, hm->headers[0].value.ptr);
+            Debug_printf("  Body: %lu bytes\n", (unsigned long)hm->body.len);
+#endif
+            client->_status_code = std::stoi(std::string(hm->uri.ptr, hm->uri.len));
+            client->_content_length = (int)hm->body.len;
 
-            // update buffer details
-            client->_buffer_pos = 0;
-            client->_buffer_len = hm->body.len;
-            if (client->_buffer) {
+            // allocate buffer for received data
+            if (client->_buffer != nullptr) {
                 // ... should not be the case
-                printf("mgHttpClient buffer realloc(%d)\n", client->_buffer_len);
-                client->_buffer = (char *)realloc(client->_buffer, client->_buffer_len);
+#ifdef VERBOSE_HTTP
+                Debug_printf("    buffer realloc(%d)\n", hm->body.len);
+#endif
+                client->_buffer = (char *)realloc(client->_buffer, hm->body.len);
             }
             else {
-                printf("mgHttpClient buffer malloc(%d)\n", client->_buffer_len);
-                client->_buffer = (char *)malloc(client->_buffer_len);
+#ifdef VERBOSE_HTTP
+                Debug_printf("    buffer malloc(%d)\n", hm->body.len);
+#endif
+                client->_buffer = (char *)malloc(hm->body.len);
             }
-            client->_buffer_len = hm->body.len;
-            memcpy(client->_buffer, hm->body.ptr, client->_buffer_len);
+            // copy received data into buffer
+            client->_buffer_pos = 0;
+            if (client->_buffer != nullptr) {
+                client->_buffer_len = hm->body.len;
+                memcpy(client->_buffer, hm->body.ptr, client->_buffer_len);
+            }
+            else {
+                client->_buffer_len = 0;
+                if (hm->body.len != 0) {
+                    Debug_printf("mgHttpClient buffer not allocated!");
+                }
+            }
 
             c->is_closing = 1;          // Tell mongoose to close this connection
             client->_processed = true;  // Tell event loop to stop
             break;
         }
+        case MG_EV_HTTP_CHUNK:
+        {
+#ifdef VERBOSE_HTTP
+            Debug_printf("mgHttpClient: HTTP chunk (partial msg)\n");
+#endif
+            break;
+        }
+        case MG_EV_READ:
+        {
+#ifdef VERBOSE_HTTP
+            Debug_printf("mgHttpClient: Data received\n");
+#endif
+            break;
+        }
+        case MG_EV_WRITE:
+        {
+#ifdef VERBOSE_HTTP
+            Debug_printf("mgHttpClient: Data written\n");
+#endif
+            break;
+        }
+        case MG_EV_CLOSE:
+        {
+#ifdef VERBOSE_HTTP
+            Debug_printf("mgHttpClient: Connection closed\n");
+#endif
+            break;
+        }
+        case MG_EV_RESOLVE:
+        {
+#ifdef VERBOSE_HTTP
+            Debug_printf("mgHttpClient: Host name resolved\n");
+#endif
+            break;
+        }
         case MG_EV_ERROR:
         {
+            Debug_printf("mgHttpClient: Error - %s\n", (const char*)ev_data);
             client->_processed = true;  // Error, tell event loop to stop
             break;
+        }
+        case MG_EV_POLL:
+        {
+            break;
+        }
+        default:
+        {
+#ifdef VERBOSE_HTTP
+            Debug_printf("mgHttpClient event: %d\n", ev);
+#endif
         }
     }
     // switch (evt->event_id)
@@ -503,9 +577,9 @@ int mgHttpClient::_perform()
     // bool chunked = esp_http_client_is_chunked_response(_handle);
     // int status = esp_http_client_get_status_code(_handle);
     // int length = esp_http_client_get_content_length(_handle);
-    bool chunked = false;
-    int status = 200; // TODO
-    int length = 0;
+    bool chunked = false; // TODO
+    int status = _status_code;
+    int length = _content_length;
 
     Debug_printf("%08lx _perform status = %d, length = %d, chunked = %d\n", (unsigned long)fnSystem.millis(), status, length, chunked ? 1 : 0);
     return status;

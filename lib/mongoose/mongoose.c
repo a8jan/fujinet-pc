@@ -832,9 +832,13 @@ size_t mg_http_next_multipart(struct mg_str body, size_t ofs,
   return b2 + 2;
 }
 
-void mg_http_bauth(struct mg_connection *c, const char *user,
-                   const char *pass) {
-  struct mg_str u = mg_str(user), p = mg_str(pass);
+void mg_http_bauth(struct mg_connection *c, const char *user, const char *pass) 
+{
+  mg_http_bauth_mgstr(c, mg_str(user), mg_str(pass));
+}
+
+void mg_http_bauth_mgstr(struct mg_connection *c, struct mg_str u, struct mg_str p)
+{
   size_t need = c->send.len + 36 + (u.len + p.len) * 2;
   if (c->send.size < need) mg_iobuf_resize(&c->send, need);
   if (c->send.size >= need) {
