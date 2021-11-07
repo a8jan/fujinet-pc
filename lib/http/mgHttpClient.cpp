@@ -327,8 +327,9 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
         }
 
         // allocate buffer for received data
-        if (client->_buffer != nullptr) {
-            // ... should not be the case
+        if (client->_buffer != nullptr) 
+        {
+            // new buffer needed after redirect
 #ifdef VERBOSE_HTTP
             Debug_printf("    buffer realloc(%d)\n", hm->body.len);
 #endif
@@ -610,9 +611,6 @@ int mgHttpClient::_perform()
         if (_status_code == 301 || _status_code == 302)
         {
             // handle HTTP redirect
-#ifdef VERBOSE_HTTP
-            Debug_printf("HTTP redirect response: %d\n", _status_code);
-#endif
             if (!_location.empty())
             {
                 _redirect_count++;
