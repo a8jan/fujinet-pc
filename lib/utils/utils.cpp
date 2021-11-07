@@ -6,10 +6,8 @@
 #ifdef HAVE_BSD_STRING_H
 #include <bsd/string.h>
 #endif
-// #ifdef DEBUG
 #include <cstdarg>
 #include <sys/time.h>
-// #endif
 
 #include "utils.h"
 #include "../../include/debug.h"
