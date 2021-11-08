@@ -658,36 +658,22 @@ size_t NetSioPort::read(uint8_t *buffer, size_t length, bool command_mode)
 /* write single byte via NetSIO */
 ssize_t NetSioPort::write(uint8_t c)
 {
-    uint8_t txbuf[6];
-    int msg_size;
+    uint8_t txbuf[2];
 
     if (!_initialized)
         return 0;
 
-    if (_sync_request_num < 0)
-    {
-        // DATA BYTE
-        // send byte as usually
-        msg_size = 2;
-        txbuf[0] = NETSIO_DATA_BYTE; // byte command
-        txbuf[1] = c;                // value
-    }
-    else
-    {
+    if (_sync_request_num >= 0)
         // SYNC RESPONSE
         // send byte (should be ACK/NAK) bundled in sync response
-        msg_size = 6;
-        txbuf[0] = NETSIO_SYNC_RESPONSE;
-        txbuf[1] = (uint8_t)_sync_request_num;
-        txbuf[2] = NETSIO_ACK_SYNC;
-        txbuf[3] = c;
-        txbuf[4] = (uint8_t)(_sync_write_size & 0xff);
-        txbuf[5] = (uint8_t)((_sync_write_size >> 8) & 0xff);
-        _sync_request_num = -1;
-        _sync_write_size = 0;
-    }
+        return send_sync_response(NETSIO_ACK_SYNC, c, _sync_write_size);
 
-    ssize_t result = write_sock(txbuf, msg_size);
+    // DATA BYTE
+    // send byte as usually
+    txbuf[0] = NETSIO_DATA_BYTE; // byte command
+    txbuf[1] = c;                // value
+
+    ssize_t result = write_sock(txbuf, sizeof(txbuf));
     return (result > 0) ? 1 : 0; // amount of data bytes written
 }
 
@@ -743,4 +729,30 @@ void NetSioPort::set_sync_ack_byte(int ack_byte)
 void NetSioPort::set_sync_write_size(int write_size)
 {
     _sync_write_size = write_size;
+}
+
+ssize_t NetSioPort::send_sync_response(uint8_t response_type, uint8_t ack_byte, uint16_t sync_write_size)
+{
+    uint8_t txbuf[6];
+
+    // SYNC RESPONSE
+    // send byte (should be ACK/NAK) bundled in sync response
+    txbuf[0] = NETSIO_SYNC_RESPONSE;
+    txbuf[1] = (uint8_t)_sync_request_num;
+    txbuf[2] = response_type;
+    txbuf[3] = ack_byte;
+    txbuf[4] = (uint8_t)(sync_write_size & 0xff);
+    txbuf[5] = (uint8_t)((sync_write_size >> 8) & 0xff);
+    // clear sync request
+    _sync_request_num = -1;
+    _sync_write_size = 0;
+
+    ssize_t result = write_sock(txbuf, sizeof(txbuf));
+    return (result > 0 && response_type != NETSIO_EMPTY_SYNC) ? 1 : 0; // amount of data bytes written
+}
+
+void NetSioPort::send_empty_sync()
+{
+    if (_sync_request_num >= 0)
+        send_sync_response(NETSIO_EMPTY_SYNC);
 }

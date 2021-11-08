@@ -88,6 +88,8 @@ public:
 
     void set_sync_ack_byte(int ack_byte);
     void set_sync_write_size(int write_size);
+    ssize_t send_sync_response(uint8_t response_type, uint8_t ack_byte=0, uint16_t sync_write_size=0);
+    void send_empty_sync();
 };
 
 #endif // NETSIO_H

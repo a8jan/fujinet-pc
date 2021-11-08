@@ -80,6 +80,7 @@ public:
     void set_netsio_host(const char *host, int port);
     const char* get_netsio_host(int &port);
     void netsio_late_sync(uint8_t c);
+    void netsio_empty_sync();
     void netsio_write_size(int write_size);
 
     // get/set SIO mode

@@ -76,7 +76,10 @@ uint8_t sioDevice::sio_to_peripheral(uint8_t *buf, unsigned short len)
     // Retrieve data frame from computer
     Debug_printf("<-SIO read %hu bytes\n", len);
 
-    fnSioCom.netsio_write_size(len); // set hint for NetSIO
+    if (fnSioCom.get_sio_mode() == SioCom::sio_mode::NETSIO)
+    {
+        fnSioCom.netsio_write_size(len); // set hint for NetSIO
+    }
 
     // __BEGIN_IGNORE_UNUSEDVARS
     size_t l = fnSioCom.readBytes(buf, len);
@@ -114,6 +117,7 @@ void sioDevice::sio_nak()
 {
     fnSioCom.write('N');
     fnSioCom.flush();
+    SIO.set_command_processed(true);
     Debug_println("NAK!");
 }
 
@@ -123,6 +127,7 @@ void sioDevice::sio_ack()
     fnSioCom.write('A');
     fnSystem.delay_microseconds(DELAY_T5); //?
     fnSioCom.flush();
+    SIO.set_command_processed(true);
     Debug_println("ACK!");
 }
 
@@ -132,8 +137,10 @@ void sioDevice::sio_late_ack()
     if (fnSioCom.get_sio_mode() == SioCom::sio_mode::NETSIO)
     {
         fnSioCom.netsio_late_sync('A');
+        SIO.set_command_processed(true);
         Debug_println("ACK+!");
-    } else
+    }
+    else
     {
         sio_ack();
     }
@@ -166,6 +173,8 @@ void sioDevice::sio_high_speed()
 // Read and process a command frame from SIO
 void sioBus::_sio_process_cmd()
 {
+    _command_processed = false;
+
     if (_modemDev != nullptr && _modemDev->modemActive)
     {
         _modemDev->modemActive = false;
@@ -271,6 +280,11 @@ void sioBus::_sio_process_cmd()
                     }
                 }
             }
+        }
+        if (!_command_processed)
+        {
+            // Notify NetSIO hub we are not interested to handle the command
+            sio_empty_ack();
         }
     } // valid checksum
     else
@@ -611,6 +625,21 @@ int sioBus::getHighSpeedIndex()
 int sioBus::getHighSpeedBaud()
 {
     return _sioBaudHigh;
+}
+
+// indicate command was handled by some device
+void sioBus::set_command_processed(bool processed)
+{
+    _command_processed = processed;
+}
+
+// Empty acknowledgment message for NetSIO hub
+void sioBus::sio_empty_ack()
+{
+    if (fnSioCom.get_sio_mode() == SioCom::sio_mode::NETSIO)
+    {
+        fnSioCom.netsio_empty_sync();
+    }
 }
 
 void sioBus::setMIDIHost(const char *hostname)

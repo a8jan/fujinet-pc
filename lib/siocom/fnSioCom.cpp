@@ -202,10 +202,14 @@ void SioCom::netsio_late_sync(uint8_t c)
     _netSio.set_sync_ack_byte(c);
 }
 
+void SioCom::netsio_empty_sync()
+{
+    _netSio.send_empty_sync();
+}
+
 void SioCom::netsio_write_size(int write_size)
 {
-    if (_sio_mode == sio_mode::NETSIO)
-        _netSio.set_sync_write_size(write_size + 1); // data + checksum byte
+    _netSio.set_sync_write_size(write_size + 1); // data + checksum byte
 }
 
 void SioCom::set_sio_mode(sio_mode mode)
