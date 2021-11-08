@@ -121,7 +121,7 @@ void sioNetwork::sio_open()
     if (protocol == nullptr)
     {
         // invalid devicespec error already passed in.
-        sio_error();
+        // sio_error();
         return;
     }
 
@@ -841,7 +841,11 @@ void sioNetwork::parse_and_instantiate_protocol()
     memset(devicespecBuf, 0, sizeof(devicespecBuf));
 
     // Get Devicespec from buffer, and put into primary devicespec string
-    sio_to_peripheral(devicespecBuf, sizeof(devicespecBuf));
+    uint8_t ck = sio_to_peripheral(devicespecBuf, sizeof(devicespecBuf));
+    if (sio_checksum(devicespecBuf, sizeof(devicespecBuf)) != ck) {
+        return;
+    }
+
     util_clean_devicespec(devicespecBuf, sizeof(devicespecBuf));
     deviceSpec = string((char *)devicespecBuf);
 
