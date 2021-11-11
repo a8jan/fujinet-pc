@@ -5,9 +5,8 @@
 
 #include <stdio.h>
 #include "config.h"
-#ifdef HAVE_BSD_STRING_H
-#include <bsd/string.h>
-#endif
+#include "compat_string.h"
+
 #include <sys/time.h>
 #include <unistd.h> // write(), read(), close()
 #include <errno.h> // Error integer and strerror() function

@@ -17,8 +17,8 @@
 #include "../network-protocol/TNFS.h"
 #include "../network-protocol/FTP.h"
 #include "../network-protocol/HTTP.h"
-#include "../network-protocol/SSH.h"
-#include "../network-protocol/SMB.h"
+// #include "../network-protocol/SSH.h"
+// #include "../network-protocol/SMB.h"
 
 using namespace std;
 

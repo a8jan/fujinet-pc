@@ -163,7 +163,7 @@ bool NetworkProtocolUDP::status(NetworkStatus *status)
         if (udp.remoteIP() != IPADDR_NONE)
         {
             // dest = string(inet_ntoa(addr));
-            dest = string(inet_ntoa(in_addr({.s_addr = addr})));
+            dest = string(compat_inet_ntoa(addr));
             port = udp.remotePort();
         }
     }

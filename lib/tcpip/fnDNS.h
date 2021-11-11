@@ -1,7 +1,7 @@
 #ifndef _FN_DNS_
 #define _FN_DNS_
 // #include <lwip/netdb.h>
-#include <netinet/in.h>
+#include "compat_inet.h"
 
 /* borrowed from lwip/ip4_addr.h */
 /** 255.255.255.255 */

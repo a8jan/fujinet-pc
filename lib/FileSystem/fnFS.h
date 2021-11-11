@@ -1,7 +1,7 @@
 #ifndef _FN_FS_
 #define _FN_FS_
 
-#include <dirent.h>
+#include "compat_dirent.h"
 #include <stdint.h>
 #include <time.h>
 #include <stdio.h>

@@ -3,7 +3,13 @@
 // #include "esp_sntp.h"
 // #include <esp_system.h>
 // #include <esp_netif.h>
+
+// gethostname
+#if defined(_WIN32)
+#include <winsock2.h>
+#else
 #include <unistd.h>
+#endif
 
 #include "fnSystem.h"
 #include "fnConfig.h"

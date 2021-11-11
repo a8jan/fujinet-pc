@@ -2,9 +2,7 @@
 // #include <driver/ledc.h>
 #include <errno.h>
 #include "config.h"
-#ifdef HAVE_BSD_STRING_H
-#include <bsd/string.h>
-#endif
+#include "compat_string.h"
 
 #include "fuji.h"
 #include "led.h"

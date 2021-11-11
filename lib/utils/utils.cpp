@@ -3,9 +3,7 @@
 #include <cstring>
 #include <sstream>
 #include "config.h"
-#ifdef HAVE_BSD_STRING_H
-#include <bsd/string.h>
-#endif
+#include "compat_string.h"
 #include <cstdarg>
 #include <sys/time.h>
 
@@ -594,7 +592,12 @@ void util_debug_printf(const char *fmt, ...)
         char buffer[32];
 
         gettimeofday(&tv, NULL);
+#if defined(_WIN32)
+        time_t t = (time_t)tv.tv_sec;
+        localtime_s(&tm, &t);
+#else
         localtime_r(&tv.tv_sec, &tm);
+#endif
         size_t endpos = strftime(buffer, sizeof(buffer), "%H:%M:%S", &tm);
         snprintf(buffer + endpos, sizeof(buffer) - endpos, ".%03d", (int)(tv.tv_usec / 1000));
         printf("%s > ", buffer);

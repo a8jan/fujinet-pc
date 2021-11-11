@@ -15,8 +15,15 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <sched.h>
-#include <sys/utsname.h>
+#include "compat_uname.h"
+
+#if defined(_WIN32)
+#ifndef EX_TEMPFAIL
+#define EX_TEMPFAIL 75
+#endif
+#else
 #include <sysexits.h>
+#endif
 
 #include "../../include/debug.h"
 #include "../../include/version.h"

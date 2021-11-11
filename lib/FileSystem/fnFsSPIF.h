@@ -1,7 +1,7 @@
 #ifndef _FN_FSSPIF_
 #define _FN_FSSPIF_
 
-#include <dirent.h>
+#include "compat_dirent.h"
 #include <stdio.h>
 #include "fnFS.h"
 

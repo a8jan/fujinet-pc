@@ -24,3 +24,11 @@ $ pacman -Su cmake
 ```
 
 ## TODO ...
+
+```sh
+# prepare build
+cmake -G "MSYS Makefiles" .. -DCMAKE_BUILD_TYPE:STRING=Debug
+
+# run build
+cmake --build .
+```
