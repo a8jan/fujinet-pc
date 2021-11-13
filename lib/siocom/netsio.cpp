@@ -83,7 +83,7 @@ void NetSioPort::begin(int baud)
 
     // Set remote IP address (no real connection is created for UDP socket)
     struct sockaddr_in addr;
-    bzero(&addr, sizeof(addr));
+    memset(&addr, 0, sizeof(addr));
     addr.sin_addr.s_addr = _ip;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(_port);
@@ -96,7 +96,12 @@ void NetSioPort::begin(int baud)
 		return;
     }
 
+#if defined(_WIN32)
+    unsigned long on = 1;
+    ioctlsocket(_fd, FIONBIO, &on);
+#else
     fcntl(_fd, F_SETFL, O_NONBLOCK);
+#endif
 
     // fast ping hub
     if (ping(2, 50, 50) < 0)
@@ -108,7 +113,7 @@ void NetSioPort::begin(int baud)
 
     // connect device
     uint8_t connect = NETSIO_DEVICE_CONNECT;
-    send(_fd, &connect, 1, 0);
+    send(_fd, (char *)&connect, 1, 0);
 
     _alive_time = fnSystem.millis();
     _alive_response = _alive_time;
@@ -125,7 +130,7 @@ void NetSioPort::end()
     if (_fd >= 0)
     {
         uint8_t disconnect = NETSIO_DEVICE_DISCONNECT;
-        send(_fd, &disconnect, 1, 0);
+        send(_fd, (char *)&disconnect, 1, 0);
         close(_fd);
         _fd  = -1;
         Debug_printf("### NetSIO stopped ###\n");
@@ -157,7 +162,7 @@ int NetSioPort::ping(int count, int interval_ms, int timeout_ms, bool fast)
         if (wait_sock_writable(timeout_ms))
         {
             ping = NETSIO_PING_REQUEST;
-            result = send(_fd, &ping, 1, 0);
+            result = send(_fd, (char *)&ping, 1, 0);
             t1 = fnSystem.micros();
             do 
             {
@@ -165,7 +170,7 @@ int NetSioPort::ping(int count, int interval_ms, int timeout_ms, bool fast)
                 if (result == 1 && wait_sock_readable(wait_ms))
                 {
                     t2 = fnSystem.micros();
-                    result = recv(_fd, &ping, 1, 0);
+                    result = recv(_fd, (char *)&ping, 1, 0);
                     if (result == 1 && ping == NETSIO_PING_RESPONSE) 
                         rtt = (int)(t2 - t1);
                 }
@@ -261,7 +266,7 @@ bool NetSioPort::keep_alive()
     {
         _alive_time = ms;
         uint8_t alive = NETSIO_ALIVE_REQUEST;
-        send(_fd, &alive, 1, 0);
+        send(_fd, (char *)&alive, 1, 0);
     }
     else if (ms - _alive_response >= ALIVE_TIMEOUT_MS)
     {
@@ -290,7 +295,7 @@ int NetSioPort::handle_netsio()
     if (!resume_test())
         return 0;
 
-    received = recv(_fd, rxbuf, sizeof(rxbuf), 0);
+    received = recv(_fd, (char *)rxbuf, sizeof(rxbuf), 0);
     if (received > 0)
     {
 #ifdef VERBOSE_SIO
@@ -473,7 +478,7 @@ ssize_t NetSioPort::write_sock(const uint8_t *buffer, size_t size, uint32_t time
         return -1;
     }
 
-    ssize_t result = send(_fd, buffer, size, 0);
+    ssize_t result = send(_fd, (char *)buffer, size, 0);
     if (result < 0)
     {
         Debug_printf("NetSIO write_sock() send error %d: %s\n", errno, strerror(errno));
@@ -538,7 +543,7 @@ void NetSioPort::set_baudrate(uint32_t baud)
     txbuf[2] = (baud >> 8) & 0xff;
     txbuf[3] = (baud >> 16) & 0xff;
     txbuf[4] = (baud >> 24) & 0xff;
-    send(_fd, txbuf, sizeof(txbuf), 0);
+    send(_fd, (char *)txbuf, sizeof(txbuf), 0);
     _baud = baud;
 }
 

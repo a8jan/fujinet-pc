@@ -646,7 +646,7 @@ void fnConfig::save()
     ss << "port=" << _netsio.port << LINETERM;
 
     // Write the results out
-    FILE *fout = fnSPIFFS.file_open(CONFIG_FILENAME, "w");
+    FILE *fout = fnSPIFFS.file_open(CONFIG_FILENAME, FILE_WRITE);
     std::string result = ss.str();
     size_t z = fwrite(result.c_str(), 1, result.length(), fout);
     (void)z; // Get around unused var
@@ -734,7 +734,7 @@ New behavior: copy from SD first if available, then read SPIFFS.
 
     // Read INI file into buffer (for speed)
     // Then look for sections and handle each
-    FILE *fin = fnSPIFFS.file_open(CONFIG_FILENAME);
+    FILE *fin = fnSPIFFS.file_open(CONFIG_FILENAME, FILE_READ_TEXT);
     if (fin == nullptr)
     {
         Debug_printf("Failed to open config file\n");

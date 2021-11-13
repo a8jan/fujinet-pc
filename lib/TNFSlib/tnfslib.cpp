@@ -10,6 +10,12 @@
 #include "../utils/utils.h"
 #include "../hardware/fnSystem.h"
 
+// ESTALE not in errno.h on Windows/MinGW
+#ifndef ESTALE
+#define ESTALE 116
+#endif
+
+
 bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t datalen);
 uint8_t _tnfs_session_recovery(tnfsMountInfo *m_info, uint8_t command);
 

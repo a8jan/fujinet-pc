@@ -5,10 +5,17 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include <fcntl.h>
-#include <sys/socket.h>
+#include "compat_inet.h"
+// #include <sys/socket.h>
+
+#if defined(_WIN32)
+#define MSG_DONTWAIT 0 // !! TODO this is to compile the code but it is unlikely to work
+#else
+#include <sys/ioctl.h>
 #include <netinet/tcp.h>
+#endif
+
 #include <string>
 
 #include "../../include/debug.h"
@@ -20,14 +27,15 @@
 #define FNTCP_SELECT_TIMEOUT_US (1000000)
 #define FNTCP_FLUSH_BUFFER_SIZE (1024)
 
-// MSG_NOSIGNAL does not exists on older macOS
 #ifndef MSG_NOSIGNAL
+# if defined(_WIN32)
+#  define MSG_NOSIGNAL 0
+# endif
+// MSG_NOSIGNAL does not exists on older macOS
 # if defined(__APPLE__) || defined(__MACH__)
 #  define USE_SO_NOSIGPIPE
-#  define FN_MSG_NOSIGNAL 0
+#  define MSG_NOSIGNAL 0
 # endif
-#else
-# define FN_MSG_NOSIGNAL MSG_NOSIGNAL
 #endif
 
 class fnTcpClientRxBuffer
@@ -46,6 +54,15 @@ private:
         {
             return 0;
         }
+#if defined(_WIN32)
+        unsigned long count;
+        int res = ioctlsocket(_fd, FIONREAD, &count);
+        if (res != 0)
+        {
+            _failed = true;
+            return 0;
+        }
+#else
         int count;
         // int res = lwip_ioctl(_fd, FIONREAD, &count);
         int res = ioctl(_fd, FIONREAD, &count);
@@ -54,6 +71,7 @@ private:
             _failed = true;
             return 0;
         }
+#endif
         return count;
     }
 
@@ -85,7 +103,7 @@ private:
         }
 
         // Read the data
-        int res = recv(_fd, _buffer + _fill, _size - _fill, MSG_DONTWAIT);
+        int res = recv(_fd, (char *)(_buffer + _fill), _size - _fill, MSG_DONTWAIT);
         if (res < 0)
         {
             if (errno != EWOULDBLOCK)
@@ -222,7 +240,12 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     }
 #endif
     // Add O_NONBLOCK to our socket file descriptor
+#if defined(_WIN32)
+    unsigned long on = 1;
+    ioctlsocket(sockfd, FIONBIO, &on);
+#else
     fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
+#endif
 
     // Fill a new sockaddr_in struct with our info
     struct sockaddr_in serveraddr;
@@ -272,7 +295,16 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         int sockerr;
         socklen_t len = (socklen_t)sizeof(int);
         // Store any socket error value in sockerr
-        res = getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &sockerr, &len);
+        res = getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (char *)&sockerr, &len);
+#if defined(_WIN32)
+        if (res != 0)
+        {
+            // Failed to retrieve SO_ERROR
+            Debug_printf("getsockopt on fd %d, errno: %d\n", sockfd, WSAGetLastError());
+            ::close(sockfd);
+            return 0;
+        }
+#else
         if (res < 0)
         {
             // Failed to retrieve SO_ERROR
@@ -280,6 +312,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
             ::close(sockfd);
             return 0;
         }
+#endif
         // Retrieved SO_ERROR and found that we have an error condition
         if (sockerr != 0)
         {
@@ -289,7 +322,12 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         }
     }
     // Remove the O_NONBLOCK flag
+#if defined(_WIN32)
+    unsigned long off = 0;
+    ioctlsocket(sockfd, FIONBIO, &off);
+#else
     fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) & (~O_NONBLOCK));
+#endif
     // Create a socket handle and recieve buffer objects
     _clientSocketHandle.reset(new fnTcpClientSocketHandle(sockfd));
     _rxBuffer.reset(new fnTcpClientRxBuffer(sockfd));
@@ -308,12 +346,16 @@ int fnTcpClient::connect(const char *host, uint16_t port, int32_t timeout)
 int fnTcpClient::setTimeout(uint32_t seconds)
 {
     //Client::setTimeout(seconds * 1000); // This sets the timeout on the underlying Stream in the WiFiClient code
-    struct timeval tv;
-    tv.tv_sec = seconds;
-    tv.tv_usec = 0;
-    if (setSocketOption(SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
+#if defined(_WIN32)
+    DWORD to = 1000 * seconds;
+#else
+    struct timeval to;
+    to.tv_sec = seconds;
+    to.tv_usec = 0;
+#endif
+    if (setSocketOption(SO_RCVTIMEO, (char *)&to, sizeof(to)) < 0)
         return -1;
-    return setSocketOption(SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval));
+    return setSocketOption(SO_SNDTIMEO, (char *)&to, sizeof(to));
 }
 
 // Set socket option
@@ -400,7 +442,7 @@ size_t fnTcpClient::write(const uint8_t *buf, size_t size)
         // (Otherwise we timed-out and should retry the loop)
         if (FD_ISSET(socketFileDescriptor, &fdset))
         {
-            res = send(socketFileDescriptor, (void *)buf, bytesRemaining, MSG_DONTWAIT | FN_MSG_NOSIGNAL);
+            res = send(socketFileDescriptor, (char *)buf, bytesRemaining, MSG_DONTWAIT | MSG_NOSIGNAL);
             // We succeeded sending some bytes
             if (res > 0)
             {
@@ -541,7 +583,7 @@ void fnTcpClient::flush()
     while (a)
     {
         toRead = (a > FNTCP_FLUSH_BUFFER_SIZE) ? FNTCP_FLUSH_BUFFER_SIZE : a;
-        res = recv(fd(), buf, toRead, MSG_DONTWAIT);
+        res = recv(fd(), (char *)buf, toRead, MSG_DONTWAIT);
         if (res < 0)
         {
             Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
@@ -559,7 +601,7 @@ uint8_t fnTcpClient::connected()
     if (_connected)
     {
         uint8_t dummy;
-        int res = recv(fd(), &dummy, 1, MSG_PEEK | MSG_DONTWAIT);
+        int res = recv(fd(), (char *)&dummy, 1, MSG_PEEK | MSG_DONTWAIT);
 
         if (res > 0)
         {

@@ -443,14 +443,16 @@ void sioModem::sio_config()
        4,5: Word size (00=5,01=6,10=7,11=8)
        3-0: Baud rate:
     */
-#define BAUD_300 0x8
-#define BAUD_600 0x9
-#define BAUD_1200 0xA
-#define BAUD_1800 0xB
-#define BAUD_2400 0xC
-#define BAUD_4800 0xD
-#define BAUD_9600 0xE
-#define BAUD_19200 0xF
+
+// a8jan: BAUD_300, BAUD_600, ... already exists somewhere on Windows/MinGW
+#define MODEM_BAUD_300 0x8
+#define MODEM_BAUD_600 0x9
+#define MODEM_BAUD_1200 0xA
+#define MODEM_BAUD_1800 0xB
+#define MODEM_BAUD_2400 0xC
+#define MODEM_BAUD_4800 0xD
+#define MODEM_BAUD_9600 0xE
+#define MODEM_BAUD_19200 0xF
     /*
        AUX2:
        7-3: NA
@@ -471,28 +473,28 @@ void sioModem::sio_config()
 
     switch (newBaud)
     {
-    case BAUD_300:
+    case MODEM_BAUD_300:
         modemBaud = 300;
         break;
-    case BAUD_600:
+    case MODEM_BAUD_600:
         modemBaud = 600;
         break;
-    case BAUD_1200:
+    case MODEM_BAUD_1200:
         modemBaud = 1200;
         break;
-    case BAUD_1800:
+    case MODEM_BAUD_1800:
         modemBaud = 1800;
         break;
-    case BAUD_2400:
+    case MODEM_BAUD_2400:
         modemBaud = 2400;
         break;
-    case BAUD_4800:
+    case MODEM_BAUD_4800:
         modemBaud = 4800;
         break;
-    case BAUD_9600:
+    case MODEM_BAUD_9600:
         modemBaud = 9600;
         break;
-    case BAUD_19200:
+    case MODEM_BAUD_19200:
         modemBaud = 19200;
         break;
     default:

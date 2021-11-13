@@ -10,9 +10,12 @@
 #include "../../include/debug.h"
 
 #ifndef FILE_READ
-#define FILE_READ "r"
-#define FILE_WRITE "w"
-#define FILE_APPEND "a"
+#define FILE_READ "rb"
+#define FILE_WRITE "wb"
+#define FILE_APPEND "ab"
+#define FILE_READ_TEXT "rt"
+#define FILE_WRITE_TEXT "wt"
+#define FILE_APPEND_TEXT "at"
 #endif
 
 #define MAX_PATHLEN 256

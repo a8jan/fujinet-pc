@@ -4,12 +4,15 @@
 // #include <lwip/netdb.h>
 #include <errno.h>
 #include <unistd.h>
-#include <netdb.h>
 #include <fcntl.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include "compat_inet.h"
+// #include <netdb.h>
+// #include <sys/socket.h>
+// #include <netinet/in.h>
+// #include <arpa/inet.h>
+#if !defined(_WIN32)
 #include <netinet/tcp.h>
-#include <arpa/inet.h>
+#endif
 
 #include "../../include/debug.h"
 
@@ -44,10 +47,17 @@ void fnTcpServer::begin(uint16_t port)
     }
 
     int enable = 1;
+#if defined(_WIN32)
+    if (setsockopt(_sockfd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char *) &enable, sizeof(enable)) != 0)
+    {
+        Debug_printf("fnTcpServer::begin failed to set SO_EXCLUSIVEADDRUSE, err %d", WSAGetLastError());
+    }
+#else
     if (setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
     {
         Debug_printf("fnTcpServer::begin failed to set SO_REUSEADDR, err %d", errno);
     }
+#endif
 
     Debug_printf("Max clients is currently %u\n",_max_clients);
 
@@ -59,7 +69,12 @@ void fnTcpServer::begin(uint16_t port)
     }
 
     // Switch to non-blocking mode
+#if defined(_WIN32)
+    unsigned long on = 1;
+    ioctlsocket(_sockfd, FIONBIO, &on);
+#else
     fcntl(_sockfd, F_SETFL, O_NONBLOCK);
+#endif
 
     _listening = true;
     _noDelay = false;
@@ -112,10 +127,10 @@ fnTcpClient fnTcpServer::available()
     if (client_sock >= 0)
     {
         int val = 1;
-        if (setsockopt(client_sock, SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val)) == 0)
+        if (setsockopt(client_sock, SOL_SOCKET, SO_KEEPALIVE, (char *)&val, sizeof(val)) == 0)
         {
             val = _noDelay;
-            if (setsockopt(client_sock, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val)) == 0)
+            if (setsockopt(client_sock, IPPROTO_TCP, TCP_NODELAY, (char *)&val, sizeof(val)) == 0)
                 return fnTcpClient(client_sock);
         }
     }
@@ -127,12 +142,19 @@ fnTcpClient fnTcpServer::available()
 // Set both send and receive timeouts on the TCP socket
 int fnTcpServer::setTimeout(uint32_t seconds)
 {
+#if defined(_WIN32)
+    DWORD ms = 1000 * seconds;
+    if (setsockopt(_sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&ms, sizeof(ms)) != 0)
+        return -1;
+    return setsockopt(_sockfd, SOL_SOCKET, SO_SNDTIMEO, (char *)&ms, sizeof(ms));
+#else
     struct timeval tv;
     tv.tv_sec = seconds;
     tv.tv_usec = 0;
     if (setsockopt(_sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
         return -1;
     return setsockopt(_sockfd, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval));
+#endif
 }
 
 // Closes listening socket

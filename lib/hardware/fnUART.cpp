@@ -10,9 +10,14 @@
 #include <sys/time.h>
 #include <unistd.h> // write(), read(), close()
 #include <errno.h> // Error integer and strerror() function
+
+#if defined(_WIN32)
+#else
 #include <termios.h> // Contains POSIX terminal control definitions
-#include <fcntl.h> // Contains file controls like O_RDWR
 #include <sys/ioctl.h> // TIOCM_DSR etc.
+#endif
+
+#include <fcntl.h> // Contains file controls like O_RDWR
 
 #if defined(__linux__)
 #include <linux/serial.h>
@@ -57,6 +62,100 @@ void UARTManager::end()
     }
     _initialized = false;
 }
+
+#if defined(_WIN32)
+// TODO
+// stubs here
+void UARTManager::set_port(const char *device, int command_pin, int proceed_pin) 
+{
+    if (device != nullptr)
+        strlcpy(_device, device, sizeof(_device));
+    else
+        _device[0] = 0;
+    _command_pin = command_pin;
+    _proceed_pin = proceed_pin;
+};
+const char* UARTManager::get_port(int &command_pin, int &proceed_pin)
+{
+    command_pin = _command_pin;
+    proceed_pin = _proceed_pin;
+    return _device;
+}
+void UARTManager::begin(int baud)
+{
+    if(_initialized)
+    {
+        end();
+    }
+    Debug_printf("### UART initialized ###\n");
+    // Set initialized.
+    _initialized=true;
+    set_baudrate(baud);
+}
+void UARTManager::suspend(int sec)
+{
+    Debug_println("Suspending serial port");
+}
+void UARTManager::flush_input()
+{
+}
+
+/* Clears input buffer and flushes out transmit buffer waiting at most
+   waiting MAX_FLUSH_WAIT_TICKS until all sends are completed
+*/
+void UARTManager::flush()
+{
+}
+
+/* Returns number of bytes available in receive buffer or -1 on error
+*/
+int UARTManager::available()
+{
+    return 0;
+}
+void UARTManager::set_baudrate(uint32_t baud)
+{
+    Debug_printf("UART set_baudrate: %d\n", baud);
+    _baud = baud;
+}
+bool UARTManager::command_asserted(void)
+{
+    return false;
+}
+void UARTManager::set_proceed(bool level)
+{
+}
+timeval timeval_from_ms(const uint32_t millis)
+{
+  timeval tv;
+  tv.tv_sec = millis / 1000;
+  tv.tv_usec = (millis - (tv.tv_sec * 1000)) * 1000;
+  return tv;
+}
+bool UARTManager::waitReadable(uint32_t timeout_ms)
+{
+    return false;
+}
+int UARTManager::read(void)
+{
+    uint8_t byte;
+    return (readBytes(&byte, 1) == 1) ? byte : -1;
+}
+size_t UARTManager::readBytes(uint8_t *buffer, size_t length, bool command_mode)
+{
+    return 0;
+}
+size_t UARTManager::write(uint8_t c)
+{
+    return write(&c, 1);
+}
+
+size_t UARTManager::write(const uint8_t *buffer, size_t size)
+{
+    return 0;
+}
+
+#else
 
 void UARTManager::set_port(const char *device, int command_pin, int proceed_pin)
 {
@@ -598,6 +697,8 @@ size_t UARTManager::write(const uint8_t *buffer, size_t size)
     }
     return txbytes;
 }
+
+#endif // _WIN32
 
 size_t UARTManager::write(const char *str)
 {

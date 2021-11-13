@@ -1,9 +1,13 @@
-#ifndef UTSNAME_H
-#define UTSNAME_H
+#ifndef COMPAT_UNAME_H
+#define COMPAT_UNAME_H
 
 #if defined(_WIN32)
 
-#define UTSNAME_MAXLENGTH 256
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define UTSNAME_MAXLENGTH 65
 
 struct utsname {
 	char sysname [UTSNAME_MAXLENGTH]; // name of this implementation of the operating system
@@ -15,10 +19,14 @@ struct utsname {
 
 int uname(struct utsname *name);
 
+#ifdef __cplusplus
+}
+#endif
+
 #else
 
 #include <sys/utsname.h>
 
 #endif
 
-#endif // UTSNAME_H
+#endif // COMPAT_UNAME_H

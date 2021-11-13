@@ -4,7 +4,8 @@
 
 #include "compat_uname.h"
 
-int uname(struct utsname *name) {
+int uname(struct utsname *name)
+{
 	OSVERSIONINFO versionInfo;
 	SYSTEM_INFO sysInfo;
 

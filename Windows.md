@@ -27,7 +27,7 @@ $ pacman -Su cmake
 
 ```sh
 # prepare build
-cmake -G "MSYS Makefiles" .. -DCMAKE_BUILD_TYPE:STRING=Debug
+cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
 
 # run build
 cmake --build .

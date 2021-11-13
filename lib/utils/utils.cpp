@@ -616,4 +616,5 @@ void util_debug_printf(const char *fmt, ...)
         printf("%s", s);
     }
     va_end(argp);
+    fflush(stdout);
 }

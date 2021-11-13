@@ -6,9 +6,10 @@
 
 #include <errno.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "compat_inet.h"
+// #include <sys/socket.h>
+// #include <netinet/in.h>
+// #include <arpa/inet.h>
 #include "TCP.h"
 #include "status_error_codes.h"
 

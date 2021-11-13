@@ -514,7 +514,7 @@ size_t SystemManager::copy_file(FileSystem *source_fs, const char *source_filena
     }
 
     size_t result = 0;
-    FILE *fout = dest_fs->file_open(dest_filename, "w");
+    FILE *fout = dest_fs->file_open(dest_filename, FILE_WRITE);
     if (fout == nullptr)
     {
         Debug_println("copy_file failed to open destination");
