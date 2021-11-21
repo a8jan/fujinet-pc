@@ -75,24 +75,21 @@ bool fnUDP::begin(in_addr_t address, uint16_t port)
 
     if ((udp_server = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP)) == -1)
     {
-        Debug_printf("could not create socket: %d", errno);
+        Debug_printf("could not create socket: %d", FN_SOCK_ERRNO);
         return false;
     }
 
     int yes = 1;
 #if defined(_WIN32)
     if (setsockopt(udp_server, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char *) &yes, sizeof(yes)) != 0)
-    {
-        Debug_printf("could not set socket option: %d", WSAGetLastError());
-    }
 #else
     if (setsockopt(udp_server, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0)
+#endif
     {
-        Debug_printf("could not set socket option: %d", errno);
+        Debug_printf("could not set socket option: %d", FN_SOCK_ERRNO);
         stop();
         return false;
     }
-#endif
 
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
@@ -102,7 +99,7 @@ bool fnUDP::begin(in_addr_t address, uint16_t port)
     addr.sin_addr.s_addr = address;
     if (bind(udp_server, (struct sockaddr *)&addr, sizeof(addr)) == -1)
     {
-        Debug_printf("could not bind socket: %d", errno);
+        Debug_printf("could not bind socket: %d", FN_SOCK_ERRNO);
         stop();
         return false;
     }
@@ -144,7 +141,7 @@ bool fnUDP::beginPacket()
 
     if ((udp_server = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP)) == -1)
     {
-        Debug_printf("could not create socket: %d", errno);
+        Debug_printf("could not create socket: %d", FN_SOCK_ERRNO);
         return false;
     }
 
@@ -194,21 +191,12 @@ bool fnUDP::beginMulticast(in_addr_t a, uint16_t p)
             mreq.imr_multiaddr.s_addr = a;
             mreq.imr_interface.s_addr = INADDR_ANY;
             int res = setsockopt(udp_server, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof(mreq));
-#if defined(_WIN32)
-            if (res != 0)
-            {
-                Debug_printf("could not join igmp: %d\n", WSAGetLastError());
-                stop();
-                return false;
-            }
-#else
             if (res < 0)
             {
-                Debug_printf("could not join igmp: %d\n", errno);
+                Debug_printf("could not join igmp: %d\n", FN_SOCK_ERRNO);
                 stop();
                 return false;
             }
-#endif
             multicast_ip = a;
         }
         return true;
@@ -252,8 +240,13 @@ int fnUDP::parsePacket()
     if ((len = recvfrom(udp_server, buf, UDP_RXTX_BUFLEN, MSG_DONTWAIT, (struct sockaddr *)&si_other, (socklen_t *)&slen)) == -1)
     {
         delete[] buf;
-        if (errno != EWOULDBLOCK)
-            Debug_printf("could not receive data: %d", errno);
+        int err = FN_SOCK_ERRNO;
+#if defined(_WIN32)
+        if (err != WSAEWOULDBLOCK)
+#else
+        if (err != EWOULDBLOCK)
+#endif
+            Debug_printf("could not receive data: %d\n", err);
         return 0;
     }
 
@@ -336,7 +329,7 @@ bool fnUDP::endPacket()
     int sent = sendto(udp_server, tx_buffer, tx_buffer_len, 0, (struct sockaddr *)&recipient, sizeof(recipient));
     if (sent < 0)
     {
-        Debug_printf("could not send data: %d", errno);
+        Debug_printf("could not send data: %d\n", FN_SOCK_ERRNO);
         return false;
     }
     return true;

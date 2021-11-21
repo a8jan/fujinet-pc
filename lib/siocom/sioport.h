@@ -16,6 +16,7 @@ class SioPort
 public:
     virtual void begin(int baud) = 0;
     virtual void end() = 0;
+    virtual bool poll(int ms) = 0;
 
     virtual void set_baudrate(uint32_t baud) = 0;
     virtual uint32_t get_baudrate() = 0;

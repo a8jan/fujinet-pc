@@ -183,9 +183,6 @@ void fn_service_loop(void *param)
 {
     while (true)
     {
-        if (fnHTTPD.running())
-            fnHTTPD.service();
-
         // We don't have any delays in this loop, so IDLE threads will be starved
         // Shouldn't be a problem, but something to keep in mind...
         // Go service BT if it's active
@@ -196,6 +193,8 @@ void fn_service_loop(void *param)
     #endif
         SIO.service();
 
+        fnHTTPD.service();
+
         taskMgr.service();
 
         if (fnSystem.check_deferred_reboot())
@@ -204,7 +203,7 @@ void fn_service_loop(void *param)
             // web server is tested by script in restart.html to check if the program is running again
             fnHTTPD.stop();
             // exit the program with special exit code (75)
-            // to indicate the proigram should be started again
+            // to indicate the program should be started again
             fnSystem.reboot();
         }
     }

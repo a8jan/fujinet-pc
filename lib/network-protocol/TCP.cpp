@@ -51,7 +51,7 @@ bool NetworkProtocolTCP::open(EdUrlParser *urlParser, cmdFrame_t *cmdFrame)
 {
     bool ret = true; // assume error until proven ok
 
-    Debug_printf("NetworkProtocolTCP::open(%s:%s)", urlParser->hostName.c_str(), urlParser->port.c_str());
+    Debug_printf("NetworkProtocolTCP::open(%s:%s)\n", urlParser->hostName.c_str(), urlParser->port.c_str());
 
     if (urlParser->hostName.empty())
     {

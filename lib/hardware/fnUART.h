@@ -33,6 +33,8 @@ public:
 
     void begin(int baud);
     void end();
+    bool poll(int ms);
+
     void suspend(int sec=5);
     bool initialized() { return _initialized; }
 

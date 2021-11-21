@@ -50,7 +50,7 @@ protected:
     bool rxbuffer_empty();
     bool rxbuffer_put(uint8_t b);
     int rxbuffer_get();
-    int  rxbuffer_available();
+    int rxbuffer_available();
     void rxbuffer_flush();
 
 public:
@@ -58,6 +58,7 @@ public:
     virtual ~NetSioPort();
     virtual void begin(int baud) override;
     virtual void end() override;
+    virtual bool poll(int ms) override;
 
     virtual void set_baudrate(uint32_t baud) override;
     virtual uint32_t get_baudrate() override;

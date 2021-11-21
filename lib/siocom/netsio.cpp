@@ -66,7 +66,7 @@ void NetSioPort::begin(int baud)
 
     if (_fd < 0)
     {
-        Debug_printf("socket error %d: %s\n", errno, strerror(errno));
+        Debug_printf("socket error %d: %s\n", FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
         _errcount++;
         suspend(suspend_ms);
 		return;
@@ -90,7 +90,7 @@ void NetSioPort::begin(int baud)
     if (connect(_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
         // should not happen (UDP)
-        Debug_printf("connect error %d: %s\n", errno, strerror(errno));
+        Debug_printf("connect error %d: %s\n", FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
         _errcount++;
         suspend(suspend_ms);
 		return;
@@ -136,6 +136,14 @@ void NetSioPort::end()
         Debug_printf("### NetSIO stopped ###\n");
     }
     _initialized = false;
+}
+
+bool NetSioPort::poll(int ms)
+{
+    if (_initialized)
+        return wait_sock_readable(ms);
+    fnSystem.delay(ms);
+    return false;
 }
 
 void NetSioPort::suspend(int ms)
@@ -348,6 +356,7 @@ int NetSioPort::handle_netsio()
                 _command_asserted = true;
                 _sync_request_num = -1; // cancel any sync request
                 _sync_write_size = 0;
+                rxbuffer_flush();   // flush any stray input data
                 break;
 
             case NETSIO_MOTOR_OFF:
@@ -407,12 +416,17 @@ bool NetSioPort::wait_sock_readable(uint32_t timeout_ms)
         // select error
         if (result < 0)
         {
-            if (errno == EINTR) 
+            int err = FN_SOCK_ERRNO;
+#if defined(_WIN32)
+            if (err == WSAEINTR)
+#else
+            if (err == EINTR) 
+#endif
             {
                 // TODO adjust timeout_tv
                 continue;
             }
-            Debug_printf("NetSIO wait_sock_readable() select error %d: %s\n", errno, strerror(errno));
+            Debug_printf("NetSIO wait_sock_readable() select error %d: %s\n", err, strerror(err));
             return false;
         }
 
@@ -447,11 +461,17 @@ bool NetSioPort::wait_sock_writable(uint32_t timeout_ms)
         // select error
         if (result < 0) 
         {
-            if (errno == EINTR) {
+            int err = FN_SOCK_ERRNO;
+#if defined(_WIN32)
+            if (err == WSAEINTR)
+#else
+            if (err == EINTR) 
+#endif
+            {
                 // TODO adjust timeout_tv
                 continue;
             }
-            Debug_printf("NetSIO wait_sock_writable() select error %d: %s\n", errno, strerror(errno));
+            Debug_printf("NetSIO wait_sock_writable() select error %d: %s\n", err, strerror(err));
             return false;
         }
 
@@ -481,7 +501,7 @@ ssize_t NetSioPort::write_sock(const uint8_t *buffer, size_t size, uint32_t time
     ssize_t result = send(_fd, (char *)buffer, size, 0);
     if (result < 0)
     {
-        Debug_printf("NetSIO write_sock() send error %d: %s\n", errno, strerror(errno));
+        Debug_printf("NetSIO write_sock() send error %d: %s\n", FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
     }
     return result;
 }

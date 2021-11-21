@@ -629,5 +629,6 @@ void fnHttpService::stop()
 
 void fnHttpService::service()
 {
-    mg_mgr_poll(state.hServer, 0);
+    if (state.hServer != nullptr)
+        mg_mgr_poll(state.hServer, 0);
 }

@@ -25,6 +25,16 @@ void SioCom::end()
     _sioPort->end(); 
 }
 
+/*
+ Poll the SIO port
+ * ms = milliseconds to wait for "port event"
+ * return true if port handling is needed
+ */
+bool SioCom::poll(int ms)
+{
+    return _sioPort->poll(ms); 
+}
+
 void SioCom::set_baudrate(uint32_t baud) 
 { 
     _sioPort->set_baudrate(baud); 

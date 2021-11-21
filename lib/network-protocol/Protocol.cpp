@@ -5,6 +5,7 @@
 #include <string.h>
 #include <algorithm>
 #include <errno.h>
+#include "compat_inet.h"
 #include "Protocol.h"
 #include "status_error_codes.h"
 #include "../utils/utils.h"
@@ -198,11 +199,22 @@ unsigned short NetworkProtocol::translate_transmit_buffer()
  */
 void NetworkProtocol::errno_to_error()
 {
-    switch (errno)
+#if defined(_WIN32)
+    int err = WSAGetLastError();
+#else
+    int err = errno;
+#endif
+    switch (err)
     {
+#if defined(_WIN32)
+    case WSAEWOULDBLOCK:
+        error = 1; // This is okay.
+        WSASetLastError(0);
+#else
     case EAGAIN:
         error = 1; // This is okay.
         errno = 0; // Short circuit and say it's okay.
+#endif
         break;
     case EADDRINUSE:
         error = NETWORK_ERROR_ADDRESS_IN_USE;
@@ -226,7 +238,7 @@ void NetworkProtocol::errno_to_error()
         error = NETWORK_ERROR_NETWORK_DOWN;
         break;
     default:
-        Debug_printf("errno_to_error() - Uncaught errno = %u, returning 144.\n", errno);
+        Debug_printf("errno_to_error() - Uncaught errno = %u, returning 144.\n", err);
         error = NETWORK_ERROR_GENERAL;
         break;
     }

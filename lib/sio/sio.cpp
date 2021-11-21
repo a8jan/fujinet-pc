@@ -332,10 +332,12 @@ void sioBus::_sio_process_queue()
 void sioBus::service()
 {
     bool idle = true;
+    do
+    {
 
     // Check for any messages in our queue (this should always happen, even if any other special
     // modes disrupt normal SIO handling - should probably make a separate task for this)
-    _sio_process_queue();
+    // _sio_process_queue();
 
 //     if (_midiDev != nullptr && _midiDev->midimazeActive)
 //     {
@@ -411,11 +413,11 @@ void sioBus::service()
     {
         idle = (_modemDev->sio_handle_modem() <= 0);
     }
-    else
-    // Neither CMD nor active modem, so throw out any stray input data
-    {
-        fnSioCom.flush_input();
-    }
+    // else
+    // // Neither CMD nor active modem, so throw out any stray input data
+    // {
+    //     fnSioCom.flush_input();
+    // }
 
     // Handle interrupts from network protocols
     for (int i = 0; i < 8; i++)
@@ -424,9 +426,13 @@ void sioBus::service()
             _netDev[i]->sio_poll_interrupt();
     }
 
-    if (idle)
-        // fnSystem.yield();
-        fnSystem.delay_microseconds(500);
+    // poll with 1 ms interval
+    //   true  = SIO port needs handling
+    //   false = no SIO "event" ocurred within interval
+    } while (fnSioCom.poll(1));
+    // if (idle)
+    //     // fnSystem.yield();
+    //     fnSystem.delay_microseconds(500);
 }
 
 // Setup SIO bus

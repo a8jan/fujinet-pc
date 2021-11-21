@@ -12,6 +12,7 @@ fnTaskManager::fnTaskManager()
 {
     Debug_println("fnTaskManager::fnTaskManager");
     _next_tid = 1;
+    _task_count = 0;
 }
 
 fnTaskManager::~fnTaskManager()
@@ -30,6 +31,7 @@ void fnTaskManager::shutdown()
         delete it->second;
     }
     _task_map.clear();
+    _task_count = 0;
 }
 
 int fnTaskManager::submit_task(fnTask * t)
@@ -54,6 +56,7 @@ int fnTaskManager::submit_task(fnTask * t)
     {
         // store task
         t->_id = tid;
+        _task_count += 1;
         _task_map[tid] = t;
         _next_tid = tid+1;
         Debug_printf(" submitted #%d\n", tid);
@@ -127,6 +130,7 @@ int fnTaskManager::abort_task(uint8_t tid)
     task->_reason = fnTask::TASK_ABORTED;
     // TODO callback
     // remove aborted task
+    _task_count -= 1;
     _task_map.erase(tid);
     delete task;
     return result;
@@ -142,6 +146,7 @@ int fnTaskManager::complete_task(uint8_t tid)
     task->_reason = fnTask::TASK_COMPLETED;
     // TODO callback
     // remove completed task
+    _task_count -= 1;
     _task_map.erase(tid);
     delete task;
     return 0;
@@ -149,6 +154,9 @@ int fnTaskManager::complete_task(uint8_t tid)
 
 bool fnTaskManager::service()
 {
+    if (_task_count == 0)
+        return true; // idle
+
     bool idle = true; // was service() idle?
     int result;
     fnTask *task;

@@ -9,6 +9,8 @@
 
 typedef uint32_t in_addr_t;
 
+#define FN_SOCK_ERRNO WSAGetLastError()
+
 #else
 
 #include <netinet/in.h>
@@ -16,6 +18,8 @@ typedef uint32_t in_addr_t;
 
 #include <netdb.h>
 #include <sys/socket.h>
+
+#define FN_SOCK_ERRNO errno
 
 #endif
 

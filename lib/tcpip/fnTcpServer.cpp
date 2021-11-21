@@ -31,7 +31,7 @@ void fnTcpServer::begin(uint16_t port)
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (_sockfd < 0)
     {
-        Debug_printf("fnTcpServer::begin failed to allocate socket, err %d\n", errno);
+        Debug_printf("fnTcpServer::begin failed to allocate socket, err %d\n", FN_SOCK_ERRNO);
         return;
     }
 
@@ -42,7 +42,7 @@ void fnTcpServer::begin(uint16_t port)
     server.sin_port = htons(_port);
     if (bind(_sockfd, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
-        Debug_printf("fnTcpServer::begin failed to bind socket, err %d\n", errno);
+        Debug_printf("fnTcpServer::begin failed to bind socket, err %d\n", FN_SOCK_ERRNO);
         return;
     }
 
@@ -55,7 +55,7 @@ void fnTcpServer::begin(uint16_t port)
 #else
     if (setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
     {
-        Debug_printf("fnTcpServer::begin failed to set SO_REUSEADDR, err %d", errno);
+        Debug_printf("fnTcpServer::begin failed to set SO_REUSEADDR, err %d", FN_SOCK_ERRNO);
     }
 #endif
 
@@ -64,7 +64,7 @@ void fnTcpServer::begin(uint16_t port)
     // Now listen in on this socket
     if (listen(_sockfd, _max_clients) < 0)
     {
-        Debug_printf("fnTcpServer::begin failed to listen on socket, err %d\n", errno);
+        Debug_printf("fnTcpServer::begin failed to listen on socket, err %d\n", FN_SOCK_ERRNO);
         return;
     }
 
@@ -164,7 +164,7 @@ void fnTcpServer::stop()
     {
         Debug_printf("fnTcpServer::stop(%d)\n", _sockfd);
         close(_sockfd);
-        Debug_printf("close errno %d\n",errno);
+        Debug_printf("close errno %d\n",FN_SOCK_ERRNO);
         _sockfd = -1;
         _listening = false;
     }

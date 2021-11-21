@@ -12,23 +12,32 @@ https://www.msys2.org/
 
 ### Install packages
 
-Start MSYS2 MinGW 64-bit
+Start MSYS2
 
 ```sh
-$ pacman -S --needed base-devel mingw-w64-x86_64-toolchain
+# TODO not sure if mingw-w64-x86_64-toolchain is necessary
+pacman -S --needed base-devel mingw-w64-x86_64-toolchain
+pacman -S mingw-w64-ucrt-x86_64-toolchain
 ```
 
 ```sh
 $ pacman -Su git
-$ pacman -Su cmake
+$ pacman -Su mingw-w64-x86_64-cmake
 ```
 
-## TODO ...
+## TODO ... Build (WIP!)
+
+```sh
+# create build directory for Windows build
+cd build
+mkdir windows-x86_64 && cd windows-x86_64
+```
 
 ```sh
 # prepare build
-cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
+#cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
+/mingw64/bin/cmake ../.. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
 
 # run build
-cmake --build .
+/mingw64/bin/cmake --build .
 ```

@@ -25,6 +25,7 @@
 #include <IOKit/serial/ioss.h>
 #endif
 
+#include "fnSystem.h"
 #include "fnUART.h"
 #include "sioport.h" // SIOPORT_DEFAULT_BAUD
 #include "../../include/debug.h"
@@ -63,9 +64,17 @@ void UARTManager::end()
     _initialized = false;
 }
 
+
+bool UARTManager::poll(int ms)
+{
+    // TODO check serial port command link and input data
+    fnSystem.delay_microseconds(500); // TODO use ms parameter
+    return false;
+}
+
 #if defined(_WIN32)
 // TODO
-// stubs here
+// only stubs here
 void UARTManager::set_port(const char *device, int command_pin, int proceed_pin) 
 {
     if (device != nullptr)

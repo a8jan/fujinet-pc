@@ -41,7 +41,7 @@ public:
      * The spinlock for the ESP32 hardware timers. Used for interrupt rate limiting.
      */
     // portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
-    pthread_mutex_t timerMux;
+    // pthread_mutex_t timerMux;
 
     /**
      * Toggled by the rate limiting timer to indicate that the PROCEED interrupt should
@@ -169,8 +169,9 @@ private:
      * ESP timer handle for the Interrupt rate limiting timer
      */
     // esp_timer_handle_t rateTimerHandle = nullptr;
-    pthread_t rateTimerThread;
-    pthread_t *rateTimerHandle = nullptr;
+    // pthread_t rateTimerThread;
+    // pthread_t *rateTimerHandle = nullptr;
+    uint64_t lastInterruptMs;
 
     /**
      * Devicespec passed to us, e.g. N:HTTP://WWW.GOOGLE.COM:80/

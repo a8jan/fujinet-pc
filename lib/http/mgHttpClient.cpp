@@ -34,7 +34,9 @@ mgHttpClient::~mgHttpClient()
         // esp_http_client_cleanup(_handle);
 
     if (_buffer != nullptr) {
-        printf("mgHttpClient buffer free\n");
+#ifdef VERBOSE_HTTP
+        Debug_printf("mgHttpClient buffer free\n");
+#endif
         free(_buffer);
     }
 }

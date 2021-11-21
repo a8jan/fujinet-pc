@@ -106,7 +106,11 @@ private:
         int res = recv(_fd, (char *)(_buffer + _fill), _size - _fill, MSG_DONTWAIT);
         if (res < 0)
         {
+#if defined(_WIN32)
+            if (WSAGetLastError() != WSAEWOULDBLOCK)
+#else
             if (errno != EWOULDBLOCK)
+#endif
             {
                 _failed = true;
             }
@@ -229,7 +233,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
     {
-        Debug_printf("socket: %d\n", errno);
+        Debug_printf("socket: %d\n", FN_SOCK_ERRNO);
         return 0;
     }
 #ifdef USE_SO_NOSIGPIPE
@@ -257,12 +261,21 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     // Connect to the server
     // int res = lwip_connect(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
     int res = ::connect(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
+#if defined(_WIN32)
+    if (res < 0 && WSAGetLastError() != WSAEWOULDBLOCK)
+    {
+        Debug_printf("connect on fd %d, errno: %d\n", sockfd, WSAGetLastError());
+        ::close(sockfd);
+        return 0;
+    }
+#else
     if (res < 0 && errno != EINPROGRESS)
     {
         Debug_printf("connect on fd %d, errno: %d, \"%s\"\n", sockfd, errno, strerror(errno));
         ::close(sockfd);
         return 0;
     }
+#endif
 
     // Wait for the socket to be ready for writing to
     // fdset contains the file descriptor(s) we're checking for readiness
@@ -278,7 +291,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     // Error result
     if (res < 0)
     {
-        Debug_printf("select on fd %d, errno: %d, \"%s\"\n", sockfd, errno, strerror(errno));
+        Debug_printf("select on fd %d, errno: %d, \"%s\"\n", sockfd, FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
         ::close(sockfd);
         return 0;
     }
@@ -296,23 +309,13 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         socklen_t len = (socklen_t)sizeof(int);
         // Store any socket error value in sockerr
         res = getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (char *)&sockerr, &len);
-#if defined(_WIN32)
-        if (res != 0)
-        {
-            // Failed to retrieve SO_ERROR
-            Debug_printf("getsockopt on fd %d, errno: %d\n", sockfd, WSAGetLastError());
-            ::close(sockfd);
-            return 0;
-        }
-#else
         if (res < 0)
         {
             // Failed to retrieve SO_ERROR
-            Debug_printf("getsockopt on fd %d, errno: %d, \"%s\"\n", sockfd, errno, strerror(errno));
+            Debug_printf("getsockopt on fd %d, errno: %d, \"%s\"\n", sockfd, FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
             ::close(sockfd);
             return 0;
         }
-#endif
         // Retrieved SO_ERROR and found that we have an error condition
         if (sockerr != 0)
         {
@@ -364,7 +367,7 @@ int fnTcpClient::setSocketOption(int option, char *value, size_t len)
     int res = setsockopt(fd(), SOL_SOCKET, option, value, len);
     if (res < 0)
     {
-        Debug_printf("%X : %d\n", option, errno);
+        Debug_printf("%X : %d\n", option, FN_SOCK_ERRNO);
     }
 
     return res;
@@ -376,7 +379,7 @@ int fnTcpClient::setOption(int option, int *value)
     int res = setsockopt(fd(), IPPROTO_TCP, option, (char *)value, sizeof(int));
     if (res < 0)
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
     }
 
     return res;
@@ -390,7 +393,7 @@ int fnTcpClient::getOption(int option, int *value)
     int res = getsockopt(fd(), IPPROTO_TCP, option, (char *)value, &size);
     if (res < 0)
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
     }
 
     return res;
@@ -463,9 +466,10 @@ size_t fnTcpClient::write(const uint8_t *buf, size_t size)
             // We got an error
             else if (res < 0)
             {
-                Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
+                int err = FN_SOCK_ERRNO;
+                Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), err, strerror(err));
                 // Give up if this wasn't just a try again error
-                if (errno != EAGAIN)
+                if (err != EAGAIN)
                 {
                     stop();
                     res = 0;
@@ -586,7 +590,7 @@ void fnTcpClient::flush()
         res = recv(fd(), (char *)buf, toRead, MSG_DONTWAIT);
         if (res < 0)
         {
-            Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
+            Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
             stop();
             break;
         }
@@ -614,9 +618,14 @@ uint8_t fnTcpClient::connected()
         }
         else
         {
-            switch (errno)
+            int err = FN_SOCK_ERRNO;
+            switch (err)
             {
+#if defined(_WIN32)
+            case WSAEWOULDBLOCK:
+#else
             case EWOULDBLOCK:
+#endif
             case ENOENT: // Caused by VFS
                 _connected = true;
                 break;
@@ -626,10 +635,10 @@ uint8_t fnTcpClient::connected()
             case ECONNREFUSED:
             case ECONNABORTED:
                 _connected = false;
-                Debug_printf("fnTcpClient disconnected: res %d, errno %d\n", res, errno);
+                Debug_printf("fnTcpClient disconnected: res %d, errno %d\n", res, err);
                 break;
             default:
-                Debug_printf("fnTcpClient unexpected: res %d, errno %d\n", res, errno);
+                Debug_printf("fnTcpClient unexpected: res %d, errno %d\n", res, err);
                 _connected = true;
                 break;
             }

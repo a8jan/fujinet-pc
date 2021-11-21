@@ -25,6 +25,9 @@
 #include <sysexits.h>
 #endif
 
+// #include <chrono>
+// #include <thread>
+
 #include "../../include/debug.h"
 #include "../../include/version.h"
 
@@ -235,11 +238,28 @@ void SystemManager::delay(uint32_t ms)
 
 void SystemManager::delay_microseconds(uint32_t us)
 {
+#if defined(_WIN32)
+    HANDLE timer; 
+    LARGE_INTEGER ft; 
+
+    ft.QuadPart = -(10*us); // Convert to 100 nanosecond interval, negative value indicates relative time
+
+    timer = CreateWaitableTimer(NULL, TRUE, NULL); 
+    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0); 
+    WaitForSingleObject(timer, INFINITE); 
+#else
+    // a)
     // struct timespec ts;
     // ts.tv_sec = us / (1000 * 1000);
     // ts.tv_nsec = (us % (1000 * 1000)) * 1000;
     // nanosleep(&ts, NULL);
+
+    // b)
     usleep(us);
+
+    // c)
+    // std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+#endif
 }
 
 // from esp32-hal-misc.
@@ -320,7 +340,12 @@ const char *SystemManager::get_current_time_str()
     time_t tt = time(nullptr);
     struct tm *tinfo = localtime(&tt);
 
+    // compatibility notice:
+    // this works on Windows only if linked using newer UCRT lib (Universal C runtime, Windows 10+)
     strftime(_currenttime_string, sizeof(_currenttime_string), "%a %b %e, %H:%M:%S %Y %z", tinfo);
+    // this should work on Windows if linked using old MSCRT lib
+    // (%#d instead of %e, no timezone)
+    // strftime(_currenttime_string, sizeof(_currenttime_string), "%a %b %#d, %H:%M:%S %Y", tinfo);
 
     return _currenttime_string;
 }
