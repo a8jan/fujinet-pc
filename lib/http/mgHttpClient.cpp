@@ -216,6 +216,7 @@ void mgHttpClient::close()
 //         esp_http_client_close(_handle);
 
     _stored_headers.clear();
+    _request_headers.clear();
 }
 
 /*
@@ -280,11 +281,12 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
             mg_printf(c, "GET %s HTTP/1.0\r\n"
                             "Host: %.*s\r\n",
                             mg_url_uri(url), (int)host.len, host.ptr);
-            if (!client->_username.empty()) {
+            // send auth header
+            if (!client->_username.empty())
                 mg_http_bauth(c, client->_username.c_str(), client->_password.c_str());
-            }
-            // TODO send request headers
-            // ...
+            // send request headers
+            for (const auto& rh: client->_request_headers)
+                mg_printf(c, "%s: %s\r\n", rh.first.c_str(), rh.second.c_str());
             mg_printf(c, "\r\n");
             break;
 
@@ -294,14 +296,17 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
                             "Host: %.*s\r\n",
                             (client->_method == HTTP_PUT) ? "PUT" : "POST",
                             mg_url_uri(url), (int)host.len, host.ptr);
-            if (!client->_username.empty()) {
+            // send auth header
+            if (!client->_username.empty())
                 mg_http_bauth(c, client->_username.c_str(), client->_password.c_str());
-            }
+            // set Content-Type if not set
+            header_map_t::iterator it = client->_request_headers.find("Content-Type");
+            if (it == client->_request_headers.end())
+                client->set_header("Content-Type", "application/octet-stream");
+            // send request headers
+            for (const auto& rh: client->_request_headers)
+                mg_printf(c, "%s: %s\r\n", rh.first.c_str(), rh.second.c_str());
             mg_printf(c, "Content-Length: %d\r\n", client->_post_datalen);
-            // TODO send request headers
-            // ...
-            // TODO send default Content-Type only if not set in request headers
-            mg_printf(c, "Content-Type: application/octet-stream\r\n");
             mg_printf(c, "\r\n");
             mg_send(c, client->_post_data, client->_post_datalen);
             break;
@@ -962,7 +967,10 @@ bool mgHttpClient::set_url(const char *url)
 // Sets an HTTP request header
 bool mgHttpClient::set_header(const char *header_key, const char *header_value)
 {
-    if (_handle == nullptr)
+    if (_handle == nullptr || header_key == nullptr || header_value == nullptr)
+        return false;
+
+    if (_request_headers.size() >= 20)
         return false;
 
     // esp_err_t e = esp_http_client_set_header(_handle, header_key, header_value);
@@ -971,6 +979,7 @@ bool mgHttpClient::set_header(const char *header_key, const char *header_value)
     //     Debug_printf("mgHttpClient::set_header error %d\n", e);
     //     return false;
     // }
+    _request_headers.insert(header_entry_t(header_key, header_value));
     return true;
 }
 

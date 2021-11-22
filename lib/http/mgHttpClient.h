@@ -36,6 +36,7 @@ private:
 
     uint16_t _port = 80;
     header_map_t _stored_headers;
+    header_map_t _request_headers;
 
     // esp_http_client_handle_t _handle = nullptr;
     struct mg_mgr *_handle;
