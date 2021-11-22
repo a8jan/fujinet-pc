@@ -274,15 +274,42 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
         }
 
         // Send request
-        mg_printf(c, "GET %s HTTP/1.0\r\n"
-                        "Host: %.*s\r\n",
-                        mg_url_uri(url), (int)host.len, host.ptr);
-        if (!client->_username.empty()) {
-            mg_http_bauth(c, client->_username.c_str(), client->_password.c_str());
+        switch(client->_method)
+        {
+        case HTTP_GET:
+            mg_printf(c, "GET %s HTTP/1.0\r\n"
+                            "Host: %.*s\r\n",
+                            mg_url_uri(url), (int)host.len, host.ptr);
+            if (!client->_username.empty()) {
+                mg_http_bauth(c, client->_username.c_str(), client->_password.c_str());
+            }
+            // TODO send request headers
+            // ...
+            mg_printf(c, "\r\n");
+            break;
+
+        case HTTP_PUT:
+        case HTTP_POST:
+            mg_printf(c, "%s %s HTTP/1.0\r\n"
+                            "Host: %.*s\r\n",
+                            (client->_method == HTTP_PUT) ? "PUT" : "POST",
+                            mg_url_uri(url), (int)host.len, host.ptr);
+            if (!client->_username.empty()) {
+                mg_http_bauth(c, client->_username.c_str(), client->_password.c_str());
+            }
+            mg_printf(c, "Content-Length: %d\r\n", client->_post_datalen);
+            // TODO send request headers
+            // ...
+            // TODO send default Content-Type only if not set in request headers
+            mg_printf(c, "Content-Type: application/octet-stream\r\n");
+            mg_printf(c, "\r\n");
+            mg_send(c, client->_post_data, client->_post_datalen);
+            break;
+
         }
-        mg_printf(c, "\r\n");
         break;
-    }
+    } // MG_EV_CONNECT
+
     case MG_EV_HTTP_MSG:
     {
         // Response received. Print it
@@ -307,7 +334,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
                 client->_location = std::string(loc->ptr, loc->len);
         }
 
-        // get requested response headers
+        // get response headers client is interested in
         size_t max_headers = sizeof(hm->headers) / sizeof(hm->headers[0]);
         for (int i = 0; i < max_headers && hm->headers[i].name.len > 0; i++) 
         {
@@ -358,6 +385,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
         client->_processed = true;  // Tell event loop to stop
         break;
     }
+
     case MG_EV_HTTP_CHUNK:
     {
 #ifdef VERBOSE_HTTP
@@ -365,6 +393,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
 #endif
         break;
     }
+
     case MG_EV_READ:
     {
 #ifdef VERBOSE_HTTP
@@ -372,6 +401,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
 #endif
         break;
     }
+    
     case MG_EV_WRITE:
     {
 #ifdef VERBOSE_HTTP
@@ -379,6 +409,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
 #endif
         break;
     }
+    
     case MG_EV_CLOSE:
     {
 #ifdef VERBOSE_HTTP
@@ -386,6 +417,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
 #endif
         break;
     }
+    
     case MG_EV_RESOLVE:
     {
 #ifdef VERBOSE_HTTP
@@ -393,16 +425,19 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
 #endif
         break;
     }
+    
     case MG_EV_ERROR:
     {
         Debug_printf("mgHttpClient: Error - %s\n", (const char*)ev_data);
         client->_processed = true;  // Error, tell event loop to stop
         break;
     }
+    
     case MG_EV_POLL:
     {
         break;
     }
+    
     default:
     {
 #ifdef VERBOSE_HTTP
@@ -752,6 +787,7 @@ int mgHttpClient::PUT(const char *put_data, int put_datalen)
 
     // // Set method
     // esp_http_client_set_method(_handle, esp_http_client_method_t::HTTP_METHOD_PUT);
+    _method = HTTP_PUT;
     // // See if a content-type has been set and set a default one if not
     // // Call this before esp_http_client_set_post_field() otherwise that function will definitely set the content type to form
     // char *value = nullptr;
@@ -760,6 +796,8 @@ int mgHttpClient::PUT(const char *put_data, int put_datalen)
     //     esp_http_client_set_header(_handle, "Content-Type", "application/octet-stream");
     // // esp_http_client_set_post_field() sets the content of the body of the transaction
     // esp_http_client_set_post_field(_handle, put_data, put_datalen);
+    _post_data = put_data;
+    _post_datalen = put_datalen;
 
     return _perform();
 }
@@ -775,6 +813,7 @@ int mgHttpClient::PROPFIND(webdav_depth depth, const char *properties_xml)
 
     // // Set method
     // esp_http_client_set_method(_handle, esp_http_client_method_t::HTTP_METHOD_PROPFIND);
+    _method = HTTP_PROPFIND;
     // // Assume any request body will be XML
     // esp_http_client_set_header(_handle, "Content-Type", "text/xml");
     // // Set depth
@@ -803,6 +842,7 @@ int mgHttpClient::DELETE()
 
     // // Set method
     // esp_http_client_set_method(_handle, esp_http_client_method_t::HTTP_METHOD_DELETE);
+    _method = HTTP_DELETE;
 
     return _perform();
 }
@@ -818,6 +858,7 @@ int mgHttpClient::MKCOL()
 
     // // Set method
     // esp_http_client_set_method(_handle, esp_http_client_method_t::HTTP_METHOD_MKCOL);
+    _method = HTTP_MKCOL;
 
     return _perform();
 }
@@ -833,6 +874,7 @@ int mgHttpClient::COPY(const char *destination, bool overwrite, bool move)
 
     // // Set method
     // esp_http_client_set_method(_handle, move ? esp_http_client_method_t::HTTP_METHOD_MOVE : esp_http_client_method_t::HTTP_METHOD_COPY);
+    _method = HTTP_MOVE;
     // // Set detination
     // esp_http_client_set_header(_handle, "Destination", destination);
     // // Set overwrite
@@ -866,6 +908,9 @@ int mgHttpClient::POST(const char *post_data, int post_datalen)
     // // Set method
     // esp_http_client_set_method(_handle, esp_http_client_method_t::HTTP_METHOD_POST);
     // esp_http_client_set_post_field(_handle, post_data, post_datalen);
+    _method = HTTP_POST;
+    _post_data = post_data;
+    _post_datalen = post_datalen;
 
     return _perform();
 }
@@ -882,6 +927,7 @@ int mgHttpClient::GET()
 
     // // Set method
     // esp_http_client_set_method(_handle, esp_http_client_method_t::HTTP_METHOD_GET);
+    _method = HTTP_GET;
 
     return _perform();
 }
@@ -897,6 +943,7 @@ int mgHttpClient::HEAD()
 
     // // Set method
     // esp_http_client_set_method(_handle, esp_http_client_method_t::HTTP_METHOD_HEAD);
+    _method = HTTP_HEAD;
 
     return _perform();
 }

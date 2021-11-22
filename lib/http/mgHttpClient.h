@@ -51,6 +51,25 @@ private:
     // http redirect location
     std::string _location;
 
+    // HTTP methods
+    enum HttpMethod
+    {
+        HTTP_GET,
+        HTTP_POST,
+        HTTP_PUT,
+        HTTP_DELETE,
+        HTTP_HEAD,
+        HTTP_COPY,
+        HTTP_MOVE,
+        HTTP_MKCOL,
+        HTTP_PROPFIND,
+    };
+    HttpMethod _method;
+
+    // data to send to server
+    const char *_post_data;
+    int _post_datalen;
+
     // static void _perform_subtask(void *param);
     // static esp_err_t _httpevent_handler(esp_http_client_event_t *evt);
     static void _httpevent_handler(struct mg_connection *c, int ev, void *ev_data, void *user_data);
