@@ -979,7 +979,7 @@ bool mgHttpClient::set_header(const char *header_key, const char *header_value)
     //     Debug_printf("mgHttpClient::set_header error %d\n", e);
     //     return false;
     // }
-    _request_headers.insert(header_entry_t(header_key, header_value));
+    _request_headers[header_key] = header_value;
     return true;
 }
 

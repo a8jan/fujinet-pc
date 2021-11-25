@@ -493,12 +493,6 @@ bool NetworkProtocolHTTP::write_file_handle_set_header(uint8_t *buf, unsigned sh
     // Erase ATASCII EOL if present
     if (pos != string::npos)
         incomingHeader.erase(pos);
-    pos = incomingHeader.find('\r');
-    if (pos != string::npos)
-        incomingHeader.erase(pos);
-    pos = incomingHeader.find('\n');
-    if (pos != string::npos)
-        incomingHeader.erase(pos);
 
     // Find delimiter
     pos = incomingHeader.find(":");
@@ -506,9 +500,15 @@ bool NetworkProtocolHTTP::write_file_handle_set_header(uint8_t *buf, unsigned sh
     if (pos == string::npos)
         return true;
 
-    Debug_printf("NetworkProtocolHTTP::write_file_set_header(%s,%s)\n", incomingHeader.substr(0, pos).c_str(), incomingHeader.substr(pos + 2).c_str());
+    string key(incomingHeader.substr(0, pos));
+    string val(incomingHeader.substr(pos + 2).c_str());
+    util_string_trim(key);
+    util_string_trim(val);
 
-    client->set_header(incomingHeader.substr(0, pos).c_str(), incomingHeader.substr(pos + 2).c_str());
+    // Debug_printf("NetworkProtocolHTTP::write_file_set_header(%s,%s)\n", incomingHeader.substr(0, pos).c_str(), incomingHeader.substr(pos + 2).c_str());
+    Debug_printf("NetworkProtocolHTTP::write_file_set_header(%s,%s)\n", key.c_str(), val.c_str());
+
+    client->set_header(key.c_str(), val.c_str());
     return false;
 }
 
