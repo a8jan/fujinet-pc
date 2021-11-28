@@ -58,7 +58,8 @@ void main_shutdown_handler()
 
 void sighandler(int signum)
 {
-    Debug_printf("\nSignal received (%d)\n", signum);
+    Debug_print("\n");
+    Debug_printf("Signal received (%d)\n", signum);
     exit(0);
 }
 
@@ -101,6 +102,17 @@ void main_setup(int argc, char *argv[])
 
     // fnKeyManager.setup();
     // fnLedManager.setup();
+
+#if defined(_WIN32)
+    // Initialize Winsock
+    WSADATA wsaData;
+    int result = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if (result != 0) 
+    {
+        Debug_printf("WSAStartup failed: %d\n", result);
+        exit(EXIT_FAILURE);
+    }
+#endif
 
     atexit(main_shutdown_handler);
     signal(SIGINT, sighandler);

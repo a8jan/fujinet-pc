@@ -15,14 +15,15 @@ https://www.msys2.org/
 Start MSYS2
 
 ```sh
-# TODO not sure if mingw-w64-x86_64-toolchain is necessary
-pacman -S --needed base-devel mingw-w64-x86_64-toolchain
-pacman -S mingw-w64-ucrt-x86_64-toolchain
+# TODO not sure if mingw-w64-x86_64-toolchain is necessary, ucrt definitely needed
+#pacman -S --needed base-devel mingw-w64-x86_64-toolchain
+pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain
 ```
 
 ```sh
 $ pacman -Su git
-$ pacman -Su mingw-w64-x86_64-cmake
+#$ pacman -Su mingw-w64-x86_64-cmake
+pacman -S mingw-w64-ucrt-x86_64-cmake
 ```
 
 ## TODO ... Build (WIP!)
@@ -35,9 +36,8 @@ mkdir windows-x86_64 && cd windows-x86_64
 
 ```sh
 # prepare build
-#cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
-/mingw64/bin/cmake ../.. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
+cmake ../.. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
 
 # run build
-/mingw64/bin/cmake --build .
+cmake --build .
 ```
