@@ -237,7 +237,8 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
     // // Our user_data should be a pointer to our mgHttpClient object
     // mgHttpClient *client = (mgHttpClient *)evt->user_data;
     mgHttpClient *client = (mgHttpClient *)user_data;
-    client->_progressed = true;
+    bool progress = true;
+    
     switch (ev)
     {
     case MG_EV_CONNECT:
@@ -440,6 +441,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
     
     case MG_EV_POLL:
     {
+        progress = false;
         break;
     }
     
@@ -451,6 +453,9 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
         break;
     }
     }
+
+    client->_progressed = progress;
+
     // switch (evt->event_id)
     // {
     // case HTTP_EVENT_ERROR: // This event occurs when there are any errors during execution
