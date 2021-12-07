@@ -106,10 +106,11 @@ private:
         int res = recv(_fd, (char *)(_buffer + _fill), _size - _fill, MSG_DONTWAIT);
         if (res < 0)
         {
+            int err = compat_getsockerr();
 #if defined(_WIN32)
-            if (WSAGetLastError() != WSAEWOULDBLOCK)
+            if (err != WSAEWOULDBLOCK)
 #else
-            if (errno != EWOULDBLOCK)
+            if (err != EWOULDBLOCK)
 #endif
             {
                 _failed = true;
@@ -233,9 +234,10 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
     {
-        Debug_printf("socket: %d\n", FN_SOCK_ERRNO);
+        Debug_printf("socket: %d\n", compat_getsockerr());
         return 0;
     }
+
 #ifdef USE_SO_NOSIGPIPE
     // set SO_NOSIGPIPE on macOS without MSG_NOSIGNAL
     {
@@ -243,6 +245,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         setSocketOption(SO_NOSIGPIPE, (char *)&set, sizeof(int));
     }
 #endif
+
     // Add O_NONBLOCK to our socket file descriptor
 #if defined(_WIN32)
     unsigned long on = 1;
@@ -261,38 +264,44 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     // Connect to the server
     // int res = lwip_connect(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
     int res = ::connect(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
+    int err = compat_getsockerr();
+
 #if defined(_WIN32)
-    if (res < 0 && WSAGetLastError() != WSAEWOULDBLOCK)
-    {
-        Debug_printf("connect on fd %d, errno: %d\n", sockfd, WSAGetLastError());
-        ::close(sockfd);
-        return 0;
-    }
+    if (res < 0 && err != WSAEWOULDBLOCK)
 #else
-    if (res < 0 && errno != EINPROGRESS)
+    if (res < 0 && err != EINPROGRESS)
+#endif
     {
-        Debug_printf("connect on fd %d, errno: %d, \"%s\"\n", sockfd, errno, strerror(errno));
+        Debug_printf("connect on fd %d, errno: %d, \"%s\"\n", sockfd, err, compat_sockstrerror(err));
         ::close(sockfd);
+        // re-set errno for errno_to_error()
+        compat_setsockerr(err);
         return 0;
     }
-#endif
 
     // Wait for the socket to be ready for writing to
     // fdset contains the file descriptor(s) we're checking for readiness
     fd_set fdset;
     FD_ZERO(&fdset);
     FD_SET(sockfd, &fdset);
+    // select for error on sockfd too
+    fd_set fdseterr;
+    FD_ZERO(&fdseterr);
+    FD_SET(sockfd, &fdseterr);
 
     struct timeval tv;
     tv.tv_sec = timeout / 1000;
     tv.tv_usec = (timeout - tv.tv_sec*1000) * 1000;
 
-    res = select(sockfd + 1, nullptr, &fdset, nullptr, timeout < 0 ? nullptr : &tv);
+    res = select(sockfd + 1, nullptr, &fdset, &fdseterr, timeout < 0 ? nullptr : &tv);
     // Error result
     if (res < 0)
     {
-        Debug_printf("select on fd %d, errno: %d, \"%s\"\n", sockfd, FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
+        err = compat_getsockerr();
+        Debug_printf("select on fd %d, errno: %d, \"%s\"\n", sockfd, err, compat_sockstrerror(err));
         ::close(sockfd);
+        // re-set errno
+        compat_setsockerr(err);
         return 0;
     }
     // Timeout reached
@@ -300,9 +309,16 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     {
         Debug_printf("select returned due to timeout %d ms for fd %d\n", timeout, sockfd);
         ::close(sockfd);
+#if defined(_WIN32)
+        err = WSAETIMEDOUT;
+#else
+        err = ETIMEDOUT;
+#endif
+        // set errno
+        compat_setsockerr(err);
         return 0;
     }
-    // Success
+    // Success (ready for write) OR error on socket
     else
     {
         int sockerr;
@@ -312,22 +328,29 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         if (res < 0)
         {
             // Failed to retrieve SO_ERROR
-            Debug_printf("getsockopt on fd %d, errno: %d, \"%s\"\n", sockfd, FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
+            err = compat_getsockerr();
+            Debug_printf("getsockopt on fd %d, errno: %d, \"%s\"\n", sockfd, err ,compat_sockstrerror(err));
             ::close(sockfd);
+            // set errno
+            compat_setsockerr(err);
             return 0;
         }
         // Retrieved SO_ERROR and found that we have an error condition
         if (sockerr != 0)
         {
-            Debug_printf("socket error on fd %d, errno: %d, \"%s\"\n", sockfd, sockerr, strerror(sockerr));
+            Debug_printf("socket error on fd %d, errno: %d, \"%s\"\n", sockfd, sockerr, compat_sockstrerror(sockerr));
             ::close(sockfd);
+            // set errno
+            compat_setsockerr(sockerr);
             return 0;
         }
     }
+
     // Remove the O_NONBLOCK flag
 #if defined(_WIN32)
-    unsigned long off = 0;
-    ioctlsocket(sockfd, FIONBIO, &off);
+    // cannot use MSG_DONTWAIT on Windows, keep O_NONBLOCK
+    // unsigned long off = 0;
+    // ioctlsocket(sockfd, FIONBIO, &off);
 #else
     fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) & (~O_NONBLOCK));
 #endif
@@ -367,7 +390,7 @@ int fnTcpClient::setSocketOption(int option, char *value, size_t len)
     int res = setsockopt(fd(), SOL_SOCKET, option, value, len);
     if (res < 0)
     {
-        Debug_printf("%X : %d\n", option, FN_SOCK_ERRNO);
+        Debug_printf("%X : %d\n", option, compat_getsockerr());
     }
 
     return res;
@@ -379,7 +402,7 @@ int fnTcpClient::setOption(int option, int *value)
     int res = setsockopt(fd(), IPPROTO_TCP, option, (char *)value, sizeof(int));
     if (res < 0)
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
     }
 
     return res;
@@ -393,7 +416,7 @@ int fnTcpClient::getOption(int option, int *value)
     int res = getsockopt(fd(), IPPROTO_TCP, option, (char *)value, &size);
     if (res < 0)
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
     }
 
     return res;
@@ -466,7 +489,7 @@ size_t fnTcpClient::write(const uint8_t *buf, size_t size)
             // We got an error
             else if (res < 0)
             {
-                int err = FN_SOCK_ERRNO;
+                int err = compat_getsockerr();
                 Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), err, strerror(err));
                 // Give up if this wasn't just a try again error
                 if (err != EAGAIN)
@@ -590,7 +613,8 @@ void fnTcpClient::flush()
         res = recv(fd(), (char *)buf, toRead, MSG_DONTWAIT);
         if (res < 0)
         {
-            Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
+            Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", 
+                fd(), compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
             stop();
             break;
         }
@@ -618,7 +642,7 @@ uint8_t fnTcpClient::connected()
         }
         else
         {
-            int err = FN_SOCK_ERRNO;
+            int err = compat_getsockerr();
             switch (err)
             {
 #if defined(_WIN32)
@@ -629,13 +653,22 @@ uint8_t fnTcpClient::connected()
             case ENOENT: // Caused by VFS
                 _connected = true;
                 break;
+#if defined(_WIN32)
+            case WSAENETDOWN:
+            case WSAENETRESET:
+            case WSAESHUTDOWN:
+            case WSAECONNABORTED:
+            case WSAECONNRESET:
+            case WSAETIMEDOUT:
+#else
             case ENOTCONN:
             case EPIPE:
             case ECONNRESET:
             case ECONNREFUSED:
             case ECONNABORTED:
-                _connected = false;
+#endif
                 Debug_printf("fnTcpClient disconnected: res %d, errno %d\n", res, err);
+                _connected = false;
                 break;
             default:
                 Debug_printf("fnTcpClient unexpected: res %d, errno %d\n", res, err);

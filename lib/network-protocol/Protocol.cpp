@@ -199,22 +199,39 @@ unsigned short NetworkProtocol::translate_transmit_buffer()
  */
 void NetworkProtocol::errno_to_error()
 {
-#if defined(_WIN32)
-    int err = WSAGetLastError();
-#else
-    int err = errno;
-#endif
+    int err = compat_getsockerr();
     switch (err)
     {
 #if defined(_WIN32)
     case WSAEWOULDBLOCK:
         error = 1; // This is okay.
-        WSASetLastError(0);
+        WSASetLastError(0); // Short circuit and say it's okay.
+    case WSAEADDRINUSE:
+        error = NETWORK_ERROR_ADDRESS_IN_USE;
+        break;
+    case WSAEINPROGRESS:
+    case WSAEALREADY:
+        error = NETWORK_ERROR_CONNECTION_ALREADY_IN_PROGRESS;
+        break;
+    case WSAECONNRESET:
+        error = NETWORK_ERROR_CONNECTION_RESET;
+        break;
+    case WSAECONNREFUSED:
+        error = NETWORK_ERROR_CONNECTION_REFUSED;
+        break;
+    case WSAENETUNREACH:
+        error = NETWORK_ERROR_NETWORK_UNREACHABLE;
+        break;
+    case WSAETIMEDOUT:
+        error = NETWORK_ERROR_SOCKET_TIMEOUT;
+        break;
+    case WSAENETDOWN:
+        error = NETWORK_ERROR_NETWORK_DOWN;
+        break;
 #else
     case EAGAIN:
         error = 1; // This is okay.
         errno = 0; // Short circuit and say it's okay.
-#endif
         break;
     case EADDRINUSE:
         error = NETWORK_ERROR_ADDRESS_IN_USE;
@@ -237,6 +254,7 @@ void NetworkProtocol::errno_to_error()
     case ENETDOWN:
         error = NETWORK_ERROR_NETWORK_DOWN;
         break;
+#endif
     default:
         Debug_printf("errno_to_error() - Uncaught errno = %u, returning 144.\n", err);
         error = NETWORK_ERROR_GENERAL;

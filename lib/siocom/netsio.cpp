@@ -66,7 +66,8 @@ void NetSioPort::begin(int baud)
 
     if (_fd < 0)
     {
-        Debug_printf("socket error %d: %s\n", FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
+        Debug_printf("socket error %d: %s\n", 
+            compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
         _errcount++;
         suspend(suspend_ms);
 		return;
@@ -90,7 +91,8 @@ void NetSioPort::begin(int baud)
     if (connect(_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
         // should not happen (UDP)
-        Debug_printf("connect error %d: %s\n", FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
+        Debug_printf("connect error %d: %s\n", 
+            compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
         _errcount++;
         suspend(suspend_ms);
 		return;
@@ -416,7 +418,7 @@ bool NetSioPort::wait_sock_readable(uint32_t timeout_ms)
         // select error
         if (result < 0)
         {
-            int err = FN_SOCK_ERRNO;
+            int err = compat_getsockerr();
 #if defined(_WIN32)
             if (err == WSAEINTR)
 #else
@@ -461,7 +463,7 @@ bool NetSioPort::wait_sock_writable(uint32_t timeout_ms)
         // select error
         if (result < 0) 
         {
-            int err = FN_SOCK_ERRNO;
+            int err = compat_getsockerr();
 #if defined(_WIN32)
             if (err == WSAEINTR)
 #else
@@ -501,7 +503,8 @@ ssize_t NetSioPort::write_sock(const uint8_t *buffer, size_t size, uint32_t time
     ssize_t result = send(_fd, (char *)buffer, size, 0);
     if (result < 0)
     {
-        Debug_printf("NetSIO write_sock() send error %d: %s\n", FN_SOCK_ERRNO, strerror(FN_SOCK_ERRNO));
+        Debug_printf("NetSIO write_sock() send error %d: %s\n", 
+            compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
     }
     return result;
 }

@@ -15,18 +15,15 @@ https://www.msys2.org/
 Start MSYS2
 
 ```sh
-# TODO not sure if mingw-w64-x86_64-toolchain is necessary, ucrt definitely needed
-#pacman -S --needed base-devel mingw-w64-x86_64-toolchain
 pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain
 ```
 
 ```sh
 $ pacman -Su git
-#$ pacman -Su mingw-w64-x86_64-cmake
 pacman -S mingw-w64-ucrt-x86_64-cmake
 ```
 
-## TODO ... Build (WIP!)
+## Build
 
 ```sh
 # create build directory for Windows build

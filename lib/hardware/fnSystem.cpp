@@ -239,6 +239,7 @@ void SystemManager::delay(uint32_t ms)
 void SystemManager::delay_microseconds(uint32_t us)
 {
 #if defined(_WIN32)
+    // a)
     HANDLE timer; 
     LARGE_INTEGER ft; 
 
@@ -247,6 +248,14 @@ void SystemManager::delay_microseconds(uint32_t us)
     timer = CreateWaitableTimer(NULL, TRUE, NULL); 
     SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0); 
     WaitForSingleObject(timer, INFINITE); 
+
+    CloseHandle(timer);
+
+    // b)
+    // usleep(us);
+
+    // c)
+    // std::this_thread::sleep_for(std::chrono::microseconds(us));
 #else
     // a)
     // struct timespec ts;
@@ -258,7 +267,7 @@ void SystemManager::delay_microseconds(uint32_t us)
     usleep(us);
 
     // c)
-    // std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+    // std::this_thread::sleep_for(std::chrono::microseconds(us));
 #endif
 }
 

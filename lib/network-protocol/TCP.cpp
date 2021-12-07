@@ -337,7 +337,7 @@ bool NetworkProtocolTCP::open_client(string hostname, unsigned short port)
 
     Debug_printf("Connecting to host %s port %d\n", hostname.c_str(), port);
 
-    res = client.connect(hostname.c_str(), port);
+    res = client.connect(hostname.c_str(), port, 5000); // TODO constant for connect timeout
 
     if (res == 0)
     {

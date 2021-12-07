@@ -9,7 +9,7 @@
 
 typedef uint32_t in_addr_t;
 
-#define FN_SOCK_ERRNO WSAGetLastError()
+// #define FN_SOCK_ERRNO WSAGetLastError()
 
 #else
 
@@ -19,7 +19,7 @@ typedef uint32_t in_addr_t;
 #include <netdb.h>
 #include <sys/socket.h>
 
-#define FN_SOCK_ERRNO errno
+// #define FN_SOCK_ERRNO errno
 
 #endif
 
@@ -29,6 +29,10 @@ extern "C" {
 
 /* takes in_addr_t as argument */
 char *compat_inet_ntoa(in_addr_t in);
+
+int compat_getsockerr();
+void compat_setsockerr(int err);
+const char *compat_sockstrerror(int err);
 
 #ifdef __cplusplus
 }
