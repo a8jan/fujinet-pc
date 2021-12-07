@@ -89,7 +89,7 @@ sioNetwork::~sioNetwork()
  */
 void sioNetwork::sio_open()
 {
-    Debug_println("sioNetwork::sio_open()\n");
+    Debug_println("sioNetwork::sio_open()");
 
     sio_late_ack();
 

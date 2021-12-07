@@ -10,13 +10,13 @@ fnTaskManager taskMgr;
 
 fnTaskManager::fnTaskManager()
 {
-    Debug_println("fnTaskManager::fnTaskManager");
+    // Debug_println("fnTaskManager::fnTaskManager");
     _next_tid = 1;
 }
 
 fnTaskManager::~fnTaskManager()
 {
-    Debug_println("fnTaskManager::~fnTaskManager");
+    // Debug_println("fnTaskManager::~fnTaskManager");
     shutdown();
 }
 
