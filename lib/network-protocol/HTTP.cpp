@@ -605,6 +605,8 @@ void NetworkProtocolHTTP::http_transaction()
         }
     }
 
+    fserror_to_error();
+
     fileSize = bodySize = client->available();
 }
 

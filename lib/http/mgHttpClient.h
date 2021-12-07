@@ -4,7 +4,8 @@
 #include <string>
 #include <map>
 
-#define HTTP_TIMEOUT 5000
+// http timeout in ms
+#define HTTP_TIMEOUT 7000
 
 // using namespace fujinet;
 

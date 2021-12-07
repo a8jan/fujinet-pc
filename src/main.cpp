@@ -69,7 +69,10 @@ void main_setup(int argc, char *argv[])
 #ifdef DEBUG
     // fnUartDebug.begin(DEBUG_SPEED);
     unsigned long startms = fnSystem.millis();
-    Debug_printf("\n\n--~--~--~--\nFujiNet %s Started @ %lu\n", fnSystem.get_fujinet_version(), startms);
+    Debug_print("\n");
+    Debug_print("\n");
+    Debug_print("--~--~--~--\n");
+    Debug_printf("FujiNet %s Started @ %lu\n", fnSystem.get_fujinet_version(), startms);
     Debug_printf("Starting heap: %u\n", fnSystem.get_free_heap_size());
     Debug_printf("PsramSize %u\n", fnSystem.get_psram_size());
     // Debug_printf("himem phys %u\n", esp_himem_get_phys_size());
