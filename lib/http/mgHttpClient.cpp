@@ -278,40 +278,53 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
         // Send request
         switch(client->_method)
         {
-        case HTTP_GET:
-            mg_printf(c, "GET %s HTTP/1.0\r\n"
-                            "Host: %.*s\r\n",
-                            mg_url_uri(url), (int)host.len, host.ptr);
-            // send auth header
-            if (!client->_username.empty())
-                mg_http_bauth(c, client->_username.c_str(), client->_password.c_str());
-            // send request headers
-            for (const auto& rh: client->_request_headers)
-                mg_printf(c, "%s: %s\r\n", rh.first.c_str(), rh.second.c_str());
-            mg_printf(c, "\r\n");
-            break;
-
-        case HTTP_PUT:
-        case HTTP_POST:
-            mg_printf(c, "%s %s HTTP/1.0\r\n"
-                            "Host: %.*s\r\n",
-                            (client->_method == HTTP_PUT) ? "PUT" : "POST",
-                            mg_url_uri(url), (int)host.len, host.ptr);
-            // send auth header
-            if (!client->_username.empty())
-                mg_http_bauth(c, client->_username.c_str(), client->_password.c_str());
-            // set Content-Type if not set
-            header_map_t::iterator it = client->_request_headers.find("Content-Type");
-            if (it == client->_request_headers.end())
-                client->set_header("Content-Type", "application/octet-stream");
-            // send request headers
-            for (const auto& rh: client->_request_headers)
-                mg_printf(c, "%s: %s\r\n", rh.first.c_str(), rh.second.c_str());
-            mg_printf(c, "Content-Length: %d\r\n", client->_post_datalen);
-            mg_printf(c, "\r\n");
-            mg_send(c, client->_post_data, client->_post_datalen);
-            break;
-
+            case HTTP_GET:
+            {
+                mg_printf(c, "GET %s HTTP/1.0\r\n"
+                                "Host: %.*s\r\n",
+                                mg_url_uri(url), (int)host.len, host.ptr);
+                // send auth header
+                if (!client->_username.empty())
+                    mg_http_bauth(c, client->_username.c_str(), client->_password.c_str());
+                // send request headers
+                for (const auto& rh: client->_request_headers)
+                    mg_printf(c, "%s: %s\r\n", rh.first.c_str(), rh.second.c_str());
+                mg_printf(c, "\r\n");
+                break;
+            }
+            case HTTP_PUT:
+            case HTTP_POST:
+            {
+                mg_printf(c, "%s %s HTTP/1.0\r\n"
+                                "Host: %.*s\r\n",
+                                (client->_method == HTTP_PUT) ? "PUT" : "POST",
+                                mg_url_uri(url), (int)host.len, host.ptr);
+                // send auth header
+                if (!client->_username.empty())
+                    mg_http_bauth(c, client->_username.c_str(), client->_password.c_str());
+                // set Content-Type if not set
+                header_map_t::iterator it = client->_request_headers.find("Content-Type");
+                if (it == client->_request_headers.end())
+                    client->set_header("Content-Type", "application/octet-stream");
+                // send request headers
+                for (const auto& rh: client->_request_headers)
+                    mg_printf(c, "%s: %s\r\n", rh.first.c_str(), rh.second.c_str());
+#ifdef VERBOSE_HTTP
+                Debug_println("Custom headers");
+                for (const auto& rh: client->_request_headers)
+                    Debug_printf("  %s: %s\n", rh.first.c_str(), rh.second.c_str());
+#endif
+                mg_printf(c, "Content-Length: %d\r\n", client->_post_datalen);
+                mg_printf(c, "\r\n");
+                mg_send(c, client->_post_data, client->_post_datalen);
+                break;
+            }
+            default:
+            {
+#ifdef VERBOSE_HTTP
+                Debug_printf("mgHttpClient: method %d is not implemented\n", client->_method);
+#endif
+            }
         }
         break;
     } // MG_EV_CONNECT
