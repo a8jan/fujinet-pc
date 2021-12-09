@@ -119,6 +119,7 @@ bool NetworkProtocolHTTP::open_file_handle()
         httpOpenMode = PUT;
         break;
     case 13: // POST can set headers, also no filename resolve
+    case 14: // PUT with ability to set headers, no filename resolve
         httpOpenMode = POST;
         break;
     default:
@@ -588,7 +589,10 @@ void NetworkProtocolHTTP::http_transaction()
         resultCode = client->GET();
         break;
     case POST:
-        resultCode = client->POST(postData.c_str(), postData.size());
+        if (aux1_open == 14)
+            resultCode = client->PUT(postData.c_str(), postData.size());
+        else
+            resultCode = client->POST(postData.c_str(), postData.size());
         break;
     case PUT:
         resultCode = client->PUT(postData.c_str(), postData.size());
