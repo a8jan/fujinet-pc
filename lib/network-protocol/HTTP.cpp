@@ -19,6 +19,7 @@ Aux1 values
 8 = PUT, write data to server, XIO used to toggle headers to get versus data write
 12 = GET, write sets headers to fetch, read grabs data
 13 = POST, write sends post data to server, read grabs response, XIO used to change write behavior, toggle headers to get or headers to set.
+14 = PUT, write sends post data to server, read grabs response, XIO used to change write behavior, toggle headers to get or headers to set.
 
 DELETE, MKCOL, RMCOL, COPY, MOVE, are all handled via idempotent XIO commands.
 */

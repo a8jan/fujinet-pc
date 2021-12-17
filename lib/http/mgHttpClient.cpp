@@ -34,7 +34,9 @@ mgHttpClient::~mgHttpClient()
         // esp_http_client_cleanup(_handle);
 
     if (_buffer != nullptr) {
-        printf("mgHttpClient buffer free\n");
+#ifdef VERBOSE_HTTP
+        Debug_printf("mgHttpClient buffer free\n");
+#endif
         free(_buffer);
     }
 }
@@ -107,7 +109,7 @@ int mgHttpClient::read(uint8_t *dest_buffer, int dest_bufflen)
         bytes_left = _buffer_len - _buffer_pos;
         bytes_to_copy = dest_bufflen > bytes_left ? bytes_left : dest_bufflen;
 
-        Debug_printf("::read from buffer %d\n", bytes_to_copy);
+        //Debug_printf("::read from buffer %d\n", bytes_to_copy);
         memcpy(dest_buffer, _buffer + _buffer_pos, bytes_to_copy);
         _buffer_pos += bytes_to_copy;
         _buffer_total_read += bytes_to_copy;
