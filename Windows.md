@@ -2,7 +2,7 @@
 
 Currently, on Windows it is possible to install WSL to get Ubuntu inside Windows. FujiNet-PC compiles and it can run in WSL Ubuntu.
 
-**WIP warning:** FujiNet-PC does not compile natively on Windows yet. Don't use instructions below!
+**Warning:** FujiNet-PC native Windows port is work in progress. The things may not work yet.
 
 ## MSYS2
 
