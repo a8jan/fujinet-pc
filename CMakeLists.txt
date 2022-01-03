@@ -12,18 +12,18 @@ project(fujinet-pc VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__PC_BUILD_DEBUG__ -DVERBOSE_TNFS -DVERBOSE_SIO")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D__PC_BUILD_DEBUG__ -DSKIP_SERVER_CERT_VERIFY -DVERBOSE_HTTP")
 
 # mongoose.c some compile options: -DMG_ENABLE_LINES=1 -DMG_ENABLE_DIRECTORY_LISTING=1 -DMG_ENABLE_SSI=1
 #set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DMG_ENABLE_DIRECTORY_LISTING=1")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMG_ENABLE_OPENSSL=1 -DMG_ENABLE_LOG=0")
 
-INCLUDE (CheckIncludeFiles)
-CHECK_INCLUDE_FILES (bsd/string.h HAVE_BSD_STRING_H)
+# INCLUDE (CheckIncludeFiles)
+# CHECK_INCLUDE_FILES (bsd/string.h HAVE_BSD_STRING_H)
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
 
-set(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include lib/config lib/FileSystem lib/utils lib/hardware 
+set(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include lib/compat lib/config 
+    lib/FileSystem lib/utils lib/hardware 
     lib/tcpip lib/telnet  lib/EdUrlParser lib/TNFSlib
     lib/siocom lib/sio lib/printer-emulator lib/mongoose lib/http lib/task
     components/libsmb2/include)
@@ -107,7 +107,19 @@ set(SOURCES src/main.cpp
     lib/http/mgHttpClient.h lib/http/mgHttpClient.cpp
     lib/task/fnTask.h lib/task/fnTask.cpp
     lib/task/fnTaskManager.h lib/task/fnTaskManager.cpp
+    lib/compat/compat_inet.c
+    lib/compat/compat_gettimeofday.c
 )
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(SOURCES ${SOURCES} lib/compat/win32_uname.c)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+# strlcpy and strlcat are part of stdlib on mac
+else()
+    set(SOURCES ${SOURCES} lib/compat/strlcat.c lib/compat/strlcpy.c)
+endif()
 
 add_executable(fujinet ${SOURCES})
 
@@ -117,6 +129,10 @@ find_package(OpenSSL REQUIRED)
 target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
 target_link_libraries(fujinet pthread expat OpenSSL::SSL OpenSSL::Crypto)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_libraries(fujinet bsd)
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_link_libraries(fujinet ws2_32)
 endif()
+
+# if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+#     target_link_libraries(fujinet bsd)
+# endif()

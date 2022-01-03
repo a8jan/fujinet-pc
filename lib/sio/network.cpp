@@ -17,8 +17,8 @@
 #include "../network-protocol/TNFS.h"
 #include "../network-protocol/FTP.h"
 #include "../network-protocol/HTTP.h"
-#include "../network-protocol/SSH.h"
-#include "../network-protocol/SMB.h"
+// #include "../network-protocol/SSH.h"
+// #include "../network-protocol/SMB.h"
 
 using namespace std;
 
@@ -26,23 +26,23 @@ using namespace std;
  * Static callback function for the interrupt rate limiting timer. It sets the interruptProceed
  * flag to true. This is set to false when the interrupt is serviced.
  */
-void* onTimer(void *info)
-{
-    sioNetwork *parent = (sioNetwork *)info;
-    pthread_mutex_t *mux_ptr = &(parent->timerMux);
-    int rate = parent->timerRate;
-    volatile bool *proceed_ptr = &(parent->interruptProceed);
+// void* onTimer(void *info)
+// {
+//     sioNetwork *parent = (sioNetwork *)info;
+//     pthread_mutex_t *mux_ptr = &(parent->timerMux);
+//     int rate = parent->timerRate;
+//     volatile bool *proceed_ptr = &(parent->interruptProceed);
 
-    while(true)
-    {
-        // portENTER_CRITICAL_ISR(&parent->timerMux);
-        pthread_mutex_lock(mux_ptr);
-        *proceed_ptr = !*proceed_ptr;
-        pthread_mutex_unlock(mux_ptr);
-        // portEXIT_CRITICAL_ISR(&parent->timerMux);
-        fnSystem.delay(rate); // = usleep * 1000
-    }
-}
+//     while(true)
+//     {
+//         // portENTER_CRITICAL_ISR(&parent->timerMux);
+//         pthread_mutex_lock(mux_ptr);
+//         *proceed_ptr = !*proceed_ptr;
+//         pthread_mutex_unlock(mux_ptr);
+//         // portEXIT_CRITICAL_ISR(&parent->timerMux);
+//         fnSystem.delay(rate); // = usleep * 1000
+//     }
+// }
 
 /**
  * Constructor
@@ -57,7 +57,7 @@ sioNetwork::sioNetwork()
     transmitBuffer->clear();
     specialBuffer->clear();
 
-    pthread_mutex_init(&timerMux, NULL);
+    // pthread_mutex_init(&timerMux, NULL);
 }
 
 /**
@@ -77,7 +77,7 @@ sioNetwork::~sioNetwork()
         delete specialBuffer;
 
     timer_stop();
-    pthread_mutex_destroy(&timerMux);
+    // pthread_mutex_destroy(&timerMux);
 }
 
 /** SIO COMMANDS ***************************************************************/
@@ -882,14 +882,17 @@ void sioNetwork::timer_start()
     // tcfg.name = nullptr;
     // esp_timer_create(&tcfg, &rateTimerHandle);
     // esp_timer_start_periodic(rateTimerHandle, timerRate * 1000);
-    int err;
-    if ((err = pthread_create(&rateTimerThread, NULL, onTimer, this)) != 0)
-    {
-        errno = err;
-        perror("Failed to create timer thread");
-        return;
-    }
-    rateTimerHandle = &rateTimerThread;
+
+    // int err;
+    // if ((err = pthread_create(&rateTimerThread, NULL, onTimer, this)) != 0)
+    // {
+    //     errno = err;
+    //     perror("Failed to create timer thread");
+    //     return;
+    // }
+    // rateTimerHandle = &rateTimerThread;
+
+    lastInterruptMs = fnSystem.millis() - timerRate;
 }
 
 /**
@@ -905,14 +908,15 @@ void sioNetwork::timer_stop()
     //     esp_timer_delete(rateTimerHandle);
     //     rateTimerHandle = nullptr;
     // }
-    if (rateTimerHandle != nullptr)
-    {
-        void *ret;
-        Debug_println("Deleting existing rateTimer");
-        pthread_cancel(rateTimerThread);
-        pthread_join(rateTimerThread, &ret);
-        rateTimerHandle = nullptr;
-    }
+
+    // if (rateTimerHandle != nullptr)
+    // {
+    //     void *ret;
+    //     Debug_println("Deleting existing rateTimer");
+    //     pthread_cancel(rateTimerThread);
+    //     pthread_join(rateTimerThread, &ret);
+    //     rateTimerHandle = nullptr;
+    // }
 }
 
 /**
@@ -1027,11 +1031,20 @@ void sioNetwork::processCommaFromDevicespec()
 void sioNetwork::sio_assert_interrupt()
 {
     // fnSystem.digital_write(PIN_PROC, interruptProceed == true ? DIGI_HIGH : DIGI_LOW);
-    bool level;
-    pthread_mutex_lock(&timerMux);
-    level = interruptProceed;
-    pthread_mutex_unlock(&timerMux);
-    fnSioCom.set_proceed(level);
+
+    // bool level;
+    // pthread_mutex_lock(&timerMux);
+    // level = interruptProceed;
+    // pthread_mutex_unlock(&timerMux);
+    // fnSioCom.set_proceed(level);
+
+    uint64_t ms = fnSystem.millis();
+    if (ms - lastInterruptMs >= timerRate)
+    {
+        fnSioCom.set_proceed(interruptProceed);
+        lastInterruptMs = ms;
+        interruptProceed = !interruptProceed;
+    }
 }
 
 void sioNetwork::sio_set_translation()

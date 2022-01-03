@@ -15,8 +15,19 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <sched.h>
-#include <sys/utsname.h>
+#include "compat_uname.h"
+#include "compat_gettimeofday.h"
+
+#if defined(_WIN32)
+#ifndef EX_TEMPFAIL
+#define EX_TEMPFAIL 75
+#endif
+#else
 #include <sysexits.h>
+#endif
+
+// #include <chrono>
+// #include <thread>
 
 #include "../../include/debug.h"
 #include "../../include/version.h"
@@ -74,7 +85,7 @@ SystemManager fnSystem;
 uint64_t _get_start_millis()
 {
     struct timeval tv;
-    gettimeofday(&tv, NULL);
+    compat_gettimeofday(&tv, NULL);
     return (uint64_t)(tv.tv_sec*1000ULL+tv.tv_usec/1000ULL);
 }
 uint64_t _start_millis = _get_start_millis();
@@ -175,7 +186,7 @@ uint64_t SystemManager::micros()
 {
     // return (unsigned long)(esp_timer_get_time());
     struct timeval tv;
-    gettimeofday(&tv, NULL);
+    compat_gettimeofday(&tv, NULL);
     return (uint64_t)(tv.tv_sec*1000000ULL+tv.tv_usec) - _start_micros;
 }
 
@@ -185,7 +196,7 @@ uint64_t SystemManager::millis()
 {
     // return (unsigned long)(esp_timer_get_time() / 1000ULL);
     struct timeval tv;
-    gettimeofday(&tv, NULL);
+    compat_gettimeofday(&tv, NULL);
     return (uint64_t)(tv.tv_sec*1000UL+tv.tv_usec/1000UL) - _start_millis;
 }
 
@@ -228,11 +239,37 @@ void SystemManager::delay(uint32_t ms)
 
 void SystemManager::delay_microseconds(uint32_t us)
 {
+#if defined(_WIN32)
+    // a)
+    HANDLE timer; 
+    LARGE_INTEGER ft; 
+
+    ft.QuadPart = -(10*us); // Convert to 100 nanosecond interval, negative value indicates relative time
+
+    timer = CreateWaitableTimer(NULL, TRUE, NULL); 
+    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0); 
+    WaitForSingleObject(timer, INFINITE); 
+
+    CloseHandle(timer);
+
+    // b)
+    // usleep(us);
+
+    // c)
+    // std::this_thread::sleep_for(std::chrono::microseconds(us));
+#else
+    // a)
     // struct timespec ts;
     // ts.tv_sec = us / (1000 * 1000);
     // ts.tv_nsec = (us % (1000 * 1000)) * 1000;
     // nanosleep(&ts, NULL);
+
+    // b)
     usleep(us);
+
+    // c)
+    // std::this_thread::sleep_for(std::chrono::microseconds(us));
+#endif
 }
 
 // from esp32-hal-misc.
@@ -313,7 +350,12 @@ const char *SystemManager::get_current_time_str()
     time_t tt = time(nullptr);
     struct tm *tinfo = localtime(&tt);
 
+    // compatibility notice:
+    // this works on Windows only if linked using newer UCRT lib (Universal C runtime, Windows 10+)
     strftime(_currenttime_string, sizeof(_currenttime_string), "%a %b %e, %H:%M:%S %Y %z", tinfo);
+    // this should work on Windows if linked using old MSCRT lib
+    // (%#d instead of %e, no timezone)
+    // strftime(_currenttime_string, sizeof(_currenttime_string), "%a %b %#d, %H:%M:%S %Y", tinfo);
 
     return _currenttime_string;
 }
@@ -357,7 +399,11 @@ const char *SystemManager::get_uname()
     if (uname(&uts) == -1)
         return "Unknown";
 
+#if defined(_WIN32)
+    if (snprintf(_uname_string, sizeof(_uname_string), "%s %s.%s %s", uts.sysname, uts.version, uts.release, uts.machine) >= sizeof(_uname_string))
+#else
     if (snprintf(_uname_string, sizeof(_uname_string), "%s %s %s", uts.sysname, uts.release, uts.machine) >= sizeof(_uname_string))
+#endif
     {
         strcpy(_uname_string+sizeof(_uname_string)-4, "...");
     }
@@ -507,7 +553,7 @@ size_t SystemManager::copy_file(FileSystem *source_fs, const char *source_filena
     }
 
     size_t result = 0;
-    FILE *fout = dest_fs->file_open(dest_filename, "w");
+    FILE *fout = dest_fs->file_open(dest_filename, FILE_WRITE);
     if (fout == nullptr)
     {
         Debug_println("copy_file failed to open destination");

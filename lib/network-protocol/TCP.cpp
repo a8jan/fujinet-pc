@@ -6,9 +6,10 @@
 
 #include <errno.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "compat_inet.h"
+// #include <sys/socket.h>
+// #include <netinet/in.h>
+// #include <arpa/inet.h>
 #include "TCP.h"
 #include "status_error_codes.h"
 
@@ -50,7 +51,7 @@ bool NetworkProtocolTCP::open(EdUrlParser *urlParser, cmdFrame_t *cmdFrame)
 {
     bool ret = true; // assume error until proven ok
 
-    Debug_printf("NetworkProtocolTCP::open(%s:%s)", urlParser->hostName.c_str(), urlParser->port.c_str());
+    Debug_printf("NetworkProtocolTCP::open(%s:%s)\n", urlParser->hostName.c_str(), urlParser->port.c_str());
 
     if (urlParser->hostName.empty())
     {
@@ -336,7 +337,7 @@ bool NetworkProtocolTCP::open_client(string hostname, unsigned short port)
 
     Debug_printf("Connecting to host %s port %d\n", hostname.c_str(), port);
 
-    res = client.connect(hostname.c_str(), port);
+    res = client.connect(hostname.c_str(), port, 5000); // TODO constant for connect timeout
 
     if (res == 0)
     {
@@ -372,7 +373,7 @@ bool NetworkProtocolTCP::special_accept_connection()
             remoteIP = client.remoteIP();
             remotePort = client.remotePort();
             // remoteIPString = inet_ntoa(remoteIP);
-            remoteIPString = inet_ntoa(in_addr({.s_addr = remoteIP}));
+            remoteIPString = compat_inet_ntoa(remoteIP);
             Debug_printf("Accepted connection from %s:%u", remoteIPString, remotePort);
             return false;
         }
@@ -415,7 +416,7 @@ bool NetworkProtocolTCP::special_close_client_connection()
     remoteIP = client.remoteIP();
     remotePort = client.remotePort();
     // remoteIPString = inet_ntoa(remoteIP);
-    remoteIPString = inet_ntoa(in_addr({.s_addr = remoteIP}));
+    remoteIPString = compat_inet_ntoa(remoteIP);
 
     Debug_printf("Disconnecting client %s:%u\n", remoteIPString, remotePort);
 

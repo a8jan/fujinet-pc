@@ -1,10 +1,8 @@
 #include <errno.h>
-#include <arpa/inet.h>
-#include "config.h"
-#ifdef HAVE_BSD_STRING_H
-#include <bsd/string.h>
-#endif
+#include "compat_inet.h"
+#include "compat_string.h"
 
+#include "config.h"
 #include "fnFsTNFS.h"
 #include "fnFileTNFS.h"
 #include "../TNFSlib/tnfslib.h"
@@ -66,7 +64,7 @@ bool FileSystemTNFS::start(const char *host, uint16_t port, const char * mountpa
 
     // struct in_addr vs in_addr_t
     // Debug_printf("TNFS mount %s[%s]:%hu\n", _mountinfo.hostname, inet_ntoa(_mountinfo.host_ip), _mountinfo.port);
-    Debug_printf("TNFS mount %s[%s]:%hu\n", _mountinfo.hostname, inet_ntoa(in_addr({.s_addr = _mountinfo.host_ip})), _mountinfo.port);
+    Debug_printf("TNFS mount %s[%s]:%hu\n", _mountinfo.hostname, compat_inet_ntoa(_mountinfo.host_ip), _mountinfo.port);
 
     int r = tnfs_mount(&_mountinfo);
     if (r != TNFS_RESULT_SUCCESS)

@@ -11,6 +11,10 @@
 
 #define UDP_RXTX_BUFLEN 1460
 
+#if defined(_WIN32)
+#define MSG_DONTWAIT 0 // !! TODO this is to compile the code but it is unlikely to work
+#endif
+
 fnUDP::fnUDP()
 {
 }
@@ -44,7 +48,7 @@ void fnUDP::stop()
         struct ip_mreq mreq;
         mreq.imr_multiaddr.s_addr = (in_addr_t)multicast_ip;
         mreq.imr_interface.s_addr = (in_addr_t)0;
-        setsockopt(udp_server, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
+        setsockopt(udp_server, IPPROTO_IP, IP_DROP_MEMBERSHIP, (char *)&mreq, sizeof(mreq));
         multicast_ip = IPADDR_NONE;
     }
     close(udp_server);
@@ -71,14 +75,18 @@ bool fnUDP::begin(in_addr_t address, uint16_t port)
 
     if ((udp_server = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP)) == -1)
     {
-        Debug_printf("could not create socket: %d", errno);
+        Debug_printf("could not create socket: %d", compat_getsockerr());
         return false;
     }
 
     int yes = 1;
+#if defined(_WIN32)
+    if (setsockopt(udp_server, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char *) &yes, sizeof(yes)) != 0)
+#else
     if (setsockopt(udp_server, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0)
+#endif
     {
-        Debug_printf("could not set socket option: %d", errno);
+        Debug_printf("could not set socket option: %d", compat_getsockerr());
         stop();
         return false;
     }
@@ -91,12 +99,17 @@ bool fnUDP::begin(in_addr_t address, uint16_t port)
     addr.sin_addr.s_addr = address;
     if (bind(udp_server, (struct sockaddr *)&addr, sizeof(addr)) == -1)
     {
-        Debug_printf("could not bind socket: %d", errno);
+        Debug_printf("could not bind socket: %d", compat_getsockerr());
         stop();
         return false;
     }
 
+#if defined(_WIN32)
+    unsigned long on = 1;
+    ioctlsocket(udp_server, FIONBIO, &on);
+#else
     fcntl(udp_server, F_SETFL, O_NONBLOCK);
+#endif
 
     return true;
 }
@@ -128,11 +141,16 @@ bool fnUDP::beginPacket()
 
     if ((udp_server = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP)) == -1)
     {
-        Debug_printf("could not create socket: %d", errno);
+        Debug_printf("could not create socket: %d", compat_getsockerr());
         return false;
     }
 
+#if defined(_WIN32)
+    unsigned long on = 1;
+    ioctlsocket(udp_server, FIONBIO, &on);
+#else
     fcntl(udp_server, F_SETFL, O_NONBLOCK);
+#endif
 
     return true;
 }
@@ -172,9 +190,10 @@ bool fnUDP::beginMulticast(in_addr_t a, uint16_t p)
             struct ip_mreq mreq;
             mreq.imr_multiaddr.s_addr = a;
             mreq.imr_interface.s_addr = INADDR_ANY;
-            if (setsockopt(udp_server, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
+            int res = setsockopt(udp_server, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof(mreq));
+            if (res < 0)
             {
-                Debug_printf("could not join igmp: %d", errno);
+                Debug_printf("could not join igmp: %d\n", compat_getsockerr());
                 stop();
                 return false;
             }
@@ -221,8 +240,13 @@ int fnUDP::parsePacket()
     if ((len = recvfrom(udp_server, buf, UDP_RXTX_BUFLEN, MSG_DONTWAIT, (struct sockaddr *)&si_other, (socklen_t *)&slen)) == -1)
     {
         delete[] buf;
-        if (errno != EWOULDBLOCK)
-            Debug_printf("could not receive data: %d", errno);
+        int err = compat_getsockerr();
+#if defined(_WIN32)
+        if (err != WSAEWOULDBLOCK)
+#else
+        if (err != EWOULDBLOCK)
+#endif
+            Debug_printf("could not receive data: %d\n", err);
         return 0;
     }
 
@@ -305,7 +329,7 @@ bool fnUDP::endPacket()
     int sent = sendto(udp_server, tx_buffer, tx_buffer_len, 0, (struct sockaddr *)&recipient, sizeof(recipient));
     if (sent < 0)
     {
-        Debug_printf("could not send data: %d", errno);
+        Debug_printf("could not send data: %d\n", compat_getsockerr());
         return false;
     }
     return true;

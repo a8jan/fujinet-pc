@@ -14,15 +14,19 @@
 #include <unistd.h>
 #include <errno.h>
 #include "config.h"
-#ifdef HAVE_BSD_STRING_H
-#include <bsd/string.h>
-#endif
+#include "compat_string.h"
 
 #include "fnFsSD.h"
 #include "fnFileLocal.h"
 #include "../utils/utils.h"
 #include "../../include/debug.h"
 // #include "../../include/pinmap.h"
+
+#if defined(_WIN32)
+#include <direct.h>
+#define mkdir(A, B) _mkdir(A)
+#endif
+
 
 // Our global SD interface
 FileSystemSDFAT fnSDFAT;

@@ -58,7 +58,8 @@ void main_shutdown_handler()
 
 void sighandler(int signum)
 {
-    Debug_printf("\nSignal received (%d)\n", signum);
+    Debug_print("\n");
+    Debug_printf("Signal received (%d)\n", signum);
     exit(0);
 }
 
@@ -105,9 +106,23 @@ void main_setup(int argc, char *argv[])
     // fnKeyManager.setup();
     // fnLedManager.setup();
 
+#if defined(_WIN32)
+    // Initialize Winsock
+    WSADATA wsaData;
+    int result = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if (result != 0) 
+    {
+        Debug_printf("WSAStartup failed: %d\n", result);
+        exit(EXIT_FAILURE);
+    }
+#endif
+
     atexit(main_shutdown_handler);
     signal(SIGINT, sighandler);
     signal(SIGTERM, sighandler);
+#if defined(_WIN32)
+    signal(SIGBREAK, sighandler);
+#endif
 
     fnSPIFFS.start();
     fnSDFAT.start();
@@ -177,6 +192,8 @@ void main_setup(int argc, char *argv[])
     unsigned long endms = fnSystem.millis();
     Debug_printf("Available heap: %u\n", fnSystem.get_free_heap_size());
     Debug_printf("Setup complete @ %lu (%lums)\n", endms, endms - startms);
+    // test_gettimeofday(100000); // TODO remove
+    // test_gettimeofday(10000000); // TODO remove
 #endif
 }
 
@@ -186,9 +203,6 @@ void fn_service_loop(void *param)
 {
     while (true)
     {
-        if (fnHTTPD.running())
-            fnHTTPD.service();
-
         // We don't have any delays in this loop, so IDLE threads will be starved
         // Shouldn't be a problem, but something to keep in mind...
         // Go service BT if it's active
@@ -199,6 +213,8 @@ void fn_service_loop(void *param)
     #endif
         SIO.service();
 
+        fnHTTPD.service();
+
         taskMgr.service();
 
         if (fnSystem.check_deferred_reboot())
@@ -207,7 +223,7 @@ void fn_service_loop(void *param)
             // web server is tested by script in restart.html to check if the program is running again
             fnHTTPD.stop();
             // exit the program with special exit code (75)
-            // to indicate the proigram should be started again
+            // to indicate the program should be started again
             fnSystem.reboot();
         }
     }

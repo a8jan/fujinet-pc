@@ -19,6 +19,7 @@ public:
     SerialSioPort() {}
     virtual void begin(int baud) override { _uart.begin(baud); }
     virtual void end() override { _uart.end(); }
+    virtual bool poll(int ms) override { return _uart.poll(ms); }
 
     virtual void set_baudrate(uint32_t baud) override { _uart.set_baudrate(baud); }
     virtual uint32_t get_baudrate() override { return _uart.get_baudrate(); }

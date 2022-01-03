@@ -26,7 +26,8 @@ private:
     void shutdown();
 
     std::map<uint8_t, fnTask *> _task_map;
-    uint8_t _next_tid = 1;
+    uint8_t _next_tid;
+    uint8_t _task_count;
 };
 
 // global task manager

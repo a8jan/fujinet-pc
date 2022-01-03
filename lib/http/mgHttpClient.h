@@ -9,6 +9,11 @@
 
 // using namespace fujinet;
 
+// on Windows/MinGW DELETE is somewhere defined already
+#ifdef DELETE
+#undef DELETE
+#endif
+
 class mgHttpClient
 {
 private:

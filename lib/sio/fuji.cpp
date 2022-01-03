@@ -2,9 +2,7 @@
 // #include <driver/ledc.h>
 #include <errno.h>
 #include "config.h"
-#ifdef HAVE_BSD_STRING_H
-#include <bsd/string.h>
-#endif
+#include "compat_string.h"
 
 #include "fuji.h"
 #include "led.h"
@@ -319,9 +317,9 @@ int sioFuji::sio_disk_image_mount(bool siomode, int slot)
     Debug_printf("Fuji cmd: MOUNT IMAGE 0x%02X 0x%02X\n", deviceSlot, options);
 
     // TODO: Implement FETCH?
-    char flag[3] = {'r', 0, 0};
+    char flag[4] = {'r', 'b', 0, 0};
     if (options == DISK_ACCESS_MODE_WRITE)
-        flag[1] = '+';
+        flag[2] = '+';
 
     // Make sure we weren't given a bad hostSlot
     if (!_validate_device_slot(deviceSlot))
@@ -446,7 +444,7 @@ void sioFuji::sio_copy_file()
     _fnHosts[destSlot].mount();
 
     // Open files...
-    sourceFile = _fnHosts[sourceSlot].filehandler_open(sourcePath.c_str(), (char *)sourcePath.c_str(), sourcePath.size() + 1, "r");
+    sourceFile = _fnHosts[sourceSlot].filehandler_open(sourcePath.c_str(), (char *)sourcePath.c_str(), sourcePath.size() + 1, FILE_READ);
 
     if (sourceFile == nullptr)
     {
@@ -454,7 +452,7 @@ void sioFuji::sio_copy_file()
         return;
     }
 
-    destFile = _fnHosts[destSlot].filehandler_open(destPath.c_str(), (char *)destPath.c_str(), destPath.size() + 1, "w");
+    destFile = _fnHosts[destSlot].filehandler_open(destPath.c_str(), (char *)destPath.c_str(), destPath.size() + 1, FILE_WRITE);
 
     if (destFile == nullptr)
     {
@@ -486,10 +484,10 @@ void sioFuji::sio_mount_all()
     {
         fujiDisk &disk = _fnDisks[i];
         fujiHost &host = _fnHosts[disk.host_slot];
-        char flag[3] = {'r', 0, 0};
+        char flag[4] = {'r', 'b', 0, 0};
 
         if (disk.access_mode == DISK_ACCESS_MODE_WRITE)
-            flag[1] = '+';
+            flag[2] = '+';
 
         if (disk.host_slot != 0xFF)
         {
@@ -699,7 +697,7 @@ void sioFuji::sio_read_app_key()
 
     Debug_printf("Reading appkey from \"%s\"\n", filename);
 
-    FILE *fIn = fnSDFAT.file_open(filename, "r");
+    FILE *fIn = fnSDFAT.file_open(filename, FILE_READ);
     if (fIn == nullptr)
     {
         Debug_printf("Failed to open input file: errno=%d\n", errno);
@@ -1126,7 +1124,7 @@ void sioFuji::sio_new_disk()
         return;
     }
 
-    disk.fileh = host.filehandler_open(disk.filename, disk.filename, sizeof(disk.filename), "w");
+    disk.fileh = host.filehandler_open(disk.filename, disk.filename, sizeof(disk.filename), FILE_WRITE);
     if (disk.fileh == nullptr)
     {
         Debug_printf("sio_new_disk Couldn't open file for writing: \"%s\"\n", disk.filename);

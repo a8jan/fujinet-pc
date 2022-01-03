@@ -89,7 +89,7 @@ void ModemSniffer::restartOutput()
     if (_file != nullptr)
         fclose(_file);
 
-    _file = activeFS->file_open(SNIFFER_OUTPUT_FILE, "w"); // This should create/truncate the file
+    _file = activeFS->file_open(SNIFFER_OUTPUT_FILE, FILE_WRITE_TEXT); // This should create/truncate the file
 
     Debug_printf("ModemSniffer::restartOutput(%p)\n", _file);
 }

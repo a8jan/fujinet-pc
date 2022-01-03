@@ -37,6 +37,7 @@ public:
     SioCom();
     void begin(int baud = 0);
     void end();
+    bool poll(int ms);
 
     void set_baudrate(uint32_t baud);
     uint32_t get_baudrate();

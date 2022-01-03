@@ -64,6 +64,6 @@ int FileHandlerLocal::flush()
 {
     Debug_println("FileHandlerLocal::flush");
     int ret = fflush(_fh);    // This doesn't seem to be connected to anything in ESP-IDF VF, so it may not do anything
-    ret = fsync(fileno(_fh)); // Since we might get reset at any moment, go ahead and sync the file (not clear if fflush does this)
+    // ret = fsync(fileno(_fh)); // Since we might get reset at any moment, go ahead and sync the file (not clear if fflush does this)
     return ret;
 }

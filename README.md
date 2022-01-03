@@ -49,19 +49,6 @@ The steps to get ready for building on macOS are described [here](macOS.md).
 
 #### Dependencies
 
-##### libbsd
-
-BSD variants of string manipulation functions are used in FN code. On some systems the [library](https://libbsd.freedesktop.org/wiki/) which contains these functions must be installed manually.
-
-For Debian, Ubuntu and derivates:
-
-```sh
-sudo apt install libbsd-dev
-```
-
-On macOS, no need to install libbsd.
-
-
 ##### libexpat
 
 [Expat](https://libexpat.github.io/) is XML parser library.

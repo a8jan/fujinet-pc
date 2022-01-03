@@ -131,7 +131,7 @@ void printer_emu::restart_output()
     _output_started = false;
     if(_file != nullptr)
         fclose(_file);
-    _file = _FS->file_open(PRINTER_OUTFILE, "w"); // This should create/truncate the file
+    _file = _FS->file_open(PRINTER_OUTFILE, FILE_WRITE); // This should create/truncate the file
 #ifdef DEBUG
     if (_file != nullptr)
     {

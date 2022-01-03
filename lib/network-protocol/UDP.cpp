@@ -3,9 +3,10 @@
  */
 
 #include <errno.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "compat_inet.h"
+// #include <sys/socket.h>
+// #include <netinet/in.h>
+// #include <arpa/inet.h>
 #include "UDP.h"
 #include "status_error_codes.h"
 #include "../tcpip/fnDNS.h"
@@ -163,7 +164,7 @@ bool NetworkProtocolUDP::status(NetworkStatus *status)
         if (udp.remoteIP() != IPADDR_NONE)
         {
             // dest = string(inet_ntoa(addr));
-            dest = string(inet_ntoa(in_addr({.s_addr = addr})));
+            dest = string(compat_inet_ntoa(addr));
             port = udp.remotePort();
         }
     }

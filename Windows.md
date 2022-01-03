@@ -2,7 +2,7 @@
 
 Currently, on Windows it is possible to install WSL to get Ubuntu inside Windows. FujiNet-PC compiles and it can run in WSL Ubuntu.
 
-**WIP warning:** FujiNet-PC does not compile natively on Windows yet. Don't use instructions below!
+**Warning:** FujiNet-PC native Windows port is work in progress. The things may not work yet.
 
 ## MSYS2
 
@@ -12,15 +12,29 @@ https://www.msys2.org/
 
 ### Install packages
 
-Start MSYS2 MinGW 64-bit
+Start MSYS2
 
 ```sh
-$ pacman -S --needed base-devel mingw-w64-x86_64-toolchain
+pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain
 ```
 
 ```sh
 $ pacman -Su git
-$ pacman -Su cmake
+pacman -S mingw-w64-ucrt-x86_64-cmake
 ```
 
-## TODO ...
+## Build
+
+```sh
+# create build directory for Windows build
+cd build
+mkdir windows-x86_64 && cd windows-x86_64
+```
+
+```sh
+# prepare build
+cmake ../.. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
+
+# run build
+cmake --build .
+```

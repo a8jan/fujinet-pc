@@ -52,7 +52,7 @@ char *full_path(char *fn)
 /*===============================================================================*/
 bool _RamLoad(char *fn, uint16_t address)
 {
-	FILE *f = fnSDFAT.file_open(full_path(fn), "r");
+	FILE *f = fnSDFAT.file_open(full_path(fn), FILE_READ);
 	bool result = false;
 	uint8_t b;
 
@@ -101,7 +101,7 @@ int _sys_select(uint8_t *disk)
 long _sys_filesize(uint8_t *fn)
 {
 	unsigned long fs = -1;
-	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), "r");
+	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), FILE_READ);
 
 	if (fp)
 	{
@@ -115,7 +115,7 @@ long _sys_filesize(uint8_t *fn)
 
 int _sys_openfile(uint8_t *fn)
 {
-	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), "r");
+	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), FILE_READ);
 	if (fp)
 	{
 		fclose(fp);
@@ -127,7 +127,7 @@ int _sys_openfile(uint8_t *fn)
 
 int _sys_makefile(uint8_t *fn)
 {
-	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), "w");
+	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), FILE_WRITE);
 	if (fp)
 	{
 		fclose(fp);
@@ -191,7 +191,7 @@ uint8_t _sys_readseq(uint8_t *fn, long fpos)
 	uint8_t dmabuf[BlkSZ];
 	int seekErr;
 
-	f = fnSDFAT.file_open(full_path((char *)fn), "r");
+	f = fnSDFAT.file_open(full_path((char *)fn), FILE_READ);
 	seekErr = fseek(f, fpos, SEEK_SET);
 	if (f)
 	{
