@@ -120,6 +120,9 @@ void main_setup(int argc, char *argv[])
     atexit(main_shutdown_handler);
     signal(SIGINT, sighandler);
     signal(SIGTERM, sighandler);
+#if defined(_WIN32)
+    signal(SIGBREAK, sighandler);
+#endif
 
     fnSPIFFS.start();
     fnSDFAT.start();
@@ -189,6 +192,8 @@ void main_setup(int argc, char *argv[])
     unsigned long endms = fnSystem.millis();
     Debug_printf("Available heap: %u\n", fnSystem.get_free_heap_size());
     Debug_printf("Setup complete @ %lu (%lums)\n", endms, endms - startms);
+    // test_gettimeofday(100000); // TODO remove
+    // test_gettimeofday(10000000); // TODO remove
 #endif
 }
 
