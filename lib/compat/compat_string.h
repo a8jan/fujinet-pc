@@ -1,5 +1,5 @@
-#ifndef _COMPAT_STRING_H_
-#define _COMPAT_STRING_H_
+#ifndef COMPAT_STRING_H
+#define COMPAT_STRING_H
 
 #include <string.h>
 
@@ -17,4 +17,4 @@ size_t strlcat(char *dst, const char *src, size_t dsize);
 }
 #endif
 
-#endif // _COMPAT_STRING_H_
+#endif // COMPAT_STRING_H

@@ -1,5 +1,5 @@
-#ifndef _COMPAT_INET_
-#define _COMPAT_INET_
+#ifndef COMPAT_INET_H
+#define COMPAT_INET_H
 
 #if defined(_WIN32)
 
@@ -39,4 +39,4 @@ const char *compat_sockstrerror(int err);
 #endif
 
 
-#endif // _COMPAT_INET_
+#endif // COMPAT_INET_H

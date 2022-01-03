@@ -29,7 +29,7 @@ void compat_setsockerr(int err)
 #endif
 }
 
-// NOTE: This not thread safe function
+// NOTE: This is not thread safe function
 // TODO: Thread safe variant - compat_sockstrerror_r
 const char *compat_sockstrerror(int err)
 {
