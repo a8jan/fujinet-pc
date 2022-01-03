@@ -1,5 +1,5 @@
-#include <WinSock2.h>
-#include <Windows.h>
+#include <winsock2.h>
+#include <windows.h>
 #include <stdio.h>
 
 #include "compat_uname.h"
@@ -38,6 +38,12 @@ int uname(struct utsname *name)
 		break;
 	case PROCESSOR_ARCHITECTURE_INTEL:
 		strcpy(name->machine, "x86");
+		break;
+	case PROCESSOR_ARCHITECTURE_ARM:
+		strcpy(name->machine, "arm");
+		break;
+	case PROCESSOR_ARCHITECTURE_ARM64:
+		strcpy(name->machine, "arm64");
 		break;
 	case PROCESSOR_ARCHITECTURE_UNKNOWN:
 	default:

@@ -2,10 +2,10 @@
 #include <cstdio>
 #include <cstring>
 #include <sstream>
-#include "config.h"
-#include "compat_string.h"
 #include <cstdarg>
-#include <sys/time.h>
+// #include "config.h"
+#include "compat_string.h"
+#include "compat_gettimeofday.h"
 
 #include "utils.h"
 #include "../../include/debug.h"
@@ -591,7 +591,7 @@ void util_debug_printf(const char *fmt, ...)
         tm tm;
         char buffer[32];
 
-        gettimeofday(&tv, NULL);
+        compat_gettimeofday(&tv, NULL);
 #if defined(_WIN32)
         time_t t = (time_t)tv.tv_sec;
         localtime_s(&tm, &t);
@@ -599,7 +599,7 @@ void util_debug_printf(const char *fmt, ...)
         localtime_r(&tv.tv_sec, &tm);
 #endif
         size_t endpos = strftime(buffer, sizeof(buffer), "%H:%M:%S", &tm);
-        snprintf(buffer + endpos, sizeof(buffer) - endpos, ".%03d", (int)(tv.tv_usec / 1000));
+        snprintf(buffer + endpos, sizeof(buffer) - endpos, ".%06d", (int)(tv.tv_usec));
         printf("%s > ", buffer);
     }
 

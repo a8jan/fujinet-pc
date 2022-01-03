@@ -108,6 +108,7 @@ set(SOURCES src/main.cpp
     lib/task/fnTask.h lib/task/fnTask.cpp
     lib/task/fnTaskManager.h lib/task/fnTaskManager.cpp
     lib/compat/compat_inet.c
+    lib/compat/compat_gettimeofday.c
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")

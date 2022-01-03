@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <sched.h>
 #include "compat_uname.h"
+#include "compat_gettimeofday.h"
 
 #if defined(_WIN32)
 #ifndef EX_TEMPFAIL
@@ -84,7 +85,7 @@ SystemManager fnSystem;
 uint64_t _get_start_millis()
 {
     struct timeval tv;
-    gettimeofday(&tv, NULL);
+    compat_gettimeofday(&tv, NULL);
     return (uint64_t)(tv.tv_sec*1000ULL+tv.tv_usec/1000ULL);
 }
 uint64_t _start_millis = _get_start_millis();
@@ -185,7 +186,7 @@ uint64_t SystemManager::micros()
 {
     // return (unsigned long)(esp_timer_get_time());
     struct timeval tv;
-    gettimeofday(&tv, NULL);
+    compat_gettimeofday(&tv, NULL);
     return (uint64_t)(tv.tv_sec*1000000ULL+tv.tv_usec) - _start_micros;
 }
 
@@ -195,7 +196,7 @@ uint64_t SystemManager::millis()
 {
     // return (unsigned long)(esp_timer_get_time() / 1000ULL);
     struct timeval tv;
-    gettimeofday(&tv, NULL);
+    compat_gettimeofday(&tv, NULL);
     return (uint64_t)(tv.tv_sec*1000UL+tv.tv_usec/1000UL) - _start_millis;
 }
 
@@ -398,7 +399,11 @@ const char *SystemManager::get_uname()
     if (uname(&uts) == -1)
         return "Unknown";
 
+#if defined(_WIN32)
+    if (snprintf(_uname_string, sizeof(_uname_string), "%s %s.%s %s", uts.sysname, uts.version, uts.release, uts.machine) >= sizeof(_uname_string))
+#else
     if (snprintf(_uname_string, sizeof(_uname_string), "%s %s %s", uts.sysname, uts.release, uts.machine) >= sizeof(_uname_string))
+#endif
     {
         strcpy(_uname_string+sizeof(_uname_string)-4, "...");
     }
