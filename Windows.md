@@ -19,11 +19,13 @@ pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain
 ```
 
 ```sh
-$ pacman -Su git
+pacman -Su git
 pacman -S mingw-w64-ucrt-x86_64-cmake
 ```
 
 ## Build
+
+Start **UCRT64** shell
 
 ```sh
 # create build directory for Windows build
