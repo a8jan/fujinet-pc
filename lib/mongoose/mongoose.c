@@ -4471,10 +4471,20 @@ unsigned long mg_millis(void) {
 #elif MG_ARCH == MG_ARCH_FREERTOS_TCP || MG_ARCH == MG_ARCH_FREERTOS_LWIP
   return xTaskGetTickCount() * portTICK_PERIOD_MS;
 #else
+
+#if defined(__APPLE__) && !defined(CLOCK_REALTIME)
+  // clock_gettime is missing on macos < 10.12
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (unsigned long) ((uint64_t) tv.tv_sec * 1000 +
+                          (uint64_t) tv.tv_usec / 1000);
+#else
   struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
   return (unsigned long) ((uint64_t) ts.tv_sec * 1000 +
                           (uint64_t) ts.tv_nsec / 1000000);
+#endif
+
 #endif
 }
 
