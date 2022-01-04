@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <cstdint>
 // #include <driver/ledc.h>
 #include <errno.h>

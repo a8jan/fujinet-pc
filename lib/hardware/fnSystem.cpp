@@ -11,6 +11,8 @@
 // #include "soc/rtc.h"
 // #include "esp_adc_cal.h"
 
+#include <stdlib.h>
+#include <string.h>
 #include <cstring>
 #include <sys/time.h>
 #include <unistd.h>

@@ -4,6 +4,7 @@
  * TELNET Protocol Adapter Implementation
  */
 
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include "compat_inet.h"

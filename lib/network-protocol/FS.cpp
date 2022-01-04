@@ -4,6 +4,8 @@
  * Implementation
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include "FS.h"
 #include "status_error_codes.h"
 #include "utils.h"

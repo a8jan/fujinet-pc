@@ -17,6 +17,11 @@
 
 #include "mongoose.h"
 
+#include <inttypes.h>
+#include <math.h>
+#include <stdio.h>
+#include <time.h>
+
 #ifdef MG_ENABLE_LINES
 #line 1 "src/private.h"
 #endif

@@ -2,6 +2,7 @@
 
 // #include <lwip/sockets.h>
 // #include <lwip/netdb.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>

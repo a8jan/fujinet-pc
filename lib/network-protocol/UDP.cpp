@@ -2,6 +2,8 @@
  * UDP socket implementation
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include "compat_inet.h"
 // #include <sys/socket.h>

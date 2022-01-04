@@ -3,6 +3,7 @@
 
 #include "sioport.h"
 #include "fnDNS.h"
+#include <sys/time.h>
 
 class NetSioPort : public SioPort
 {
