@@ -1,4 +1,4 @@
-# Get macOS build environment ready
+# macOS build environment setup
 
 If running macOS jump directly to the [Homebrew](##Homebrew) section.
 
@@ -49,23 +49,22 @@ Check the downloaded `install.sh` script. If happy with it, run it:
 /bin/bash install.sh
 ```
 
-## Install build tools
-
-### cmake
+## Build tools
 
 ```sh
+# install CMake
 brew install cmake
 ```
 
-cmake together with its dependencies should be installed
+CMake with all dependencies should be installed.
 
-## Enable SSH
+## SSH
 
 Optionally, to enable SSH navigate to System Preferences > Sharing. Enable Remote Login.
 
 ## FTDI VCP Drivers
 
-Install MacOS driver for Future Technologies USB Serial chips, if using FT based cable/adapter:
+To use SIO2USB cable or adapter based on Future Technologies chip you need to install MacOS driver for it:
 
 https://ftdichip.com/Drivers/vcp-drivers/
 

@@ -1,42 +1,27 @@
-# Windows
+# Windows build environment setup
 
-Currently, on Windows it is possible to install WSL to get Ubuntu inside Windows. FujiNet-PC compiles and it can run in WSL Ubuntu.
+Windows native port is built with help of [MSYS2](https://www.msys2.org/) tools collection.
 
-**Warning:** FujiNet-PC native Windows port is work in progress. The things may not work yet.
+Alternatively, on Windows it is possible to install WSL to get Ubuntu inside Windows. FujiNet-PC compiles and it can run in WSL Ubuntu. There is nice [blog article](https://bocianu.atari.pl/blog/fujinetinaltirra) (google translate can help) prepared by *bocianu*.
 
 ## MSYS2
 
-Install and setup MSYS2
+To install and setup MSYS2 follow the instructions on https://www.msys2.org/ ,no need to install `mingw-w64-x86_64-toolchain`.
 
-https://www.msys2.org/
+For FujiNet-PC we need environment which uses UCRT runtime library (not old MSVCRT). Both `UCRT64` and `CLANG64` should work, `CLANG32` was not tested yet. More about MSYS2 environments [here](https://www.msys2.org/docs/environments/).
 
-### Install packages
 
-Start MSYS2
+### Build tools
 
-```sh
-pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain
-```
+Start **MSYS2 MSYS** (window with `MSYS` in shell prompt) and install packages to make `CLANG64` build environment ready.
 
 ```sh
-pacman -Su git
-pacman -S mingw-w64-ucrt-x86_64-cmake
-```
+# install base-devel, if not yet installed
+pacman -S --needed base-devel
 
-## Build
+# install MING64/toolchain
+pacman -S --needed mingw-w64-clang-x86_64-toolchain
 
-Start **UCRT64** shell
-
-```sh
-# create build directory for Windows build
-cd build
-mkdir windows-x86_64 && cd windows-x86_64
-```
-
-```sh
-# prepare build
-cmake ../.. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
-
-# run build
-cmake --build .
+# install git, CMake and Ninja build system
+pacman -S git mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-ninja
 ```
