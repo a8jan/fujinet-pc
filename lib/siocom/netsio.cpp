@@ -321,7 +321,7 @@ int NetSioPort::handle_netsio()
             case NETSIO_DATA_BYTE_SYNC:
                 if (received >= 3)
                     _sync_request_num = rxbuf[2];
-                [[fallthrough]]; // > No warning
+                // [[fallthrough]]; // > No warning
 
             case NETSIO_DATA_BYTE:
                 b = rxbuf[1];
@@ -349,7 +349,7 @@ int NetSioPort::handle_netsio()
             case NETSIO_COMMAND_OFF_SYNC:
                 if (received >= 2) 
                     _sync_request_num = rxbuf[1]; // sync request sequence number
-                [[fallthrough]]; // > No warning
+                // [[fallthrough]]; // > No warning
 
             case NETSIO_COMMAND_OFF:
                 _command_asserted = false;
