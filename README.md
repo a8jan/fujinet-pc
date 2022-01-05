@@ -23,7 +23,7 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 - Web interface to control program's settings, browse TNFS hosts and mount disk images
 - FujiNet network device (N:) with support for various network protocols:
   TCP, UDP, TNFS, HTTP, FTP, Telnet
-- Compiles and runs on Linux, macOS and Windows
+- Compiles and runs on Linux, macOS and Windows (Altirra only, no serial port yet)
 
 ### Not (yet) working
 
@@ -32,6 +32,7 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 - SAM voice synthesizer
 - MIDIMaze support
 - Program recorder (tape) emulation
+- UART on Windows (to connect with Atart via SIO port)
 - Distributable binary packages for supported platforms
 
 -------------------------------------------------------------------
@@ -101,7 +102,7 @@ cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug -G Ninja
 cmake --build .
 ```
 
-Note: It seems Ninja build does not work on mapped disk (network drive) due to UNC paths not supported by `cmd.exe`.
+Note: It seems Ninja build does not work on mapped disk (network drive) due to UNC paths not supported by `cmd.exe`. To use Ninja run the build on local disk. Alternatively, Make can be used  (it works with mapped disk).
 
 ```sh
 # To use Make (slower) instead of Ninja

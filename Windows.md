@@ -19,9 +19,9 @@ Start **MSYS2 MSYS** (window with `MSYS` in shell prompt) and install packages t
 # install base-devel, if not yet installed
 pacman -S --needed base-devel
 
-# install MING64/toolchain
+# install CLANG64 toolchain
 pacman -S --needed mingw-w64-clang-x86_64-toolchain
 
-# install git, CMake and Ninja build system
+# install git, CLANG64 CMake and Ninja build system
 pacman -S git mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-ninja
 ```
