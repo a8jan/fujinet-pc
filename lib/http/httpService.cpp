@@ -352,12 +352,18 @@ int fnHttpService::get_handler_print(struct mg_connection *c)
     string filename = "printout.";
     filename += exts;
 
+    // Tell printer to finish its output and get a read handle to the file
+    FILE *poutput = currentPrinter->closeOutputAndProvideReadHandle();
+    if (poutput == nullptr)
+    {
+        Debug_printf("Unable to open printer output\n");
+        return_http_error(c, fnwserr_fileopen);
+        return -1; //ESP_FAIL;
+    }
+
     // Set the expected content type based on the filename/extension
     mg_printf(c, "HTTP/1.1 200 OK\r\n");
     set_file_content_type(c, filename.c_str());
-
-    // Tell printer to finish its output and get a read handle to the file
-    FILE *poutput = currentPrinter->closeOutputAndProvideReadHandle();
 
     // char hdrval1[60];
     if (sendAsAttachment)
