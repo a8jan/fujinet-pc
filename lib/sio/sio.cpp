@@ -395,29 +395,27 @@ void sioBus::service()
     if (fnSioCom.command_asserted())
     {
 
-#ifdef DEBUG
         unsigned long startms = fnSystem.millis();
         Debug_print("\n");
-#endif
 
         _sio_process_cmd();
         idle = false;
 
-#ifdef DEBUG
         unsigned long endms = fnSystem.millis();
         Debug_printf("SIO CMD processed in %lu ms\n", (long unsigned)endms-startms);
-#endif
     }
     // Go check if the modem needs to read data if it's active
     else if (_modemDev != nullptr && _modemDev->modemActive)
     {
         idle = (_modemDev->sio_handle_modem() <= 0);
     }
-    // else
-    // // Neither CMD nor active modem, so throw out any stray input data
-    // {
-    //     fnSioCom.flush_input();
-    // }
+    else
+    // Neither CMD nor active modem, so throw out any stray input data
+    {
+        // flush UART input
+        if (fnSioCom.get_sio_mode() == SioCom::sio_mode::SERIAL)
+            fnSioCom.flush_input();
+    }
 
     // Handle interrupts from network protocols
     for (int i = 0; i < 8; i++)

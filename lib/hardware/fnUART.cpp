@@ -691,6 +691,10 @@ size_t UARTManager::write(const uint8_t *buffer, size_t size)
                 txbytes += result;
                 if (txbytes == size)
                 {
+                    // TODO is flush missing somewhere else?
+                    // wait UART is writable again before return
+                    timeout_tv = timeval_from_ms(1000 + result * 12500 / _baud);
+                    select(_fd + 1, NULL, &writefds, NULL, &timeout_tv);
                     // done
                     break;
                 }
