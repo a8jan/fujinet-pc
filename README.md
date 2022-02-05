@@ -23,7 +23,7 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 - Web interface to control program's settings, browse TNFS hosts and mount disk images
 - FujiNet network device (N:) with support for various network protocols:
   TCP, UDP, TNFS, HTTP, FTP, Telnet
-- Compiles and runs on Linux, macOS and Windows (Altirra only, no serial port yet)
+- Compiles and runs on Linux, macOS and Windows (Windows with Altirra only, no serial port yet)
 
 ### Not (yet) working
 
@@ -32,7 +32,7 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 - SAM voice synthesizer
 - MIDIMaze support
 - Program recorder (tape) emulation
-- UART on Windows (to connect with Atart via SIO port)
+- UART on Windows (to connect with Atari via SIO port)
 - Distributable binary packages for supported platforms
 
 -------------------------------------------------------------------
@@ -73,7 +73,7 @@ brew install openssl
 
 ```sh
 # get the source code
-git clone https://github.com/a8jan/fujinet-pc.git
+git clone https://github.com/FujiNetWIFI/fujinet-pc.git
 
 # enter build directory
 cd fujinet-pc/build
@@ -90,7 +90,7 @@ To build on Windows use MSYS2/CLANG64 environment. Start **CLANG64** shell (clan
 
 ```sh
 # get the source code
-git clone https://github.com/a8jan/fujinet-pc.git
+git clone https://github.com/FujiNetWIFI/fujinet-pc.git
 
 # enter build directory
 cd fujinet-pc/build
@@ -115,10 +115,11 @@ TODO: fix this section, run from other that `build` directory
 
 ```sh
 # copy data files into build directory
-cp -a ../data/* .
+cp -a ../data .
 
-# optionally put some disk image(s) to sd directory
-cp /your/dir/some/image.atr sd
+# optionally put some disk image(s) to SD directory
+mkdir SD
+cp /your/dir/some/image.atr SD
 ```
 
 ```sh
