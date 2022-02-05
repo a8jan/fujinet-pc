@@ -287,7 +287,7 @@ bool FileSystemSDFAT::remove(const char* path)
     char * fpath = _make_fullpath(path);
     int i = ::remove(fpath);
 #ifdef DEBUG
-    Debug_printf("FileSystemSDFAT::remove returned %d on \"%s\" (%s)\n", i, path, fpath);
+    //Debug_printf("FileSystemSDFAT::remove returned %d on \"%s\" (%s)\n", i, path, fpath);
 #endif
     free(fpath);
     return (i == 0);
@@ -436,7 +436,7 @@ bool FileSystemSDFAT::start()
 
     // Set our basepath
     // strlcpy(_basepath, "/sd", sizeof(_basepath));
-    strlcpy(_basepath, "./sd", sizeof(_basepath));
+    strlcpy(_basepath, "SD", sizeof(_basepath));
 
     // // Set up a configuration to the SD host interface
     // sdmmc_host_t host_config = SDSPI_HOST_DEFAULT(); 

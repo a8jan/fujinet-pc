@@ -259,7 +259,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
 #ifdef SKIP_SERVER_CERT_VERIFY                
             opts.ca = nullptr; // disable certificate checking 
 #else
-            opts.ca = "ca.pem";
+            opts.ca = "data/ca.pem";
 #endif
             opts.srvname = host;
             mg_tls_init(c, &opts);
@@ -676,9 +676,7 @@ int mgHttpClient::_perform()
                 _redirect_count++;
                 if (_redirect_count <= _max_redirects)
                 {
-#ifdef VERBOSE_HTTP
                     Debug_printf("HTTP redirect (%d) to %s\n", _redirect_count, _location.c_str());
-#endif
                     // new client connection
                     _url = _location;
                     _location.clear();

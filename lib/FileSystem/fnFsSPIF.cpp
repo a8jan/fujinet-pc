@@ -148,7 +148,7 @@ bool FileSystemSPIFFS::start()
 
     // Set our basepath
     // strlcpy(_basepath, "/spiffs", sizeof(_basepath));
-    strlcpy(_basepath, ".", sizeof(_basepath));
+    strlcpy(_basepath, "data", sizeof(_basepath));
 
     // esp_vfs_spiffs_conf_t conf = {
     //   .base_path = _basepath,
