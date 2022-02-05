@@ -8,6 +8,12 @@
 #include <cstdint>
 #include <string>
 
+// from sysexits.h
+// #define EX_TEMPFAIL     75      /* temp failure; user is invited to retry */
+//
+// exit code should be monitored by parent process and FN restarted if ended with 75
+#define EXIT_AND_RESTART 75
+
 // #include <driver/gpio.h>
 
 #include "../FileSystem/fnFS.h"
@@ -28,6 +34,7 @@ private:
     int _hardware_version = 0; // unknown
     char _uname_string[128];
     uint64_t _reboot_at = 0;
+    int _reboot_code = EXIT_AND_RESTART;
 
 public:
     class _net
@@ -90,7 +97,7 @@ public:
     int digital_read(uint8_t pin);
     // void digital_write(uint8_t pin, uint8_t val);
 
-    void reboot(uint32_t delay_ms = 0);
+    void reboot(uint32_t delay_ms = 0, bool reboot=true);
     bool check_deferred_reboot();
     uint32_t get_cpu_frequency();
     uint32_t get_free_heap_size();

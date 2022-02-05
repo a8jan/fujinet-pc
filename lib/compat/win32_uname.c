@@ -21,7 +21,7 @@ int uname(struct utsname *name)
 	// Set implementation name
 	strcpy(name->sysname, "Windows");
 	itoa(versionInfo.dwBuildNumber, name->release, 10);
-	sprintf(name->version, "%i.%i", versionInfo.dwMajorVersion, versionInfo.dwMinorVersion);
+	sprintf(name->version, "%lu.%lu", versionInfo.dwMajorVersion, versionInfo.dwMinorVersion);
 
 	// Set hostname
 	if (gethostname(name->nodename, UTSNAME_MAXLENGTH) != 0) {

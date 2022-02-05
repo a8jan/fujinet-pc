@@ -553,10 +553,21 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
         }
         else if (mg_http_match_uri(hm, "/restart"))
         {
-            // load restart page into browser
-            send_file(c, "restart.html");
-            // keep running for a while to transfer restart.html page
-            fnSystem.reboot(500); // deferred restart
+            // get "exit" query variable
+            char exit[10] = "";
+            mg_http_get_var(&hm->query, "exit", exit, sizeof(exit));
+            if (atoi(exit)) 
+            {
+                mg_http_reply(c, 200, "", "{\"result\": %d}\n", 1); // send reply
+                fnSystem.reboot(500, false); // deferred exit with code 0
+            }
+            else
+            {
+                // load restart page into browser
+                send_file(c, "restart.html");
+                // keep running for a while to transfer restart.html page
+                fnSystem.reboot(500, true); // deferred exit with code 75 -> should be started again
+            }
         }
         else
         // default handler, serve static content of www firectory

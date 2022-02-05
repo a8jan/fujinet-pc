@@ -20,14 +20,6 @@
 #include "compat_uname.h"
 #include "compat_gettimeofday.h"
 
-#if defined(_WIN32)
-#ifndef EX_TEMPFAIL
-#define EX_TEMPFAIL 75
-#endif
-#else
-#include <sysexits.h>
-#endif
-
 // #include <chrono>
 // #include <thread>
 
@@ -289,22 +281,23 @@ void SystemManager::reboot()
     esp_restart();
 }
 */
-void SystemManager::reboot(uint32_t delay_ms)
+void SystemManager::reboot(uint32_t delay_ms, bool reboot)
 {
     if (delay_ms == 0)
     {
-        // reboot now
-        // from sysexits.h
-        // #define EX_TEMPFAIL     75      /* temp failure; user is invited to retry */
-        Debug_println("SystemManager::reboot - exiting program with EX_TEMPFAIL code ...");
+        // do cleanup and exit
+        Debug_println("SystemManager::reboot - exiting ...");
         SIO.shutdown();
-        exit(EX_TEMPFAIL);
+        // FN will be restarted if ended with EXIT_AND_RESTART (75)
+        exit(_reboot_code);
     }
     else
     {
         // deferred reboot
-        Debug_printf("SystemManager::reboot - reboot in %d ms\n", delay_ms);
+        // called from httpService, some time is needed to finish http request prior exiting
         _reboot_at = millis() + delay_ms;
+        _reboot_code = reboot ? EXIT_AND_RESTART : 0;
+        Debug_printf("SystemManager::reboot - exit(%d) in %d ms\n", _reboot_code, delay_ms);
     }
 }
 
