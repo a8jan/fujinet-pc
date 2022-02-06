@@ -588,28 +588,52 @@ void sioBus::setHighSpeedMode(int hsio_mode)
 int sioBus::setHighSpeedIndex(int hsio_index)
 {
     int temp = _sioBaudHigh;
-    // _sioBaudHigh = (SIO_ATARI_PAL_FREQUENCY * 10) / (10 * (2 * (hsio_index + 7)) + 3);
-    _sioBaudHigh = (int)(1781610.0 / (2* hsio_index + 14 ));
 
-    switch (hsio_index) 
+    // // _sioBaudHigh = (SIO_ATARI_PAL_FREQUENCY * 10) / (10 * (2 * (hsio_index + 7)) + 3);
+    // _sioBaudHigh = (int)(1781610.0 / (2* hsio_index + 14 ));
+
+    // switch (hsio_index) 
+    // {
+    //     case 0:
+    //         _sioBaudHigh = 125000;
+    //         break;
+    //     case 1:
+    //         _sioBaudHigh = (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) ? 115200 : 110598;
+    //         break;
+    //     case 2:
+    //         _sioBaudHigh = 98797;
+    //         break;
+
+    //     case 8:
+    //         if (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) _sioBaudHigh = 57600; 
+    //         break;
+    //     case 16:
+    //         if (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) _sioBaudHigh = 38400; 
+    //         break;
+    // }
+
+	switch (hsio_index) 
     {
-        case 0:
-            _sioBaudHigh = 125000;
-            break;
-        case 1:
-            _sioBaudHigh = (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) ? 115200 : 110598;
-            break;
-        case 2:
-            _sioBaudHigh = 98797;
-            break;
-
-        case 8:
-            if (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) _sioBaudHigh = 57600; 
-            break;
-        case 16:
-            if (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) _sioBaudHigh = 38400; 
-            break;
-    }
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		// compensate for late pokey sampling, add 3 cycles to byte time
+		_sioBaudHigh = (SIO_ATARI_PAL_FREQUENCY * 10) / (10 * (2 * (hsio_index + 7)) + 3);
+        break;
+	case 8:
+		_sioBaudHigh = 57600;
+        break;
+	case 16:
+		_sioBaudHigh = 38400;
+        break;
+	case 40:
+		_sioBaudHigh = 19200;
+        break;
+	default:
+		_sioBaudHigh = SIO_ATARI_PAL_FREQUENCY / (2 * (hsio_index + 7));
+	}
 
     _sioHighSpeedIndex = hsio_index;
 

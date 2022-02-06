@@ -132,7 +132,7 @@ void fnHttpServiceConfigurator::config_hsio(std::string hsioindex)
     fnConfig::serial_hsio_mode mode = fnConfig::SERIAL_HSIO_DISABLED;
 
     // get HSIO index and HSIO mode
-    if (index >= 0 && index <= 10)
+    if (index >= 0 && index <= 16)
     {
         mode = fnConfig::SERIAL_HSIO_POKEY;
     }
