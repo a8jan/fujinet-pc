@@ -48,6 +48,7 @@ FN_HISPEED_INDEX=40 //  18,806 (18,806) baud
 #define SIO_STANDARD_BAUDRATE 19200
 
 #define SIO_HISPEED_LOWEST_INDEX 0x0A // Lowest HSIO index we'll accept
+#define SIO_HISPEED_x2_INDEX 0x10 // this index is accepted too
 
 #define COMMAND_FRAME_SPEED_CHANGE_THRESHOLD 2
 #define SERIAL_TIMEOUT 300
@@ -263,7 +264,6 @@ private:
     int _sioHighSpeedIndex = SIO_HISPEED_INDEX;
     int _sioBaudHigh;
     int _sioBaudUltraHigh;
-    int _sioHighSpeedMode;
 
     bool useUltraHigh = false; // Use fujinet derived clock.
 
@@ -290,7 +290,6 @@ public:
     int setHighSpeedIndex(int hsio_index); // Set HSIO index. Sets high speed SIO baud and also returns that value.
     int getHighSpeedIndex();               // Gets current HSIO index
     int getHighSpeedBaud();                // Gets current HSIO baud
-    void setHighSpeedMode(int hsio_mode);  // HSIO mode: disabled, SIO2PC, POKEY
 
     void setMIDIHost(const char *newhost);                   // Set new host/ip for MIDIMaze
     void setUltraHigh(bool _enable, int _ultraHighBaud = 0); // enable ultrahigh/set baud rate

@@ -222,9 +222,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
 
     int drive_slot, host_slot;
     char disk_id;
-
-    int hsioindex = SIO.getHighSpeedIndex();
-    fnConfig::serial_hsio_mode hsiomode = Config.get_serial_hsiomode();
+    int hsioindex;
 
     // Provide a replacement value
     switch (tagid)
@@ -305,33 +303,12 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         resultstream << ((float)fnSystem.get_sio_voltage()) / 1000.00 << "V";
         break;
     case FN_SIO_HSINDEX:
-        // combine HSIO index and HSIO mode into SIO2PC: -6,-3,-2 Disabled: -1  POKEY: 0..10
-        hsioindex = SIO.getHighSpeedIndex();
-        hsiomode = Config.get_serial_hsiomode();
-        if (hsiomode == fnConfig::SERIAL_HSIO_DISABLED)
-            hsioindex = HSIO_INVALID_INDEX;
-        else if (hsiomode == fnConfig::SERIAL_HSIO_SIO2PC)
-            switch (hsioindex)
-            {
-            case HSIO_SIO2PC_2X_POKEY:
-                hsioindex = HSIO_SIO2PC_2X_INDEX;
-                break;
-            case HSIO_SIO2PC_3X_POKEY:
-                hsioindex = HSIO_SIO2PC_3X_INDEX;
-                break;
-            case HSIO_SIO2PC_6X_POKEY:
-                hsioindex = HSIO_SIO2PC_6X_INDEX;
-                break;
-            }
-        resultstream << hsioindex;
+        resultstream << SIO.getHighSpeedIndex();
         break;
     case FN_SIO_HSTEXT:
         hsioindex = SIO.getHighSpeedIndex();
-        hsiomode = Config.get_serial_hsiomode();
-        if (hsiomode == fnConfig::SERIAL_HSIO_DISABLED)
+        if (hsioindex == HSIO_DISABLED_INDEX)
             resultstream << "HSIO Disabled";
-        else if (hsiomode == fnConfig::SERIAL_HSIO_SIO2PC)
-            resultstream << hsioindex << " (SIO2PC)";
         else
             resultstream << hsioindex;
         break;

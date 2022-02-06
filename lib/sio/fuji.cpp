@@ -1367,7 +1367,7 @@ void sioFuji::_populate_config_from_slots()
     }
 }
 
-// AUX1 is our index value (from 0 to SIO_HISPEED_LOWEST_INDEX)
+// AUX1 is our index value (0 .. 10, 16)
 // AUX2 requests a save of the change if set to 1
 void sioFuji::sio_set_hsio_index()
 {
@@ -1377,7 +1377,7 @@ void sioFuji::sio_set_hsio_index()
     uint8_t index = cmdFrame.aux1;
 
     // Make sure it's a valid value
-    if (index > SIO_HISPEED_LOWEST_INDEX)
+    if (index > SIO_HISPEED_LOWEST_INDEX && index != SIO_HISPEED_x2_INDEX) // accept 0 .. 10, 16
     {
         sio_error();
         return;

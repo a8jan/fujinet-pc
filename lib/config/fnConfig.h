@@ -15,15 +15,7 @@
 
 #define HOST_SLOT_INVALID -1
 
-#define HSIO_INVALID_INDEX -1
-
-// for httpServiceParser and httpServiceConfigurator
-#define HSIO_SIO2PC_2X_INDEX (-2)
-#define HSIO_SIO2PC_3X_INDEX (-3)
-#define HSIO_SIO2PC_6X_INDEX (-6)
-#define HSIO_SIO2PC_2X_POKEY 16
-#define HSIO_SIO2PC_3X_POKEY 8
-#define HSIO_SIO2PC_6X_POKEY 1
+#define HSIO_DISABLED_INDEX -1  // HSIO disabled, use standard speed only
 
 #define CONFIG_DEFAULT_NETSIO_PORT 9997
 
@@ -76,17 +68,6 @@ public:
     // typedef serial_proceed_pin serial_proceed_pin_t;
     serial_proceed_pin serial_proceed_from_string(const char *str);
 
-    enum serial_hsio_mode
-    {
-        SERIAL_HSIO_DISABLED = 0,
-        SERIAL_HSIO_SIO2PC,
-        SERIAL_HSIO_POKEY,
-        SERIAL_HSIO_INVALID
-    };
-    // typedef serial_hsio_mode serial_hsio_mode_t;
-    serial_hsio_mode serial_hsiomode_from_string(const char *str);
-
-
     // GENERAL
     std::string get_general_devicename() { return _general.devicename; };
     int get_general_hsioindex() { return _general.hsio_index; };
@@ -111,11 +92,9 @@ public:
     std::string get_serial_port() { return _serial.port; };
     serial_command_pin get_serial_command() { return _serial.command; };
     serial_proceed_pin get_serial_proceed() { return _serial.proceed; };
-    serial_hsio_mode get_serial_hsiomode() { return _serial.hsiomode; };
     void store_serial_port(const char *port);
     void store_serial_command(serial_command_pin command_pin);
     void store_serial_proceed(serial_proceed_pin proceed_pin);
-    void store_serial_hsiomode(serial_hsio_mode hsio_mode);
 
     // WIFI
     bool have_wifi_info() { return _wifi.ssid.empty() == false; };
@@ -244,12 +223,6 @@ private:
         "RTS"
     };
 
-    const char * _serial_hsio_mode_names[SERIAL_HSIO_INVALID] = {
-        "disabled",
-        "sio2pc",
-        "pokey"
-    };
-
     struct host_info
     {
         host_type_t type = HOSTTYPE_INVALID;
@@ -305,7 +278,7 @@ private:
     struct general_info
     {
         std::string devicename = "fujinet";
-        int hsio_index = SIO_HISPEED_INDEX; // HSIO_INVALID_INDEX;
+        int hsio_index = SIO_HISPEED_INDEX;
         std::string timezone;
         bool rotation_sounds = true;
         bool config_enabled = true;
@@ -318,7 +291,6 @@ private:
         std::string port;
         serial_command_pin command = SERIAL_COMMAND_DSR;
         serial_proceed_pin proceed = SERIAL_PROCEED_DTR;
-        serial_hsio_mode hsiomode = SERIAL_HSIO_SIO2PC;
     };
 
     struct netsio_info
