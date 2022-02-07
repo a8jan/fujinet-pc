@@ -166,7 +166,8 @@ void sioDevice::sio_error()
 void sioDevice::sio_high_speed()
 {
     Debug_print("sio HSIO INDEX\n");
-    uint8_t hsd = SIO.getHighSpeedIndex();
+    int index = SIO.getHighSpeedIndex();
+    uint8_t hsd = index == HSIO_DISABLED_INDEX ? 40 : (uint8_t)index;
     sio_to_computer((uint8_t *)&hsd, 1, false);
 }
 
@@ -451,13 +452,6 @@ void sioBus::setup()
     // qSioMessages = xQueueCreate(4, sizeof(sio_message_t));
 
     // Set the initial HSIO index
-    // First see if Config has read a value
-    // int i = Config.get_general_hsioindex();
-    // if (i != HSIO_INVALID_INDEX)
-    //     setHighSpeedIndex(i);
-    // else
-    //     setHighSpeedIndex(_sioHighSpeedIndex);
-    setHighSpeedMode(Config.get_serial_hsiomode());
     setHighSpeedIndex(Config.get_general_hsioindex());
 
     fnSioCom.flush_input();
@@ -578,46 +572,47 @@ void sioBus::setBaudrate(int baud)
     fnSioCom.set_baudrate(baud);
 }
 
-
-void sioBus::setHighSpeedMode(int hsio_mode)
-{
-    _sioHighSpeedMode = hsio_mode;
-}
-
 // Set HSIO index. Sets high speed SIO baud and also returns that value.
 int sioBus::setHighSpeedIndex(int hsio_index)
 {
     int temp = _sioBaudHigh;
-    // _sioBaudHigh = (SIO_ATARI_PAL_FREQUENCY * 10) / (10 * (2 * (hsio_index + 7)) + 3);
-    _sioBaudHigh = (int)(1781610.0 / (2* hsio_index + 14 ));
 
-    switch (hsio_index) 
+    if (hsio_index == HSIO_DISABLED_INDEX)
     {
-        case 0:
-            _sioBaudHigh = 125000;
-            break;
-        case 1:
-            _sioBaudHigh = (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) ? 115200 : 110598;
-            break;
-        case 2:
-            _sioBaudHigh = 98797;
-            break;
-
-        case 8:
-            if (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) _sioBaudHigh = 57600; 
-            break;
-        case 16:
-            if (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) _sioBaudHigh = 38400; 
-            break;
+        _sioHighSpeedIndex = HSIO_DISABLED_INDEX;
+        _sioBaudHigh = SIO_STANDARD_BAUDRATE; // 19200
+        Debug_print("HSIO disabled\n");
+        return _sioBaudHigh;
     }
+
+	switch (hsio_index)
+    {
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		// compensate for late pokey sampling, add 3 cycles to byte time
+		_sioBaudHigh = (SIO_ATARI_PAL_FREQUENCY * 10) / (10 * (2 * (hsio_index + 7)) + 3);
+        break;
+	case 8:
+		_sioBaudHigh = 57600;
+        break;
+	case 16:
+		_sioBaudHigh = 38400;
+        break;
+	case 40:
+		_sioBaudHigh = SIO_STANDARD_BAUDRATE; // 19200
+         break;
+	default:
+		_sioBaudHigh = SIO_ATARI_PAL_FREQUENCY / (2 * (hsio_index + 7));
+	}
 
     _sioHighSpeedIndex = hsio_index;
 
     // int alt = SIO_ATARI_PAL_FREQUENCY / (2 * hsio_index + 14);
 
-    Debug_printf("Set HSIO baud from %d to %d (index %d%s)\n", temp, _sioBaudHigh, hsio_index, 
-        (_sioHighSpeedMode == fnConfig::SERIAL_HSIO_SIO2PC) ? ", SIO2PC" : ""
-    );
+    Debug_printf("Set HSIO baud from %d to %d (index %d)\n", temp, _sioBaudHigh, hsio_index);
     return _sioBaudHigh;
 }
 

@@ -122,53 +122,19 @@ std::map<std::string, std::string> fnHttpServiceConfigurator::parse_postdata(con
 void fnHttpServiceConfigurator::config_hsio(std::string hsioindex)
 {
     Debug_printf("New HSIO index value: %s\n", hsioindex.c_str());
-    // int index = -1;
-    // char pc = hsioindex[0];
-    // if (pc >= '0' && pc <= '9')
-    //     index = pc - '0';
-    // else
 
     int index = atoi(hsioindex.c_str());
-    fnConfig::serial_hsio_mode mode = fnConfig::SERIAL_HSIO_DISABLED;
 
     // get HSIO index and HSIO mode
-    if (index >= 0 && index <= 10)
+    if (index < -1 || (index > 10 && index != 16)) // accepted valued: -1 (HSIO disabled), 0 .. 10, 16
     {
-        mode = fnConfig::SERIAL_HSIO_POKEY;
-    }
-    else
-    {
-        switch (index)
-        {
-        case HSIO_SIO2PC_2X_INDEX:
-            index = HSIO_SIO2PC_2X_POKEY;
-            mode = fnConfig::SERIAL_HSIO_SIO2PC;
-            break;
-        case HSIO_SIO2PC_3X_INDEX:
-            index = HSIO_SIO2PC_3X_POKEY;
-            mode = fnConfig::SERIAL_HSIO_SIO2PC;
-            break;
-        case HSIO_SIO2PC_6X_INDEX:
-            index = HSIO_SIO2PC_6X_POKEY;
-            mode = fnConfig::SERIAL_HSIO_SIO2PC;
-            break;
-        case HSIO_INVALID_INDEX:
-            // mode = fnConfig::SERIAL_HSIO_DISABLED;
-            break;
-        default:
-            Debug_printf("Bad HSIO index value: %s\n", hsioindex.c_str());
-            return;
-        }
+        Debug_printf("Bad HSIO index value: %s\n", hsioindex.c_str());
+        return;
     }
 
-    // Store our change in Config and aply
-    Config.store_serial_hsiomode(mode);
-    SIO.setHighSpeedMode(mode);
-    if (index != HSIO_INVALID_INDEX)
-    {
-        Config.store_general_hsioindex(index);
-        SIO.setHighSpeedIndex(index);
-    }
+    // Store our change in Config and apply
+    Config.store_general_hsioindex(index);
+    SIO.setHighSpeedIndex(index);
     Config.save();
 }
 

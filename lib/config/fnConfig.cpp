@@ -112,15 +112,6 @@ void fnConfig::store_serial_proceed(serial_proceed_pin proceed_pin)
     _dirty = true;
 }
 
-void fnConfig::store_serial_hsiomode(serial_hsio_mode hsio_mode)
-{
-    if (hsio_mode < 0 || hsio_mode >= SERIAL_HSIO_INVALID || _serial.hsiomode == hsio_mode)
-        return;
-
-    _serial.hsiomode = hsio_mode;
-    _dirty = true;
-}
-
 /* Replaces stored SSID with up to num_octets bytes, but stops if '\0' is reached
 */
 void fnConfig::store_wifi_ssid(const char *ssid_octets, int num_octets)
@@ -553,7 +544,6 @@ void fnConfig::save()
     ss << "port=" << _serial.port << LINETERM;
     ss << "command=" << std::string(_serial_command_pin_names[_serial.command]) << LINETERM;
     ss << "proceed=" << std::string(_serial_proceed_pin_names[_serial.proceed]) << LINETERM;
-    ss << "hsiomode=" << std::string(_serial_hsio_mode_names[_serial.hsiomode]) << LINETERM;
 
     // WIFI
     ss << LINETERM << "[WiFi]" LINETERM;
@@ -834,7 +824,7 @@ void fnConfig::_read_section_general(std::stringstream &ss)
             {
                 int index = atoi(value.c_str());
                 // if (index >= 0 && index < 10)
-                if (index >= 0 && index <= 10 || index == 16) // 0..10,16
+                if (index >= -1 && index <= 10 || index == 16) // -1(HSIO disabled),0..10,16
                     _general.hsio_index = index;
             }
             else if (strcasecmp(name.c_str(), "timezone") == 0)
@@ -897,10 +887,6 @@ void fnConfig::_read_section_serial(std::stringstream &ss)
             else if (strcasecmp(name.c_str(), "proceed") == 0)
             {
                 _serial.proceed = serial_proceed_from_string(value.c_str());
-            }
-            else if (strcasecmp(name.c_str(), "hsiomode") == 0)
-            {
-                _serial.hsiomode = serial_hsiomode_from_string(value.c_str());
             }
         }
     }
@@ -1337,15 +1323,6 @@ fnConfig::serial_proceed_pin fnConfig::serial_proceed_from_string(const char *st
         if (strcasecmp(_serial_proceed_pin_names[i], str) == 0)
             break;
     return (serial_proceed_pin)i;
-}
-
-fnConfig::serial_hsio_mode fnConfig::serial_hsiomode_from_string(const char *str)
-{
-    int i = 0;
-    for (; i < serial_hsio_mode::SERIAL_HSIO_INVALID; i++)
-        if (strcasecmp(_serial_hsio_mode_names[i], str) == 0)
-            break;
-    return (serial_hsio_mode)i;
 }
 
 bool fnConfig::_split_name_value(std::string &line, std::string &name, std::string &value)

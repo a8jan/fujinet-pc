@@ -21,6 +21,7 @@
 
 #if defined(__linux__)
 #include <linux/serial.h>
+#include "linux_termios2.h"
 #elif defined(__APPLE__)
 #include <IOKit/serial/ioss.h>
 #endif
@@ -265,10 +266,22 @@ void UARTManager::begin(int baud)
 		return;
 	}
 
-    // Create new termios struct
-    struct termios tios;
+#if defined(__linux__)
+    // Enable low latency
+	struct serial_struct ss;
+    if (-1 == ioctl(_fd, TIOCGSERIAL, &ss))
+    {
+        Debug_printf("TIOCGSERIAL error %d: %s\n", errno, strerror(errno));
+        suspend();
+        return;
+    }
+	ss.flags |= ASYNC_LOW_LATENCY;
+    if (-1 == ioctl(_fd, TIOCSSERIAL, &ss))
+        Debug_printf("TIOCSSERIAL error %d: %s\n", errno, strerror(errno));
+#endif
 
     // Read in existing settings
+    struct termios tios;
     if(tcgetattr(_fd, &tios) != 0)
     {
         Debug_printf("tcgetattr error %d: %s\n", errno, strerror(errno));
@@ -365,10 +378,6 @@ void UARTManager::set_baudrate(uint32_t baud)
     if (baud == 0)
         baud = 19200;
 
-    termios tios;
-    if(tcgetattr(_fd, &tios) != 0)
-        Debug_printf("tcgetattr error %d: %s\n", errno, strerror(errno));
-
     int baud_id = B0;  // B0 to indicate custom speed
 
     switch (baud)
@@ -418,33 +427,22 @@ void UARTManager::set_baudrate(uint32_t baud)
         if (-1 == ioctl(_fd, IOSSIOSPEED, &new_baud, 1))
             Debug_printf("IOSSIOSPEED error %d: %s\n", errno, strerror(errno));
 
-#elif defined(__linux__) && defined (TIOCSSERIAL)
+#elif defined(__linux__)
         // Linux Support
-        struct serial_struct ss;
-        // configure B38400 to custom speed
-        baud_id = B38400;
-        if (-1 == ioctl(_fd, TIOCGSERIAL, &ss)) 
+
+		struct termios2 tios2;
+		
+		if (-1 == ioctl(_fd, TCGETS2, &tios2))
         {
-            Debug_printf("TIOCGSERIAL error %d: %s\n", errno, strerror(errno));
+            Debug_printf("TCGETS2 error %d: %s\n", errno, strerror(errno));
             return;
-        }
-        ss.flags &= ~ASYNC_SPD_MASK;
-        ss.flags |= ASYNC_SPD_CUST;
-        ss.custom_divisor = (ss.baud_base + (baud / 2)) / baud;
-
-        int custom = ss.baud_base / ss.custom_divisor;
-        if (custom < baud * 98 / 100 || custom > baud * 102 / 100)
-        {
-            Debug_printf("Cannot set serial port speed to %d: Closest possible speed is %d\n", baud, custom);
-        }
-
-        if (-1 == ioctl(_fd, TIOCSSERIAL, &ss))
-            Debug_printf("TIOCSSERIAL error %d: %s\n", errno, strerror(errno));
-
-        cfsetspeed(&tios, baud_id);
-        // Apply settings
-        if (tcsetattr(_fd, TCSANOW, &tios) != 0)
-            Debug_printf("tcsetattr error %d: %s\n", errno, strerror(errno));
+		}
+		tios2.c_cflag &= ~(CBAUD | CBAUD << LINUX_IBSHIFT);
+		tios2.c_cflag |= BOTHER | BOTHER << LINUX_IBSHIFT;
+		tios2.c_ispeed = baud;
+		tios2.c_ospeed = baud;
+		if (-1 == ioctl(_fd, TCSETS2, &tios2))
+            Debug_printf("TCSETS2 error %d: %s\n", errno, strerror(errno));
 #else
         Debug_println("Custom baud rate is not implemented");
 #endif
@@ -452,23 +450,9 @@ void UARTManager::set_baudrate(uint32_t baud)
     else
     {
         // standard speeds
-#if defined(__linux__) && defined (TIOCSSERIAL)
-        // Linux Support
-
-        if (baud_id == B38400)
-        {
-            struct serial_struct ss;
-            // reset special handling of B38400 back to 38400
-            if (-1 == ioctl(_fd, TIOCGSERIAL, &ss))
-            {
-                Debug_printf("TIOCGSERIAL error %d: %s\n", errno, strerror(errno));
-                return;
-            }
-            ss.flags &= ~ASYNC_SPD_MASK;
-            if (-1 == ioctl(_fd, TIOCSSERIAL, &ss))
-                Debug_printf("TIOCSSERIAL error %d: %s\n", errno, strerror(errno));
-        }
-#endif
+        termios tios;
+        if(tcgetattr(_fd, &tios) != 0)
+            Debug_printf("tcgetattr error %d: %s\n", errno, strerror(errno));
         cfsetspeed(&tios, baud_id);
         // Apply settings
         if (tcsetattr(_fd, TCSANOW, &tios) != 0)
