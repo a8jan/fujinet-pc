@@ -2,7 +2,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include "config.h"
 #include "compat_string.h"
 
 #include "tnfslib.h"

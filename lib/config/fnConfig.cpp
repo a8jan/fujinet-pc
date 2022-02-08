@@ -1,7 +1,6 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-#include "config.h"
 #include "compat_string.h"
 
 #include "fnConfig.h"

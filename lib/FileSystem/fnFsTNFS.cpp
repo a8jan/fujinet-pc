@@ -2,7 +2,6 @@
 #include "compat_inet.h"
 #include "compat_string.h"
 
-#include "config.h"
 #include "fnFsTNFS.h"
 #include "fnFileTNFS.h"
 #include "../TNFSlib/tnfslib.h"

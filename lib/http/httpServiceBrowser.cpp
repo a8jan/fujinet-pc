@@ -1,4 +1,3 @@
-#include "config.h"
 #include "compat_string.h"
 
 #include "httpServiceBrowser.h"

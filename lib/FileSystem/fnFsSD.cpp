@@ -13,7 +13,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
-#include "config.h"
 #include "compat_string.h"
 
 #include "fnFsSD.h"

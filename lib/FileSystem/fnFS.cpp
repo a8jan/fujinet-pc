@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
 #include "compat_string.h"
 
 #include "fnFS.h"

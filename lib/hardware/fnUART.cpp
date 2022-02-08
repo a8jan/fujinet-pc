@@ -4,7 +4,6 @@
 // #include <driver/uart.h>
 
 #include <stdio.h>
-#include "config.h"
 #include "compat_string.h"
 
 #include <sys/time.h>

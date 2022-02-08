@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "config.h"
 #include "compat_string.h"
 #include <sys/time.h>
 #include <unistd.h> // write(), read(), close()

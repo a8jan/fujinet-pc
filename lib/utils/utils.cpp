@@ -3,7 +3,6 @@
 #include <cstring>
 #include <sstream>
 #include <cstdarg>
-// #include "config.h"
 #include "compat_string.h"
 #include "compat_gettimeofday.h"
 
