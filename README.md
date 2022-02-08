@@ -83,10 +83,15 @@ cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug
 
 # run build
 cmake --build .
+
+# after successful build populate dist directory with necessary files
+cmake --build . --target dist
 ```
 #### Windows
 
 To build on Windows use MSYS2/CLANG64 environment. Start **CLANG64** shell (clang64.exe).
+
+Note: It seems build does not work on mapped disk (network drive with drive letter assigned) due to UNC paths not supported by `cmd.exe`. As a workaround the build can be run within build directory on local disk from source code on mapped disk.
 
 ```sh
 # get the source code
@@ -97,39 +102,43 @@ cd fujinet-pc/build
 
 # prepare build
 cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug -G Ninja
+# alternatively, to use Make instead of Ninja
+# cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
 
 # run build
 cmake --build .
+
+# after successful build populate dist directory with necessary files
+cmake --build . --target dist
 ```
 
-Note: It seems Ninja build does not work on mapped disk (network drive) due to UNC paths not supported by `cmd.exe`. To use Ninja run the build on local disk. Alternatively, Make can be used  (it works with mapped disk).
+#### SD Card
 
-```sh
-# To use Make (slower) instead of Ninja
-cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
-```
+Part of `dist` build is to download [FujiNet SD Card](https://github.com/FujiNetWIFI/fujinet-sd-card) files from GitHub into SD "card" folder (FN-PC uses SD folder not real SD card).
+
 
 ## Run it
 
-TODO: fix this section, run from other that `build` directory
+`dist` directory (within build directory) contains files needed to run FujiNet-PC. You can run it directly inside `dist` or copy/move/rename the `dist` directory to the place of your preference and run it from there.
 
 ```sh
-# copy data files into build directory
-cp -a ../data .
+# enter dist directory (or copied/moved/renamed directory, if you copied/...)
+cd dist
 
-# optionally put some disk image(s) to SD directory
-mkdir SD
+# optionally put some additional disk image(s) to SD sub-directory
 cp /your/dir/some/image.atr SD
+
+# start fujinet with wrapper script
+./run-fujinet  # or run-fujinet.bat from Windows command prompt
 ```
 
-```sh
-# start fujinet with wrapper script
-./run-fujinet
-```
+It can be stopped with `Ctrl`+`C`
 
 ### Configure
 
-Visit http://localhost:8000 and configure serial port or enable SIO over Network for communication with Altirra Atari emulator. For emulator option check for details [here](https://github.com/FujiNetWIFI/fujinet-emulator-bridge).
+Visit http://localhost:8000 and configure serial port or enable SIO over Network for communication with Altirra Atari emulator.
+
+For emulator option check details [here](https://github.com/FujiNetWIFI/fujinet-emulator-bridge).
 
 Connect SIO2PC/USB and boot the Atari from FujiNet.
 
@@ -140,6 +149,8 @@ By default fujinet web interface is available on port 8000 listening on all avai
 # and to listen on non-default port 9001
 ./run-fujinet -u http://localhost:9001
 
-# "http://" part can be omitted, "0.0.0.0" indicates all available addresses
+# "http://" part can be omitted
+# this will make web interface available on any address assigned to PC/Mac/RPi
+# port for web interface will be 8080
 ./run-fujinet -u 0.0.0.0:8080
 ```

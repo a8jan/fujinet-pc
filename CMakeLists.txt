@@ -1,9 +1,3 @@
-# fujinet-platfromio
-# cmake_minimum_required(VERSION 3.16.0)
-# include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-# project(FujiNet_idf)
-
-
 # fujinet-pc
 cmake_minimum_required(VERSION 3.7.2)
 project(fujinet-pc VERSION 0.1.0)
@@ -21,7 +15,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMG_ENABLE_OPENSSL=1 -DMG_ENABLE_LOG=0")
 
 # INCLUDE (CheckIncludeFiles)
 # CHECK_INCLUDE_FILES (bsd/string.h HAVE_BSD_STRING_H)
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
+# CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
 
 set(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include lib/compat lib/config 
     lib/FileSystem lib/utils lib/hardware 
@@ -35,9 +29,9 @@ set(SOURCES src/main.cpp
     lib/FileSystem/fnFsSPIF.h lib/FileSystem/fnFsSPIF.cpp
     lib/FileSystem/fnFsSD.h lib/FileSystem/fnFsSD.cpp
     lib/FileSystem/fnFsTNFS.h lib/FileSystem/fnFsTNFS.cpp
-    lib//FileSystem/fnFile.h lib//FileSystem/fnFile.cpp
-    lib//FileSystem/fnFileLocal.h lib//FileSystem/fnFileLocal.cpp
-    lib//FileSystem/fnFileTNFS.h lib//FileSystem/fnFileTNFS.cpp
+    lib/FileSystem/fnFile.h lib/FileSystem/fnFile.cpp
+    lib/FileSystem/fnFileLocal.h lib/FileSystem/fnFileLocal.cpp
+    lib/FileSystem/fnFileTNFS.h lib/FileSystem/fnFileTNFS.cpp
     lib/utils/utils.h lib/utils/utils.cpp
     lib/utils/cbuf.h lib/utils/cbuf.cpp
     lib/hardware/fnDummyWiFi.h lib/hardware/fnDummyWiFi.cpp
@@ -137,3 +131,40 @@ endif()
 # if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 #     target_link_libraries(fujinet bsd)
 # endif()
+
+# "dist" target
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    add_custom_target(dist
+        COMMENT "Preparing dist directory"
+        COMMAND ${CMAKE_COMMAND} -E make_directory dist
+        COMMAND echo "Getting fujinet-sd-card"
+        COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD
+        COMMAND git clone --depth 1 https://github.com/FujiNetWIFI/fujinet-sd-card.git dist/SD
+        COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD/.git
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/distfiles dist
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fujinet> dist
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/data dist/data
+        # DLL's TODO how to make this using cmake?
+        COMMAND ldd $<TARGET_FILE:fujinet> | grep -v -i '/windows' 
+        | awk '{print $$3}' | xargs -I {} cp -p {} dist
+    )
+else()
+    add_custom_target(dist
+        COMMENT "Preparing dist directory"
+        COMMAND ${CMAKE_COMMAND} -E make_directory dist
+        COMMAND echo "Getting fujinet-sd-card"
+        COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD
+        COMMAND git clone --depth 1 https://github.com/FujiNetWIFI/fujinet-sd-card.git dist/SD
+        COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD/.git
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/distfiles dist
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fujinet> dist
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/data dist/data
+        COMMAND ${CMAKE_COMMAND} -E remove dist/run-fujinet.bat
+    )
+endif()
+add_dependencies(dist fujinet)
+
+# include dist cleanup in "clean" target
+set_property(
+    DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES dist
+)
