@@ -137,7 +137,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_custom_target(dist
         COMMENT "Preparing dist directory"
         COMMAND ${CMAKE_COMMAND} -E make_directory dist
-        COMMAND echo "Getting fujinet-sd-card"
+        COMMAND echo Getting fujinet-sd-card
         COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD
         COMMAND git clone --depth 1 https://github.com/FujiNetWIFI/fujinet-sd-card.git dist/SD
         COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD/.git
@@ -152,7 +152,7 @@ else()
     add_custom_target(dist
         COMMENT "Preparing dist directory"
         COMMAND ${CMAKE_COMMAND} -E make_directory dist
-        COMMAND echo "Getting fujinet-sd-card"
+        COMMAND echo Getting fujinet-sd-card
         COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD
         COMMAND git clone --depth 1 https://github.com/FujiNetWIFI/fujinet-sd-card.git dist/SD
         COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD/.git
