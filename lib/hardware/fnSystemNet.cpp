@@ -53,20 +53,20 @@ int SystemManager::_net::get_ip4_info(uint8_t ip4address[4], uint8_t ip4mask[4],
 
     // return e;
     // TODO
-    ip4address[0] = 1;
-    ip4address[1] = 2;
-    ip4address[2] = 3;
-    ip4address[3] = 4;
+    ip4address[0] = 0;
+    ip4address[1] = 0;
+    ip4address[2] = 0;
+    ip4address[3] = 0;
 
-    ip4mask[0] = 1;
-    ip4mask[1] = 2;
-    ip4mask[2] = 3;
-    ip4mask[3] = 4;
+    ip4mask[0] = 0;
+    ip4mask[1] = 0;
+    ip4mask[2] = 0;
+    ip4mask[3] = 0;
 
-    ip4gateway[0] = 1;
-    ip4gateway[1] = 2;
-    ip4gateway[2] = 3;
-    ip4gateway[3] = 4;
+    ip4gateway[0] = 0;
+    ip4gateway[1] = 0;
+    ip4gateway[2] = 0;
+    ip4gateway[3] = 0;
 
     return 0;
 }
@@ -84,17 +84,17 @@ int SystemManager::_net::get_ip4_dns_info(uint8_t ip4dnsprimary[4])
     // }
     // return e;
     // TODO
-    ip4dnsprimary[0] = 1;
-    ip4dnsprimary[1] = 2;
-    ip4dnsprimary[2] = 3;
-    ip4dnsprimary[3] = 4;
+    ip4dnsprimary[0] = 0;
+    ip4dnsprimary[1] = 0;
+    ip4dnsprimary[2] = 0;
+    ip4dnsprimary[3] = 0;
 
     return 0;
 }
 
 std::string SystemManager::_net::_get_ip4_address_str(_ip4_address_type iptype)
 {
-    std::string result = "1.2.3.4"; // TODO
+    std::string result = "0.0.0.0"; // TODO
     // esp_netif_ip_info_t ip_info;
     // esp_err_t e = esp_netif_get_ip_info(fnWiFi.get_adapter_handle(), &ip_info);
 
@@ -136,7 +136,7 @@ std::string SystemManager::_net::get_ip4_gateway_str()
 
 std::string SystemManager::_net::_get_ip4_dns_str(_ip4_dns_type dnstype)
 {
-    std::string result = "1.2.3.4";
+    std::string result = "0.0.0.0"; // TODO
     // esp_netif_dns_info_t dnsinfo;
     // esp_netif_dns_type_t t;
 
