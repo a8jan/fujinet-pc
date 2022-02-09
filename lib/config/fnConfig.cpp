@@ -636,6 +636,11 @@ void fnConfig::save()
 
     // Write the results out
     FILE *fout = fnSPIFFS.file_open(CONFIG_FILENAME, FILE_WRITE);
+    if (fout == nullptr)
+    {
+        Debug_printf("Failed to open config file\n");
+        return;
+    }
     std::string result = ss.str();
     size_t z = fwrite(result.c_str(), 1, result.length(), fout);
     (void)z; // Get around unused var
