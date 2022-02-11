@@ -354,6 +354,8 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         break;
     case FN_NETSIO_HOST:
         resultstream << Config.get_netsio_host();
+        if (Config.get_netsio_port() != CONFIG_DEFAULT_NETSIO_PORT)
+            resultstream << ":" << Config.get_netsio_port();
         break;
     case FN_DRIVE1HOST:
     case FN_DRIVE2HOST:

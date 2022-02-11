@@ -330,10 +330,20 @@ void fnHttpServiceConfigurator::config_netsio(std::string enable_netsio, std::st
     if (!netsio_host_port.empty())
     {
         // TODO parse netsio_host_port, detect if host part is followed by :port
-        // int port;
-        // ...
-        // Config.store_netsio_port(port)
-        Config.store_netsio_host(netsio_host_port.c_str());
+        std::size_t found = netsio_host_port.find(':');
+        std::string host = netsio_host_port;
+        int port = CONFIG_DEFAULT_NETSIO_PORT;
+        if (found != std::string::npos)
+        {
+            host = netsio_host_port.substr(0, found);
+            if (host.empty())
+                host = "localhost";
+            port = std::atoi(netsio_host_port.substr(found+1).c_str());
+            if (port < 1 || port > 65535)
+                port = CONFIG_DEFAULT_NETSIO_PORT;
+        }
+        Config.store_netsio_port(port);
+        Config.store_netsio_host(host.c_str());
         fnSioCom.set_netsio_host(Config.get_netsio_host().c_str(), Config.get_netsio_port());
     }
     if (!enable_netsio.empty())
