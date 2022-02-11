@@ -31,7 +31,7 @@ class SystemManager
 private:
     char _uptime_string[18];
     char _currenttime_string[40];
-    int _hardware_version = 0; // unknown
+    int _hardware_version = -1; // 0: unknown, -1: no HW / fujinet-pc, 1: 1.0, 2: 1.1-1.5, 3: 1.6 & up
     char _uname_string[128];
     uint64_t _reboot_at = 0;
     int _reboot_code = EXIT_AND_RESTART;

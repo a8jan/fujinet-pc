@@ -698,6 +698,9 @@ const char *SystemManager::get_hardware_ver_str()
     case 3:
         return "1.6 & up";
         break;
+    case -1:
+        return "fujinet-pc";
+        break;
     case 0:
     default:
         return "Unknown";
