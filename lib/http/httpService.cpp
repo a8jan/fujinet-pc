@@ -499,7 +499,7 @@ int fnHttpService::get_handler_browse(mg_connection *c, mg_http_message *hm)
 
 void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
 {
-    static const char *s_root_dir = "www";
+    static const char *s_root_dir = "data/www";
 
     if (ev == MG_EV_HTTP_MSG)
     {
