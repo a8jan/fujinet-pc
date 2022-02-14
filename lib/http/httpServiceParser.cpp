@@ -26,6 +26,8 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     enum tagids
     {
         FN_HOSTNAME = 0,
+        FN_DEVICE_NAME,
+        FN_LABEL,
         FN_VERSION,
         FN_IPADDRESS,
         FN_IPMASK,
@@ -118,6 +120,8 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     const char *tagids[FN_LASTTAG] =
     {
         "FN_HOSTNAME",
+        "FN_DEVICE_NAME",
+        "FN_LABEL",
         "FN_VERSION",
         "FN_IPADDRESS",
         "FN_IPMASK",
@@ -229,6 +233,13 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     {
     case FN_HOSTNAME:
         resultstream << fnSystem.Net.get_hostname();
+        break;
+    case FN_DEVICE_NAME:
+        resultstream << Config.get_general_devicename();
+        break;
+    case FN_LABEL:
+        // TODO html escape
+        resultstream << Config.get_general_label();
         break;
     case FN_VERSION:
         resultstream << fnSystem.get_fujinet_version();

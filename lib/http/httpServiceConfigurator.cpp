@@ -152,6 +152,7 @@ void fnHttpServiceConfigurator::config_timezone(std::string timezone)
 
 void fnHttpServiceConfigurator::config_hostname(std::string hostname)
 {
+    util_string_trim(hostname); // TODO trim earlier
     Debug_printf("New hostname value: %s\n", hostname.c_str());
 
     // Store our change in Config

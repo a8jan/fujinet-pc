@@ -74,6 +74,7 @@ public:
 
     // GENERAL
     std::string get_general_devicename() { return _general.devicename; };
+    std::string get_general_label();
     int get_general_hsioindex() { return _general.hsio_index; };
     std::string get_general_timezone() { return _general.timezone; };
     bool get_general_rotation_sounds() { return _general.rotation_sounds; };
@@ -285,7 +286,7 @@ private:
 
     struct general_info
     {
-        std::string devicename = "fujinet";
+        std::string devicename = "FujiNet";
         int hsio_index = SIO_HISPEED_INDEX;
         std::string timezone;
         bool rotation_sounds = true;

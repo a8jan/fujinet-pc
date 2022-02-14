@@ -166,6 +166,14 @@ void fnConfig::store_bt_devname(std::string devname)
     _dirty = true;
 }
 
+std::string fnConfig::get_general_label()
+{
+    static std::string default_label = "FujiNet";
+    if (_general.devicename.empty())
+        return default_label;
+    return _general.devicename; 
+}
+
 std::string fnConfig::get_host_name(uint8_t num)
 {
     if (num < MAX_HOST_SLOTS)

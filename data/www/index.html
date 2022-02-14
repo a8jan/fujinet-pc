@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>FujiNet</title>
+	<title><%FN_LABEL%></title>
 	<meta charset="utf-8" />
 	<script type="text/javascript" src="/file?utils.js"></script>
 	<style>
@@ -291,21 +291,30 @@
 					<div class="det"><%FN_VERSION%></div>
 				</div>
 				<div class="detline alt">
+					<div class="deth">Device name</div>
+					<div class="det">
+						<form action="/config" method="post">
+							<input type="text" name="hostname" id="txt_hostname" value="<%FN_DEVICE_NAME%>"/>
+							<input type="submit" value="Save">
+						</form>
+					</div>
+				</div>
+				<div class="detline">
 					<div class="deth">Host name</div>
 					<div class="det"><%FN_HOSTNAME%></div>
 				</div>
-				<div class="detline">
+				<div class="detline alt">
 					<div class="deth">IP address</div>
 					<div class="det"></div>
 				</div>
-				<div class="detline alt">
+				<!-- <div class="detline">
 					<div class="deth">Default gateway</div>
 					<div class="det"></div>
 				</div>
-				<div class="detline">
+				<div class="detline alt">
 					<div class="deth">DNS server</div>
 					<div class="det"></div>
-				</div>
+				</div> -->
 			</div>
 			<div class="flexchild">
 				<header>HARD<span id="logowob"></span>WARE</header>
