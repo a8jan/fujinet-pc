@@ -11,7 +11,7 @@ private:
     DIR * _dir;
     uint64_t _card_capacity = 0;
 public:
-    bool start();
+    bool start(const char *sd_path = nullptr);
     virtual bool is_global() override { return true; };
 
     fsType type() override { return FSTYPE_SDFAT; };

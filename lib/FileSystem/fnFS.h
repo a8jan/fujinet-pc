@@ -18,7 +18,7 @@
 #define FILE_APPEND_TEXT "at"
 #endif
 
-#define MAX_PATHLEN 256
+#define MAX_PATHLEN 1024
 
 #define FNFS_INVALID_DIRPOS 0xFFFF
 
@@ -45,7 +45,7 @@ typedef struct fsdir_entry fsdir_entry_t;
 class FileSystem
 {
 protected:
-    char _basepath[20] = { '\0' };
+    char _basepath[MAX_PATHLEN] = { '\0' };
     bool _started = false;
     fsdir_entry _direntry;
 

@@ -428,14 +428,17 @@ const char * FileSystemSDFAT::partition_type()
     return names[i];
 }
 
-bool FileSystemSDFAT::start()
+bool FileSystemSDFAT::start(const char *sd_path)
 {
     if(_started)
         return true;
 
     // Set our basepath
     // strlcpy(_basepath, "/sd", sizeof(_basepath));
-    strlcpy(_basepath, "SD", sizeof(_basepath));
+    if (sd_path)
+        strlcpy(_basepath, sd_path, sizeof(_basepath));
+    else
+        strlcpy(_basepath, "SD", sizeof(_basepath));
 
     // // Set up a configuration to the SD host interface
     // sdmmc_host_t host_config = SDSPI_HOST_DEFAULT(); 
@@ -481,6 +484,7 @@ bool FileSystemSDFAT::start()
 
     // esp_err_t e = esp_vfs_fat_sdspi_mount(_basepath, &host_config, &slot_config, &mount_config, &sdcard_info);
 
+    // TODO test if _basepath directory exists
     // if(e == ESP_OK)
     {
         _started = true;

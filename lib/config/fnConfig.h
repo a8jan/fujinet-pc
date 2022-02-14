@@ -5,6 +5,10 @@
 
 #include "../sio/printer.h"
 
+#define CONFIG_FILENAME "fnconfig.ini"
+#define SD_CARD_DIR "SD"
+#define WEB_SERVER_LISTEN_URL "http://0.0.0.0:8000"
+
 #define MAX_HOST_SLOTS 8
 #define MAX_MOUNT_SLOTS 8
 #define MAX_PRINTER_SLOTS 4
@@ -83,8 +87,12 @@ public:
     bool get_general_boot_mode() { return _general.boot_mode; }
     void store_general_boot_mode(uint8_t boot_mode);
     void store_midimaze_host(const char host_ip[64]);
-    std::string get_interface_url() { return _general.interface_url; };
-    void store_interface_url(const char *url);
+    std::string get_general_interface_url() { return _general.interface_url; };
+    void store_general_interface_url(const char *url);
+    std::string get_general_config_path() { return _general.config_file_path; };
+    void store_general_config_path(const char *file_path);
+    std::string get_general_SD_path() { return _general.SD_dir_path; };
+    void store_general_SD_path(const char *dir_path);
 
     const char * get_network_sntpserver() { return _network.sntpserver; };
 
@@ -283,7 +291,9 @@ private:
         bool rotation_sounds = true;
         bool config_enabled = true;
         int boot_mode = 0;
-        std::string interface_url = "http://0.0.0.0:8000";
+        std::string interface_url = WEB_SERVER_LISTEN_URL; // default URL to serve web interface
+        std::string config_file_path = CONFIG_FILENAME; // default path to load/save config file (program CWD)
+        std::string SD_dir_path = SD_CARD_DIR; // default path to load/save config file
     };
 
     struct serial_info

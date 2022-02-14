@@ -1,16 +1,16 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <sys/stat.h>
 #include "compat_string.h"
 
 #include "fnConfig.h"
-#include "../FileSystem/fnFsSPIF.h"
-#include "../FileSystem/fnFsSD.h"
+// #include "../FileSystem/fnFsSPIF.h"
+// #include "../FileSystem/fnFsSD.h"
 // #include "../hardware/keys.h"
 #include "../utils/utils.h"
 #include "../../include/debug.h"
 
-#define CONFIG_FILENAME "/fnconfig.ini"
 #define CONFIG_FILEBUFFSIZE 2048
 
 #define CONFIG_DEFAULT_SNTPSERVER "pool.ntp.org"
@@ -206,12 +206,33 @@ void fnConfig::clear_host(uint8_t num)
     }
 }
 
-void fnConfig::store_interface_url(const char *url)
+void fnConfig::store_general_interface_url(const char *url)
 {
     if (_general.interface_url.compare(url) == 0)
         return;
 
     _general.interface_url = url;
+    // this option is not stored in config file
+    // _dirty = true;
+}
+
+void fnConfig::store_general_config_path(const char *file_path)
+{
+    if (_general.config_file_path.compare(file_path) == 0)
+        return;
+
+    _general.config_file_path = file_path;
+    // this option is not stored in config file
+    // _dirty = true;
+}
+
+void fnConfig::store_general_SD_path(const char *dir_path)
+{
+    if (_general.SD_dir_path.compare(dir_path) == 0)
+        return;
+
+    _general.SD_dir_path = dir_path;
+    // this option is not stored in config file
     // _dirty = true;
 }
 
@@ -513,7 +534,7 @@ void fnConfig::store_cassette_pulldown(bool pulldown)
 void fnConfig::save()
 {
 
-    Debug_println("fnConfig::save");
+    Debug_printf("fnConfig::save \"%s\"\n", _general.config_file_path.c_str());
 
     if (!_dirty)
     {
@@ -635,7 +656,8 @@ void fnConfig::save()
     ss << "port=" << _netsio.port << LINETERM;
 
     // Write the results out
-    FILE *fout = fnSPIFFS.file_open(CONFIG_FILENAME, FILE_WRITE);
+    // FILE *fout = fnSPIFFS.file_open(CONFIG_FILENAME, FILE_WRITE);
+    FILE *fout = fopen(_general.config_file_path.c_str(), FILE_WRITE);
     if (fout == nullptr)
     {
         Debug_printf("Failed to open config file\n");
@@ -666,7 +688,7 @@ void fnConfig::save()
 */
 void fnConfig::load()
 {
-    Debug_println("fnConfig::load");
+    Debug_printf("fnConfig::load \"%s\"\n", _general.config_file_path.c_str());
 
 //     // Clear the config file if key is currently pressed
 //     if (fnKeyManager.keyCurrentlyPressed(BUTTON_B))
@@ -719,7 +741,9 @@ New behavior: copy from SD first if available, then read SPIFFS.
     //     }
     // }
     // See if we have a file in SPIFFS (either originally or something copied from SD)
-    if (false == fnSPIFFS.exists(CONFIG_FILENAME))
+    // if (false == fnSPIFFS.exists(CONFIG_FILENAME))
+    struct stat st;
+    if (stat(_general.config_file_path.c_str(), &st) < 0)
     {
         _dirty = true; // We have a new (blank) config, so we treat it as needing to be saved
         Debug_println("No config found - starting fresh!");
@@ -728,7 +752,8 @@ New behavior: copy from SD first if available, then read SPIFFS.
 
     // Read INI file into buffer (for speed)
     // Then look for sections and handle each
-    FILE *fin = fnSPIFFS.file_open(CONFIG_FILENAME, FILE_READ_TEXT);
+    // FILE *fin = fnSPIFFS.file_open(CONFIG_FILENAME, FILE_READ_TEXT);
+    FILE *fin = fopen(_general.config_file_path.c_str(), FILE_READ_TEXT);
     if (fin == nullptr)
     {
         Debug_printf("Failed to open config file\n");

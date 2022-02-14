@@ -100,12 +100,6 @@ void main_setup(int argc, char *argv[])
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
 */
 
-    fnSystem.check_hardware_ver();
-    Debug_printf("Detected Hardware Version: %s\n", fnSystem.get_hardware_ver_str());
-
-    // fnKeyManager.setup();
-    // fnLedManager.setup();
-
 #if defined(_WIN32)
     // Initialize Winsock
     WSADATA wsaData;
@@ -124,25 +118,37 @@ void main_setup(int argc, char *argv[])
     signal(SIGBREAK, sighandler);
 #endif
 
+    // program arguments
+    int opt;
+    while ((opt = getopt(argc, argv, "u:c:s:")) != -1) {
+        switch (opt) {
+            case 'u':
+                Config.store_general_interface_url(optarg);
+                break;
+            case 'c':
+                Config.store_general_config_path(optarg);
+                break;
+            case 's':
+                Config.store_general_SD_path(optarg);
+                break;
+            default: /* '?' */
+                fprintf(stderr, "Usage: %s [-u URL] [-c config_file] [-s SD_directory]\n", argv[0]);
+                exit(EXIT_FAILURE);
+        }
+    }
+
+    fnSystem.check_hardware_ver();
+    Debug_printf("Detected Hardware Version: %s\n", fnSystem.get_hardware_ver_str());
+
+    // fnKeyManager.setup();
+    // fnLedManager.setup();
+
     fnSPIFFS.start();
-    fnSDFAT.start();
+    fnSDFAT.start(Config.get_general_SD_path().c_str());
 
     // Load our stored configuration
     Config.load();
 
-    // program arguments
-    int opt;
-    while ((opt = getopt(argc, argv, "u:")) != -1) {
-        switch (opt) {
-            case 'u':
-                Config.store_interface_url(optarg);
-                break;
-            default: /* '?' */
-                fprintf(stderr, "Usage: %s [-u URL]\n", argv[0]);
-                exit(EXIT_FAILURE);
-        }
-    }
-    
     if ( Config.get_bt_status() )
     {
         // // Start SIO2BT mode if we were in it last shutdown

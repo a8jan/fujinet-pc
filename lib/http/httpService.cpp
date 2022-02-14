@@ -581,7 +581,7 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
 
 struct mg_mgr * fnHttpService::start_server(serverstate &srvstate)
 {
-    std::string s_listening_address = Config.get_interface_url();
+    std::string s_listening_address = Config.get_general_interface_url();
 
     static struct mg_mgr s_mgr;
 
