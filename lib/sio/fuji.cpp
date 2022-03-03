@@ -476,7 +476,7 @@ void sioFuji::sio_copy_file()
 }
 
 // Mount all
-void sioFuji::sio_mount_all()
+int sioFuji::sio_mount_all(bool siomode)
 {
     bool nodisks = true; // Check at the end if no disks are in a slot and disable config
 
@@ -495,8 +495,7 @@ void sioFuji::sio_mount_all()
 
             if (host.mount() == false)
             {
-                sio_error();
-                return;
+                return _on_error(siomode);
             }
 
             Debug_printf("Selecting '%s' from host #%u as %s on D%u:\n",
@@ -506,8 +505,7 @@ void sioFuji::sio_mount_all()
 
             if (disk.fileh == nullptr)
             {
-                sio_error();
-                return;
+                return _on_error(siomode);
             }
 
             // We've gotten this far, so make sure our bootable CONFIG disk is disabled
@@ -527,7 +525,7 @@ void sioFuji::sio_mount_all()
         boot_config = false;
     }
 
-    sio_complete();
+    return _on_ok(siomode);
 }
 
 // Set boot mode

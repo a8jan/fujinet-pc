@@ -86,6 +86,7 @@ class fnHttpService
     // static void send_file(httpd_req_t *req, const char *filename);
     static void send_file(struct mg_connection *c, const char *filename);
     // static void parse_query(httpd_req_t *req, queryparts *results);
+    static int redirect_or_result(mg_connection *c, mg_http_message *hm, int result);
 
     friend class fnHttpServiceBrowser; // allow browser to call above functions
 
@@ -97,6 +98,8 @@ public:
     // static esp_err_t get_handler_print(httpd_req_t *req);
     static int get_handler_print(struct mg_connection *c);
     // static esp_err_t get_handler_modem_sniffer(httpd_req_t *req);
+    static int get_handler_swap(struct mg_connection *c, struct mg_http_message *hm);
+    static int get_handler_mount(struct mg_connection *c, struct mg_http_message *hm);
 
     // static esp_err_t post_handler_config(httpd_req_t *req);
     static int post_handler_config(struct mg_connection *c, struct mg_http_message *hm);

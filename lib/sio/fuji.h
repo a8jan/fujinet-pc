@@ -141,7 +141,7 @@ public:
     void _populate_slots_from_config();
     void _populate_config_from_slots();
 
-    void sio_mount_all();              // 0xD7
+    int sio_mount_all(bool siomode=true);              // 0xD7
 
     sioFuji();
 };

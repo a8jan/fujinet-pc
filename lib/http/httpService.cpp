@@ -25,6 +25,8 @@
 
 #include "../../include/debug.h"
 
+#include "fuji.h"
+
 using namespace std;
 
 // Global HTTPD
@@ -221,6 +223,23 @@ void fnHttpService::send_file(struct mg_connection *c, const char *filename)
         free(buf);
         fclose(fInput);
     }
+}
+
+int fnHttpService::redirect_or_result(mg_connection *c, mg_http_message *hm, int result)
+{
+    // get "redirect" query variable
+    char redirect[10] = "";
+    mg_http_get_var(&hm->query, "redirect", redirect, sizeof(redirect));
+    if (atoi(redirect))
+    {
+        // Redirect back to the main page
+        mg_printf(c, "HTTP/1.1 303 See Other\r\nLocation: /\r\nContent-Length: 0\r\n\r\n");
+    }
+    else
+    {
+        mg_http_reply(c, 200, "", "{\"result\": %d}\n", result); // send reply
+    }
+    return result;
 }
 
 // void fnHttpService::parse_query(httpd_req_t *req, queryparts *results)
@@ -497,6 +516,27 @@ int fnHttpService::get_handler_browse(mg_connection *c, mg_http_message *hm)
     return 0;
 }
 
+int fnHttpService::get_handler_swap(mg_connection *c, mg_http_message *hm)
+{
+    // rotate disk images
+    Debug_printf("Disk swap from webui\n");
+    theFuji.image_rotate();
+    return redirect_or_result(c, hm, 0);
+}
+
+int fnHttpService::get_handler_mount(mg_connection *c, mg_http_message *hm)
+{
+    char mountall[10] = "";
+    mg_http_get_var(&hm->query, "mountall", mountall, sizeof(mountall));
+    if (atoi(mountall))
+    {
+        // Mount all the things
+        Debug_printf("Mount all from webui\n");
+        theFuji.sio_mount_all(false);
+    }
+    return redirect_or_result(c, hm, 0);
+}
+
 void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
 {
     static const char *s_root_dir = "data/www";
@@ -550,6 +590,16 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
         {
             // browse handler
             get_handler_browse(c, hm);
+        }
+        else if (mg_http_match_uri(hm, "/swap"))
+        {
+            // browse handler
+            get_handler_swap(c, hm);
+        }
+        else if (mg_http_match_uri(hm, "/mount"))
+        {
+            // browse handler
+            get_handler_mount(c, hm);
         }
         else if (mg_http_match_uri(hm, "/restart"))
         {

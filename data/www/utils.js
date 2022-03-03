@@ -34,3 +34,11 @@ function restartButton() {
 			btn.value = "Restart...";
 		}, 2000);
 }
+
+function swapButton() {
+	window.location.assign("/swap?redirect=1");
+}
+
+function mountAllButton() {
+	window.location.assign("/mount?mountall=1&redirect=1");
+}

@@ -303,11 +303,17 @@ int fnHttpServiceBrowser::browse_listdrives(mg_connection *c, int slot, const ch
 
     // list drive slots
     char disk_id;
+    char slot_disk[10]; // "(Dn:)"
     int host_slot;
     bool is_mounted;
     for(int drive_slot = 0; drive_slot < MAX_DISK_DEVICES; drive_slot++)
     {
         disk_id = (char) theFuji.get_disk_id(drive_slot);
+        // "(Dn:)" if any rotation has occurred
+        if (disk_id != (char) (0x31 + drive_slot))
+            snprintf(slot_disk, sizeof slot_disk, " (D%c:)", disk_id);
+        else
+            *slot_disk = '\0';
         host_slot = Config.get_mount_host_slot(drive_slot);
         is_mounted = (theFuji.get_disks(drive_slot)->fileh != nullptr);
         mg_http_printf_chunk(c, "<tr>"
@@ -317,9 +323,7 @@ int fnHttpServiceBrowser::browse_listdrives(mg_connection *c, int slot, const ch
                 "<a title=\"%s\" href=\"?action=%s&slot=%d\">[ %s ]</a></td>"
                 "<td>%s (%s)</td>"
             "</tr>",
-            drive_slot+1,
-            // Dx: drive, if any rotation has occurred
-            (disk_id != (char) (0x31 + drive_slot)) ? " (D%h:)": "",
+            drive_slot+1, slot_disk,
             // action=newmount&slot=..
             drive_slot+1, drive_slot+1,
             (host_slot == HOST_SLOT_INVALID) ? "Nothing to do" : 
