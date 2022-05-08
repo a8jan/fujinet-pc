@@ -376,7 +376,7 @@ bool NetworkProtocolTCP::special_accept_connection()
             remotePort = client.remotePort();
             // remoteIPString = inet_ntoa(remoteIP);
             remoteIPString = compat_inet_ntoa(remoteIP);
-            Debug_printf("Accepted connection from %s:%u", remoteIPString, remotePort);
+            Debug_printf("Accepted connection from %s:%u\n", remoteIPString, remotePort);
             return false;
         }
         else

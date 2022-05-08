@@ -6,6 +6,7 @@
 #include <string.h>
 #include <errno.h>
 #include "compat_inet.h"
+#include "compat_string.h"
 // #include <sys/socket.h>
 // #include <netinet/in.h>
 // #include <arpa/inet.h>
@@ -28,12 +29,8 @@ bool NetworkProtocolUDP::open(EdUrlParser *urlParser, cmdFrame_t *cmdFrame)
 {
     Debug_printf("NetworkProtocolUDP::open(%s:%s)\n", urlParser->hostName.c_str(), urlParser->port.c_str());
 
-    // Set destination to hostname, if set.
-    if (!urlParser->hostName.empty())
-    {
-        Debug_printf("Setting destination hostname to: %s\n", urlParser->hostName.c_str());
-        dest = urlParser->hostName;
-    }
+    dest = urlParser->hostName;
+    Debug_printf("Setting destination hostname to: %s\n", dest.c_str());
 
     // Port must be set, or we bail.
     if (urlParser->port.empty())
@@ -43,21 +40,20 @@ bool NetworkProtocolUDP::open(EdUrlParser *urlParser, cmdFrame_t *cmdFrame)
     }
     else
     {
-        Debug_printf("Setting destination port to: %s\n", urlParser->port.c_str());
         port = atoi(urlParser->port.c_str());
+        Debug_printf("Setting destination port to: %u\n", port);
     }
 
     // Attempt to bind port.
-    Debug_printf("Binding port %u\n", atoi(urlParser->port.c_str()));
-    if (udp.begin(atoi(urlParser->port.c_str())) == false)
+    unsigned short bind_port = dest.empty() ? port : 0;
+    Debug_printf("Binding port %u\n", bind_port);
+    if (udp.begin(bind_port) == false)
     {
         errno_to_error();
         return true;
     }
     else
     {
-        dest = urlParser->hostName;
-        port = atoi(urlParser->port.c_str());
         Debug_printf("After begin: %s:%u\n", dest.c_str(), port);
     }
 
@@ -158,14 +154,12 @@ bool NetworkProtocolUDP::status(NetworkStatus *status)
         status->rxBytesWaiting = receiveBuffer->length();
     else
     {
-        in_addr_t addr = udp.remoteIP();
-
         status->rxBytesWaiting = udp.parsePacket();
-        
+
         // Only change dest if we need to.
-        if (udp.remoteIP() != IPADDR_NONE)
+        in_addr_t addr = udp.remoteIP();
+        if (status->rxBytesWaiting > 0 && addr != IPADDR_NONE)
         {
-            // dest = string(inet_ntoa(addr));
             dest = string(compat_inet_ntoa(addr));
             port = udp.remotePort();
         }
@@ -187,6 +181,8 @@ uint8_t NetworkProtocolUDP::special_inquiry(uint8_t cmd)
     {
     case 'D':
         return 0x80;
+    case 'r':
+        return 0x40;
     }
 
     return 0xFF;
@@ -199,7 +195,14 @@ bool NetworkProtocolUDP::special_00(cmdFrame_t *cmdFrame)
 
 bool NetworkProtocolUDP::special_40(uint8_t *sp_buf, unsigned short len, cmdFrame_t *cmdFrame)
 {
-    return true; // none implemented.
+    switch (cmdFrame->comnd)
+    {
+    case 'r':
+        return get_remote(sp_buf, len);
+    default:
+        return true;
+    }
+    return true;
 }
 
 bool NetworkProtocolUDP::special_80(uint8_t *sp_buf, unsigned short len, cmdFrame_t *cmdFrame)
@@ -216,7 +219,9 @@ bool NetworkProtocolUDP::special_80(uint8_t *sp_buf, unsigned short len, cmdFram
 
 bool NetworkProtocolUDP::set_destination(uint8_t *sp_buf, unsigned short len)
 {
-    string path((const char *)sp_buf, len);
+    util_clean_devicespec(sp_buf, len); // TODO check sp_buf, first byte seems corrupted
+    Debug_printf("set_destination %s\n", sp_buf);
+    string path((const char *)sp_buf);
     int device_colon = path.find_first_of(":");
     int port_colon = path.find_last_of(":");
 
@@ -226,13 +231,24 @@ bool NetworkProtocolUDP::set_destination(uint8_t *sp_buf, unsigned short len)
     if (port_colon == device_colon)
         return true;
 
-    string new_dest_str = path.substr(device_colon + 1, port_colon - 2);
+    string new_dest_str = path.substr(device_colon + 1, port_colon-device_colon-1);
     string new_port_str = path.substr(port_colon + 1);
-
-    Debug_printf("New Destination %s port %s\n", new_dest_str.c_str(), new_port_str.c_str());
 
     port = atoi(new_port_str.c_str());
     dest = new_dest_str;
+    Debug_printf("New Destination %s port %u\n", dest.c_str(), port);
+
+    return false; // no error.
+}
+
+bool NetworkProtocolUDP::get_remote(uint8_t *sp_buf, unsigned short len)
+{
+    char port_part[8];
+
+    snprintf(port_part, sizeof port_part, ":%d\x9b", udp.remotePort());
+    strlcpy((char *)sp_buf, compat_inet_ntoa(udp.remoteIP()), len);
+    strlcat((char *)sp_buf, port_part, len);
+    Debug_printf("UDP remote is %s\n", sp_buf);
 
     return false; // no error.
 }
