@@ -24,7 +24,7 @@
 
 typedef struct
 {
-    char ssid[32];
+    char ssid[MAX_SSID_LEN+1]; // SSID + 0x0 terminator
     char hostname[64];
     unsigned char localIP[4];
     unsigned char gateway[4];
