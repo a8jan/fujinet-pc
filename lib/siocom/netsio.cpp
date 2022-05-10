@@ -133,7 +133,7 @@ void NetSioPort::end()
     {
         uint8_t disconnect = NETSIO_DEVICE_DISCONNECT;
         send(_fd, (char *)&disconnect, 1, 0);
-        close(_fd);
+        closesocket(_fd);
         _fd  = -1;
         Debug_printf("### NetSIO stopped ###\n");
     }

@@ -163,7 +163,7 @@ void fnTcpServer::stop()
     if (_sockfd > 0)
     {
         Debug_printf("fnTcpServer::stop(%d)\n", _sockfd);
-        close(_sockfd);
+        closesocket(_sockfd);
         Debug_printf("close errno %d\n",compat_getsockerr());
         _sockfd = -1;
         _listening = false;

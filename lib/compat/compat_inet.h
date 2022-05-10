@@ -19,7 +19,9 @@ typedef uint32_t in_addr_t;
 #include <netdb.h>
 #include <sys/socket.h>
 
-// #define FN_SOCK_ERRNO errno
+#ifndef closesocket
+#define closesocket(x) close(x)
+#endif
 
 #endif
 

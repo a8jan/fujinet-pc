@@ -51,7 +51,7 @@ void fnUDP::stop()
         setsockopt(udp_server, IPPROTO_IP, IP_DROP_MEMBERSHIP, (char *)&mreq, sizeof(mreq));
         multicast_ip = IPADDR_NONE;
     }
-    close(udp_server);
+    closesocket(udp_server);
     udp_server = -1;
 }
 
@@ -69,13 +69,13 @@ bool fnUDP::begin(in_addr_t address, uint16_t port)
     tx_buffer = new char[UDP_RXTX_BUFLEN];
     if (!tx_buffer)
     {
-        Debug_printf("could not create tx buffer: %d", errno);
+        Debug_printf("could not create tx buffer: %d\n", errno);
         return false;
     }
 
     if ((udp_server = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP)) == -1)
     {
-        Debug_printf("could not create socket: %d", compat_getsockerr());
+        Debug_printf("could not create socket: %d\n", compat_getsockerr());
         return false;
     }
 
@@ -86,7 +86,7 @@ bool fnUDP::begin(in_addr_t address, uint16_t port)
     if (setsockopt(udp_server, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0)
 #endif
     {
-        Debug_printf("could not set socket option: %d", compat_getsockerr());
+        Debug_printf("could not set socket option: %d\n", compat_getsockerr());
         stop();
         return false;
     }
@@ -99,7 +99,7 @@ bool fnUDP::begin(in_addr_t address, uint16_t port)
     addr.sin_addr.s_addr = address;
     if (bind(udp_server, (struct sockaddr *)&addr, sizeof(addr)) == -1)
     {
-        Debug_printf("could not bind socket: %d", compat_getsockerr());
+        Debug_printf("could not bind socket: %d\n", compat_getsockerr());
         stop();
         return false;
     }
@@ -129,7 +129,7 @@ bool fnUDP::beginPacket()
         tx_buffer = new char[UDP_RXTX_BUFLEN];
         if (!tx_buffer)
         {
-            Debug_printf("could not create tx buffer: %d", errno);
+            Debug_printf("could not create tx buffer: %d\n", errno);
             return false;
         }
     }
@@ -141,7 +141,7 @@ bool fnUDP::beginPacket()
 
     if ((udp_server = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP)) == -1)
     {
-        Debug_printf("could not create socket: %d", compat_getsockerr());
+        Debug_printf("could not create socket: %d\n", compat_getsockerr());
         return false;
     }
 

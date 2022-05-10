@@ -204,7 +204,7 @@ public:
     int fd() { return _sockfd; }
     int close()
     {
-        int res = (_sockfd >= 0) ? ::close(_sockfd) : -1;
+        int res = (_sockfd >= 0) ? ::closesocket(_sockfd) : -1;
         _sockfd = -1;
         return res;
     }
@@ -274,7 +274,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
 #endif
     {
         Debug_printf("connect on fd %d, errno: %d, \"%s\"\n", sockfd, err, compat_sockstrerror(err));
-        ::close(sockfd);
+        ::closesocket(sockfd);
         // re-set errno for errno_to_error()
         compat_setsockerr(err);
         return 0;
@@ -300,7 +300,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     {
         err = compat_getsockerr();
         Debug_printf("select on fd %d, errno: %d, \"%s\"\n", sockfd, err, compat_sockstrerror(err));
-        ::close(sockfd);
+        ::closesocket(sockfd);
         // re-set errno
         compat_setsockerr(err);
         return 0;
@@ -309,7 +309,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     else if (res == 0)
     {
         Debug_printf("select returned due to timeout %d ms for fd %d\n", timeout, sockfd);
-        ::close(sockfd);
+        ::closesocket(sockfd);
 #if defined(_WIN32)
         err = WSAETIMEDOUT;
 #else
@@ -331,7 +331,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
             // Failed to retrieve SO_ERROR
             err = compat_getsockerr();
             Debug_printf("getsockopt on fd %d, errno: %d, \"%s\"\n", sockfd, err ,compat_sockstrerror(err));
-            ::close(sockfd);
+            ::closesocket(sockfd);
             // set errno
             compat_setsockerr(err);
             return 0;
@@ -340,7 +340,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         if (sockerr != 0)
         {
             Debug_printf("socket error on fd %d, errno: %d, \"%s\"\n", sockfd, sockerr, compat_sockstrerror(sockerr));
-            ::close(sockfd);
+            ::closesocket(sockfd);
             // set errno
             compat_setsockerr(sockerr);
             return 0;
