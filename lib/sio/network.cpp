@@ -754,6 +754,8 @@ void sioNetwork::sio_poll_interrupt()
 
         if (status.rxBytesWaiting > 0 || status.connected == 0)
             sio_assert_interrupt();
+        else
+            sio_clear_interrupt();
 
         reservedSave = status.connected;
         errorSave = status.error;
@@ -1041,9 +1043,23 @@ void sioNetwork::sio_assert_interrupt()
     uint64_t ms = fnSystem.millis();
     if (ms - lastInterruptMs >= timerRate)
     {
+        interruptProceed = !interruptProceed;
         fnSioCom.set_proceed(interruptProceed);
         lastInterruptMs = ms;
-        interruptProceed = !interruptProceed;
+    }
+}
+
+/**
+ * Called to clear the PROCEED interrupt
+ */
+void sioNetwork::sio_clear_interrupt()
+{
+    if (interruptProceed) 
+    {
+        // Debug_println("clear interrupt");
+        interruptProceed = false;
+        fnSioCom.set_proceed(interruptProceed);
+        lastInterruptMs = fnSystem.millis();
     }
 }
 

@@ -52,7 +52,7 @@ public:
     /**
      * Timer Rate for interrupt timer
      */
-    int timerRate = 100;
+    int timerRate = 20;
 
     /**
      * Called for SIO Command 'O' to open a connection to a network protocol, allocate all buffers,
@@ -338,6 +338,11 @@ private:
      * Called to pulse the PROCEED interrupt, rate limited by the interrupt timer.
      */
     void sio_assert_interrupt();
+
+    /**
+     * Called to clear the PROCEED interrupt
+     */
+    void sio_clear_interrupt();
 
     /**
      * @brief Perform the inquiry, handle both local and protocol commands.
