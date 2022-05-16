@@ -298,7 +298,7 @@ bool NetSioPort::keep_alive()
 /* read NetSIO message from socket and update internal variables */
 int NetSioPort::handle_netsio()
 {
-    uint8_t rxbuf[513];
+    uint8_t rxbuf[514]; // must be able to hold whole netsio datagram, i.e. >= rxbuffer_len+2 defined in netsio.atdevice
     uint8_t b;
     int received;
 
