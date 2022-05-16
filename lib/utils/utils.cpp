@@ -583,6 +583,23 @@ void util_debug_printf(const char *fmt, ...)
     static bool print_ts = true;
     va_list argp;
 
+    if (!print_ts)
+    {
+        if (fmt != nullptr)
+        {
+            print_ts = fmt[strlen(fmt)-1] == '\n';
+        }
+        else
+        {
+            va_start(argp, fmt);
+            const char *s = va_arg(argp, const char*);
+            print_ts = s[strlen(s)-1] == '\n';
+            va_end(argp);
+        }
+        if (print_ts)
+            printf("\n");
+    }
+
     if (print_ts) 
     {
         // printf("DEBUG > ");
