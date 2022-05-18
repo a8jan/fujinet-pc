@@ -3,13 +3,15 @@
 
 #include <string>
 #include <vector>
-#include <pthread.h>
+
 #include "sio.h"
+
+#include "Protocol.h"
 #include "EdUrlParser.h"
-#include "../network-protocol/Protocol.h"
 #include "networkStatus.h"
 // #include "driver/timer.h"
-#include "../../lib/network-protocol/status_error_codes.h"
+#include "status_error_codes.h"
+#include "fnjson.h"
 
 /**
  * Number of devices to expose via SIO, becomes 0x71 to 0x70 + NUM_DEVICES - 1
@@ -233,6 +235,16 @@ private:
      */
     unsigned char reservedSave = 0;
     unsigned char errorSave = 1;
+
+    /**
+     * The fnJSON parser wrapper object
+     */
+    FNJSON json;
+
+    /**
+     * Bytes sent of current JSON query object.
+     */
+    unsigned short json_bytes_remaining=0;
 
     /**
      * Instantiate protocol object
