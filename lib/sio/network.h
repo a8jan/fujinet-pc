@@ -1,6 +1,8 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
+// #include "driver/timer.h"
+
 #include <string>
 #include <vector>
 
@@ -9,7 +11,6 @@
 #include "Protocol.h"
 #include "EdUrlParser.h"
 #include "networkStatus.h"
-// #include "driver/timer.h"
 #include "status_error_codes.h"
 #include "fnjson.h"
 
@@ -43,18 +44,12 @@ public:
      * The spinlock for the ESP32 hardware timers. Used for interrupt rate limiting.
      */
     // portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
-    // pthread_mutex_t timerMux;
 
     /**
      * Toggled by the rate limiting timer to indicate that the PROCEED interrupt should
      * be pulsed.
      */
     bool interruptProceed = false;
-
-    /**
-     * Timer Rate for interrupt timer
-     */
-    int timerRate = 20;
 
     /**
      * Called for SIO Command 'O' to open a connection to a network protocol, allocate all buffers,
@@ -98,6 +93,11 @@ public:
      * or sio_error() is called.
      */
     virtual void sio_status();
+
+    /**
+     * @brief set channel mode, JSON or PROTOCOL
+     */
+    virtual void sio_set_channel_mode();
 
     /**
      * @brief Called to set prefix
@@ -171,8 +171,6 @@ private:
      * ESP timer handle for the Interrupt rate limiting timer
      */
     // esp_timer_handle_t rateTimerHandle = nullptr;
-    // pthread_t rateTimerThread;
-    // pthread_t *rateTimerHandle = nullptr;
     uint64_t lastInterruptMs;
 
     /**
@@ -215,6 +213,11 @@ private:
      * The password to use for a protocol action
      */
     string password;
+
+    /**
+     * Timer Rate for interrupt timer (ms)
+     */
+    int timerRate = 20;
 
     /**
      * The channel mode for the currently open SIO device. By default, it is PROTOCOL, which passes
@@ -298,6 +301,12 @@ private:
     bool sio_read_channel(unsigned short num_bytes);
 
     /**
+     * @brief Perform read of the current JSON channel
+     * @param num_bytes Number of bytes to read
+     */
+    bool sio_read_channel_json(unsigned short num_bytes);
+
+    /**
      * Perform the correct write based on value of channelMode
      * @param num_bytes Number of bytes to write.
      * @return TRUE on error, FALSE on success. Used to emit sio_error or sio_complete().
@@ -314,6 +323,11 @@ private:
      * @brief perform channel status commands, if there is a protocol bound.
      */
     void sio_status_channel();
+
+    /**
+     * @brief get JSON status (# of bytes in receive channel)
+     */
+    bool sio_status_channel_json(NetworkStatus *ns);
 
     /**
      * @brief Do an inquiry to determine whether a protoocol supports a particular command.
@@ -366,6 +380,16 @@ private:
      * @brief set translation specified by aux1 to aux2_translation mode.
      */
     void sio_set_translation();
+
+    /**
+     * @brief Parse incoming JSON. (must be in JSON channelMode)
+     */
+    void sio_parse_json();
+
+    /**
+     * @brief Set JSON query string. (must be in JSON channelMode)
+     */
+    void sio_set_json_query();
 
     /**
      * @brief Set timer rate for PROCEED timer in ms
