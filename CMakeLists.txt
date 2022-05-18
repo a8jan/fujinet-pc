@@ -1,5 +1,5 @@
 # fujinet-pc
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.7.2...3.22)
 project(fujinet-pc VERSION 0.1.0)
 
 # C++ standard
@@ -16,12 +16,15 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMG_ENABLE_OPENSSL=1 -DMG_ENABLE_LOG=0")
 # INCLUDE (CheckIncludeFiles)
 # CHECK_INCLUDE_FILES (bsd/string.h HAVE_BSD_STRING_H)
 # CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
+# set(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include
 
-set(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include lib/compat lib/config 
-    lib/FileSystem lib/utils lib/hardware 
-    lib/tcpip lib/telnet  lib/EdUrlParser lib/TNFSlib
+set(INCLUDE_DIRS include
+    lib/compat lib/config lib/utils  lib/hardware
+    lib/FileSystem lib/TNFSlib
+    lib/tcpip lib/telnet  lib/EdUrlParser lib/network-protocol lib/fnjson
     lib/siocom lib/sio lib/printer-emulator lib/mongoose lib/http lib/task
-    components/libsmb2/include)
+    components/cJSON components/libsmb2/include
+)
 
 set(SOURCES src/main.cpp
     lib/config/fnConfig.h lib/config/fnConfig.cpp
@@ -87,6 +90,7 @@ set(SOURCES src/main.cpp
     lib/network-protocol/FTP.h lib/network-protocol/FTP.cpp
     lib/network-protocol/TNFS.h lib/network-protocol/TNFS.cpp
     lib/network-protocol/HTTP.h lib/network-protocol/HTTP.cpp
+    lib/fnjson/fnjson.h lib/fnjson/fnjson.cpp
     lib/siocom/sioport.h lib/siocom/sioport.cpp
     lib/siocom/serialsio.h lib/siocom/serialsio.cpp
     lib/siocom/netsio.h lib/siocom/netsio.cpp
@@ -116,13 +120,21 @@ else()
     set(SOURCES ${SOURCES} lib/compat/strlcat.c lib/compat/strlcpy.c)
 endif()
 
+# cJSON library
+# https://github.com/DaveGamble/cJSON
+set(ENABLE_CJSON_UTILS ON CACHE BOOL "Enable building the cJSON_Utils library.")
+set(ENABLE_CJSON_TEST OFF CACHE BOOL "Enable building cJSON test")
+set(CJSON_OVERRIDE_BUILD_SHARED_LIBS ON CACHE BOOL "Override BUILD_SHARED_LIBS with CJSON_BUILD_SHARED_LIBS")
+set(CJSON_BUILD_SHARED_LIBS OFF CACHE BOOL "Overrides BUILD_SHARED_LIBS if CJSON_OVERRIDE_BUILD_SHARED_LIBS is enabled")
+add_subdirectory(components/cJSON)
+
 add_executable(fujinet ${SOURCES})
 
 set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
 find_package(OpenSSL REQUIRED)
 
 target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
-target_link_libraries(fujinet pthread expat OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(fujinet pthread expat OpenSSL::SSL OpenSSL::Crypto cjson cjson_utils)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_link_libraries(fujinet ws2_32)
