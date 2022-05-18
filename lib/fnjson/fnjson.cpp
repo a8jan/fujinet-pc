@@ -94,7 +94,9 @@ string FNJSON::processString(string in)
 string FNJSON::getValue(cJSON *item)
 {
     if (cJSON_IsString(item))
+    {
         return processString(string(cJSON_GetStringValue(item)) + lineEnding);
+    }
     else if (cJSON_IsBool(item))
     {
         if (cJSON_IsTrue(item))
@@ -103,7 +105,9 @@ string FNJSON::getValue(cJSON *item)
             return "FALSE" + lineEnding;
     }
     else if (cJSON_IsNull(item))
+    {
         return "NULL" + lineEnding;
+    }
     else if (cJSON_IsNumber(item))
     {
         stringstream ss;
@@ -144,10 +148,10 @@ string FNJSON::getValue(cJSON *item)
  */
 bool FNJSON::readValue(uint8_t *rx_buf, unsigned short len)
 {
-    string ret = getValue(_item);
-
     if (_item == nullptr)
         return true; // error
+
+    string ret = getValue(_item);
 
     memcpy(rx_buf, ret.data(), len);
 
@@ -159,12 +163,10 @@ bool FNJSON::readValue(uint8_t *rx_buf, unsigned short len)
  */
 int FNJSON::readValueLen()
 {
-    int len = getValue(_item).size();
-
     if (_item == nullptr)
-        return len;
+        return 0;
 
-    return len;
+    return getValue(_item).size();
 }
 
 /**
