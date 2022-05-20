@@ -148,6 +148,13 @@ void fnConfig::store_wifi_passphrase(const char *passphrase_octets, int num_octe
     }
 }
 
+/* Stores whether Wifi is enabled or not */
+void fnConfig::store_wifi_enabled(bool status)
+{
+    _wifi.enabled = status;
+    _dirty = true;
+}
+
 void fnConfig::store_bt_status(bool status)
 {
     _bt.bt_status = status;
