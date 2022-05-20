@@ -1,4 +1,4 @@
-name: CMake
+name: Build
 
 on:
 #   push:
@@ -13,7 +13,7 @@ on:
         default: 'Debug'
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: ${{ github.event.inputs.logLevel }}
+  BUILD_TYPE: ${{ github.event.inputs.buildType }}
 
 jobs:
   build:
