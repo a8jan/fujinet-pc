@@ -1264,7 +1264,7 @@ void sioFuji::sio_read_device_slots()
             }
             else
             {
-                // Just use the basename of the image, no path. The fill path+filename is
+                // Just use the basename of the image, no path. The full path+filename is
                 // usually too long for the Atari to show anyway, so the image name is more important.
                 // Note: Basename can modify the input, so use a copy
                 filename = strdup(_fnDisks[i].filename);
