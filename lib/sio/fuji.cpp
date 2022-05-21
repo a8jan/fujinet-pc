@@ -1264,8 +1264,12 @@ void sioFuji::sio_read_device_slots()
             }
             else
             {
+                // Just use the basename of the image, no path. The fill path+filename is
+                // usually too long for the Atari to show anyway, so the image name is more important.
+                // Note: Basename can modify the input, so use a copy
                 filename = strdup(_fnDisks[i].filename);
                 strlcpy ( diskSlots[i].filename, basename(filename), MAX_DISPLAY_FILENAME_LEN );
+                free(filename);
             }
         }
 
@@ -1740,6 +1744,7 @@ std::string sioFuji::get_host_prefix(int host_slot)
 }
 
 // Send info about the image mounted in the specified slot.
+// WIP - nothing should call this yet.
 int sioFuji::sio_get_image_info(bool siomode, int slot)
 {
     uint8_t deviceSlot = siomode ? cmdFrame.aux1 : slot;
@@ -1747,6 +1752,7 @@ int sioFuji::sio_get_image_info(bool siomode, int slot)
     Debug_println("********************************************************");
     Debug_printf("Fuji cmd: GET IMAGE INFO for Slot #%d\n", deviceSlot);
 
+    // More to be added to this struct.. right now for testing just the full path/filename to the image.
     struct mounted_image_info
     {
         char fullFilename[MAX_FILENAME_LEN];
@@ -1770,6 +1776,7 @@ int sioFuji::sio_get_image_info(bool siomode, int slot)
     // in this slot.
     if ( _fnDisks[deviceSlot].filename[0] != '\0' ) 
     {
+        // temp: just playing with different data to see it on the atari side. 
         sprintf(info.fullFilename, "S%d : ", _fnDisks[deviceSlot].host_slot+1);
         //strlcpy (info.fullFilename, _fnDisks[deviceSlot].filename, MAX_FILENAME_LEN);
     }
