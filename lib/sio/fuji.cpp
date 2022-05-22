@@ -30,6 +30,7 @@
 #define SIO_FUJICMD_WRITE_HOST_SLOTS 0xF3
 #define SIO_FUJICMD_READ_DEVICE_SLOTS 0xF2
 #define SIO_FUJICMD_WRITE_DEVICE_SLOTS 0xF1
+#define SIO_FUJICMD_GET_WIFI_ENABLED 0xEA
 #define SIO_FUJICMD_UNMOUNT_IMAGE 0xE9
 #define SIO_FUJICMD_GET_ADAPTERCONFIG 0xE8
 #define SIO_FUJICMD_NEW_DISK 0xE7
@@ -50,6 +51,7 @@
 #define SIO_FUJICMD_COPY_FILE 0xD8
 #define SIO_FUJICMD_MOUNT_ALL 0xD7
 #define SIO_FUJICMD_SET_BOOT_MODE 0xD6
+#define SIO_FUJICMD_GET_IMAGE_INFO 0xD5
 #define SIO_FUJICMD_STATUS 0x53
 #define SIO_FUJICMD_HSIO_INDEX 0x3F
 
@@ -281,6 +283,14 @@ void sioFuji::sio_net_get_wifi_status()
     // WL_CONNECTED = 3, WL_DISCONNECTED = 6
     uint8_t wifiStatus = fnWiFi.connected() ? 3 : 6;
     sio_to_computer(&wifiStatus, sizeof(wifiStatus), false);
+}
+
+// Check if Wifi is enabled
+void sioFuji::sio_net_get_wifi_enabled()
+{
+    uint8_t e = Config.get_wifi_enabled() ? 1 : 0;
+    Debug_printf("Fuji cmd: GET WIFI ENABLED: %d\n",e);
+    sio_to_computer(&e, sizeof(e), false);
 }
 
 // Mount Server
@@ -1237,6 +1247,7 @@ void sioFuji::sio_read_device_slots()
     disk_slot diskSlots[MAX_DISK_DEVICES];
 
     int returnsize;
+    char *filename;
 
     // AUX1 specifies which slots to return
     // Handle disk slots
@@ -1247,7 +1258,19 @@ void sioFuji::sio_read_device_slots()
         {
             diskSlots[i].mode = _fnDisks[i].access_mode;
             diskSlots[i].hostSlot = _fnDisks[i].host_slot;
-            strlcpy(diskSlots[i].filename, _fnDisks[i].filename, MAX_DISPLAY_FILENAME_LEN);
+            if ( _fnDisks[i].filename[0] == '\0' )
+            {
+                strlcpy(diskSlots[i].filename, "", MAX_DISPLAY_FILENAME_LEN);
+            }
+            else
+            {
+                // Just use the basename of the image, no path. The full path+filename is
+                // usually too long for the Atari to show anyway, so the image name is more important.
+                // Note: Basename can modify the input, so use a copy
+                filename = strdup(_fnDisks[i].filename);
+                strlcpy ( diskSlots[i].filename, basename(filename), MAX_DISPLAY_FILENAME_LEN );
+                free(filename);
+            }
         }
 
         returnsize = sizeof(disk_slot) * MAX_DISK_DEVICES;
@@ -1633,6 +1656,10 @@ void sioFuji::sio_process(uint32_t commanddata, uint8_t checksum)
         sio_late_ack();
         sio_write_device_slots();
         break;
+    case SIO_FUJICMD_GET_WIFI_ENABLED:
+        sio_ack();
+        sio_net_get_wifi_enabled();
+        break;
     case SIO_FUJICMD_UNMOUNT_IMAGE:
         sio_ack();
         sio_disk_image_umount();
@@ -1697,6 +1724,10 @@ void sioFuji::sio_process(uint32_t commanddata, uint8_t checksum)
         sio_ack();
         sio_set_boot_mode();
         break;
+    case SIO_FUJICMD_GET_IMAGE_INFO:
+        sio_ack();
+        sio_get_image_info();
+        break;
     default:
         sio_nak();
     }
@@ -1710,4 +1741,47 @@ int sioFuji::get_disk_id(int drive_slot)
 std::string sioFuji::get_host_prefix(int host_slot)
 {
     return _fnHosts[host_slot].get_prefix();
+}
+
+// Send info about the image mounted in the specified slot.
+// WIP - nothing should call this yet.
+int sioFuji::sio_get_image_info(bool siomode, int slot)
+{
+    uint8_t deviceSlot = siomode ? cmdFrame.aux1 : slot;
+
+    Debug_println("********************************************************");
+    Debug_printf("Fuji cmd: GET IMAGE INFO for Slot #%d\n", deviceSlot);
+
+    // More to be added to this struct.. right now for testing just the full path/filename to the image.
+    struct mounted_image_info
+    {
+        char fullFilename[MAX_FILENAME_LEN];
+    };
+
+    mounted_image_info info;
+
+    memset(&info, 0, sizeof(info));
+
+    // Make sure we weren't given a bad hostSlot
+    if (!_validate_device_slot(deviceSlot))
+    {
+        return _on_error(siomode);
+    }
+    if (!_validate_host_slot(_fnDisks[deviceSlot].host_slot))
+    {
+        return _on_error(siomode);
+    }
+
+    // Populate the return structure with information. Only if we have something mounted
+    // in this slot.
+    if ( _fnDisks[deviceSlot].filename[0] != '\0' ) 
+    {
+        // temp: just playing with different data to see it on the atari side. 
+        sprintf(info.fullFilename, "S%d : ", _fnDisks[deviceSlot].host_slot+1);
+        //strlcpy (info.fullFilename, _fnDisks[deviceSlot].filename, MAX_FILENAME_LEN);
+    }
+
+    sio_to_computer((uint8_t *)&info, sizeof(info), false);
+    Debug_println("********************************************************");
+    return _on_ok(siomode);
 }
