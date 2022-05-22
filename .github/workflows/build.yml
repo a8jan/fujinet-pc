@@ -38,10 +38,21 @@ jobs:
       with:
         name: fujinet-pc_ubuntu-22.04-amd64
         path: build/dist/**
+        
+  build-ubuntu-18:
+    runs-on: ubuntu-18.04
 
-#     - name: Test
-#       working-directory: ${{github.workspace}}/build
-#       # Execute tests defined by the CMake configuration.  
-#       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-#       run: ctest -C ${{env.BUILD_TYPE}}
-      
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target=dist
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: fujinet-pc_ubuntu-18.04-amd64
+        path: build/dist/**
+
