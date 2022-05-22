@@ -56,3 +56,19 @@ jobs:
         name: fujinet-pc_ubuntu-18.04-amd64
         path: build/dist/**
 
+  build-macos-catalina:
+    runs-on: macos-10.15
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target=dist
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: fujinet-pc_macos-10.15
+        path: build/dist/**
