@@ -23,14 +23,17 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v3
+    - name: '🧰 Checkout'
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: Build
+    - name: '🚧 Build FujiNet-PC'
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target=dist
 
@@ -43,12 +46,15 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-    - uses: actions/checkout@v3
+    - name: '🧰 Checkout'
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: Build
+    - name: '🚧 Build FujiNet-PC'
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target=dist
 
     - uses: actions/upload-artifact@v3
@@ -60,15 +66,60 @@ jobs:
     runs-on: macos-10.15
 
     steps:
-    - uses: actions/checkout@v3
+    - name: '🧰 Checkout'
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: Build
+    - name: '🚧 Build FujiNet-PC'
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target=dist
 
     - uses: actions/upload-artifact@v3
       with:
         name: fujinet-pc_macos-10.15
         path: build/dist/**
+
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - name: '🧰 Checkout'
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        
+    - name: Setup MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: CLANG64
+        update: true
+        install: >-
+          git
+          base-devel
+        pacboy: >-
+          toolchain:p
+          cmake:p
+          ninja:p
+
+    - name: Uname
+      run: uname -a
+
+    - name: Show CMake version
+      run: cmake --version
+
+#     - name: Configure CMake
+#       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+#     - name: '🚧 Build FujiNet-PC'
+#       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target=dist
+
+#     - uses: actions/upload-artifact@v3
+#       with:
+#         name: fujinet-pc_windows-x64
+#         path: build/dist/**
