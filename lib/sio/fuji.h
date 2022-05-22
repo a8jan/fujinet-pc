@@ -91,6 +91,7 @@ protected:
     void sio_write_host_slots();       // 0xF3
     void sio_read_device_slots();      // 0xF2
     void sio_write_device_slots();     // 0xF1
+    void sio_net_get_wifi_enabled();   // 0xEA    
     int sio_disk_image_umount(bool siomode=true, int slot=-1);  // 0xE9
     void sio_get_adapter_config();     // 0xE8
     void sio_new_disk();               // 0xE7
@@ -110,6 +111,7 @@ protected:
     void sio_set_boot_config();        // 0xD9
     void sio_copy_file();              // 0xD8
     void sio_set_boot_mode();          // 0xD6
+    int sio_get_image_info(bool siomode=true, int slot=-1);         // 0xD5
 
     void sio_status() override;
     void sio_process(uint32_t commanddata, uint8_t checksum) override;
