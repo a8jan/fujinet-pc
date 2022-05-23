@@ -102,10 +102,6 @@ jobs:
     - name: '🧰 Checkout'
       uses: actions/checkout@v3
 
-    - name: Uninstall OpenSSL
-      shell: pwsh
-      run: choco uninstall openssl
-
     - name: Setup MSYS2
       uses: msys2/setup-msys2@v2
       with:
@@ -133,12 +129,21 @@ jobs:
       run: cmake --build build
 
     - name: 'Prepare dist'
-      run: cmake --build build --target=dist
+      run: |
+        cmake --build build --target=dist
+
+    # Windows runner is pre-installed with some openssl
+    # dist target skippes libssl and libvrypto in /c/Windows/SYSTEM32/
+    - name: 'Update dist with OpenSSL from CLANG64'
+      run: |
+        cp -pv /clang64/bin/libssl-*-x64.dll build/dist
+        cp -pv /clang64/bin/libcrypto-*-x64.dll build/dist
 
     - name: 'List dist'
+      working-directory: build/dist
       run: |
-        ldd build/fujinet.exe
-        ls -la build/dist
+        ls -la .
+        ldd fujinet.exe
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
