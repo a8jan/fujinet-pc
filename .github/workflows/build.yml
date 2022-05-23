@@ -133,8 +133,8 @@ jobs:
 
     - name: 'List dist'
       run: |
-        ldd fujinet.exe
-        ls -la dist
+        ldd build/fujinet.exe
+        ls -la build/dist
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
