@@ -24,4 +24,7 @@ pacman -S --needed mingw-w64-clang-x86_64-toolchain
 
 # install git, CLANG64 CMake and Ninja build system
 pacman -S git mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-ninja
+
+# install stack protection library
+pacman -S mingw-w64-clang-x86_64-libssp
 ```
