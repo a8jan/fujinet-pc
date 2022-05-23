@@ -101,7 +101,11 @@ jobs:
     steps:
     - name: '🧰 Checkout'
       uses: actions/checkout@v3
-        
+
+    - name: Uninstall OpenSSL
+      shell: pwsh
+      run: choco uninstall openssl
+
     - name: Setup MSYS2
       uses: msys2/setup-msys2@v2
       with:
