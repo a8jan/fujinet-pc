@@ -131,6 +131,11 @@ jobs:
     - name: 'Prepare dist'
       run: cmake --build build --target=dist
 
+    - name: 'List dist'
+      run: |
+        ldd fujinet.exe
+        ls -la dist
+
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
       with:
