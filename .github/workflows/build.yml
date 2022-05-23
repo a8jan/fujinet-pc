@@ -24,18 +24,18 @@ jobs:
 
     steps:
     - name: '🧰 Checkout'
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      uses: actions/checkout@v3
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: '🚧 Build FujiNet-PC'
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target=dist
+      run: cmake --build build
+
+    - name: 'Prepare dist'
+      run: cmake --build build --target=dist
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
@@ -48,15 +48,16 @@ jobs:
 
     steps:
     - name: '🧰 Checkout'
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      uses: actions/checkout@v3
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: '🚧 Build FujiNet-PC'
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target=dist
+      run: cmake --build build
+
+    - name: 'Prepare dist'
+      run: cmake --build build --target=dist
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
@@ -69,15 +70,16 @@ jobs:
 
     steps:
     - name: '🧰 Checkout'
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      uses: actions/checkout@v3
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: '🚧 Build FujiNet-PC'
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target=dist
+      run: cmake --build build
+
+    - name: 'Prepare dist'
+      run: cmake --build build --target=dist
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
@@ -93,9 +95,7 @@ jobs:
 
     steps:
     - name: '🧰 Checkout'
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      uses: actions/checkout@v3
         
     - name: Setup MSYS2
       uses: msys2/setup-msys2@v2
@@ -121,6 +121,9 @@ jobs:
       run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: '🚧 Build FujiNet-PC'
+      run: cmake --build build
+
+    - name: 'Prepare dist'
       run: cmake --build build --target=dist
 
     - name: Upload build artifact
