@@ -160,7 +160,7 @@ class Version:
                     self._date = subprocess.check_output(
                         ["git", "show", "--quiet", "--date=format-local:%Y-%m-%d %H:%M:%S", "--format=%cd", self.head],
                         env={'TZ': 'UTC0'}, universal_newlines=True).strip()
-                    print("HEAD date:", self._date)
+                    # print("HEAD date:", self._date)
                 except subprocess.CalledProcessError:
                     pass
         return self._date
@@ -175,10 +175,10 @@ class Version:
                     self._ver_date = subprocess.check_output(
                         ["git", "show", "--quiet", "--date=format-local:%y%m", "--format=%cd", self.head],
                         env={'TZ': 'UTC0'}, universal_newlines=True).strip()
-                    print("HEAD version date:", self._ver_date)
+                    # print("HEAD ver date:", self._ver_date)
                 except subprocess.CalledProcessError:
                     pass
-            print("version date:", self._ver_date)
+            # print("ver date:", self._ver_date)
         return self._ver_date
 
     @property
