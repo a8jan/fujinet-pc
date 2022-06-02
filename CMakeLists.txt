@@ -129,7 +129,14 @@ set(CJSON_BUILD_SHARED_LIBS OFF CACHE BOOL "Overrides BUILD_SHARED_LIBS if CJSON
 add_subdirectory(components/cJSON)
 add_link_options("-fstack-protector")
 
-add_executable(fujinet ${SOURCES})
+add_custom_command(
+  OUTPUT include/version.h
+  COMMAND python build_version.py
+  DEPENDS ${SOURCE_FILES} build_version.py
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_executable(fujinet ${SOURCES} include/version.h)
 
 set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
 find_package(OpenSSL REQUIRED)
