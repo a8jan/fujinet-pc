@@ -33,7 +33,7 @@ jobs:
     name: Prepare for release
     steps:
     - name: Create release tag
-      if: ${{ github.event.inputs.releaseBuild }}
+      if: github.event.inputs.releaseBuild
       run: echo 'TODO run python build_version.py release ${{ github.event.inputs.releaseVersion }}'
   build-ubuntu-22:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
@@ -64,112 +64,112 @@ jobs:
         name: fujinet-pc_ubuntu-22.04-amd64
         path: build/dist/**
         
-  build-ubuntu-18:
-    runs-on: ubuntu-18.04
-    name: Ubuntu 18.04
-    needs: release-prep
+#   build-ubuntu-18:
+#     runs-on: ubuntu-18.04
+#     name: Ubuntu 18.04
+#     needs: release-prep
 
-    steps:
-    - name: '🧰 Checkout'
-      uses: actions/checkout@v3
+#     steps:
+#     - name: '🧰 Checkout'
+#       uses: actions/checkout@v3
 
-    - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+#     - name: Configure CMake
+#       run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: '🚧 Build FujiNet-PC'
-      run: cmake --build build
+#     - name: '🚧 Build FujiNet-PC'
+#       run: cmake --build build
 
-    - name: 'Prepare dist'
-      run: cmake --build build --target=dist
+#     - name: 'Prepare dist'
+#       run: cmake --build build --target=dist
 
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: fujinet-pc_ubuntu-18.04-amd64
-        path: build/dist/**
+#     - name: Upload build artifact
+#       uses: actions/upload-artifact@v3
+#       with:
+#         name: fujinet-pc_ubuntu-18.04-amd64
+#         path: build/dist/**
 
-  build-macos-catalina:
-    runs-on: macos-10.15
-    name: macOS 10.15 Catalina
-    needs: release-prep
+#   build-macos-catalina:
+#     runs-on: macos-10.15
+#     name: macOS 10.15 Catalina
+#     needs: release-prep
 
-    steps:
-    - name: '🧰 Checkout'
-      uses: actions/checkout@v3
+#     steps:
+#     - name: '🧰 Checkout'
+#       uses: actions/checkout@v3
 
-    - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+#     - name: Configure CMake
+#       run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: '🚧 Build FujiNet-PC'
-      run: cmake --build build
+#     - name: '🚧 Build FujiNet-PC'
+#       run: cmake --build build
 
-    - name: 'Prepare dist'
-      run: cmake --build build --target=dist
+#     - name: 'Prepare dist'
+#       run: cmake --build build --target=dist
 
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: fujinet-pc_macos-10.15
-        path: build/dist/**
+#     - name: Upload build artifact
+#       uses: actions/upload-artifact@v3
+#       with:
+#         name: fujinet-pc_macos-10.15
+#         path: build/dist/**
 
-  build-windows:
-    runs-on: windows-latest
-    name: Windows
-    needs: release-prep
+#   build-windows:
+#     runs-on: windows-latest
+#     name: Windows
+#     needs: release-prep
 
-    defaults:
-      run:
-        shell: msys2 {0}
+#     defaults:
+#       run:
+#         shell: msys2 {0}
 
-    steps:
-    - name: '🧰 Checkout'
-      uses: actions/checkout@v3
+#     steps:
+#     - name: '🧰 Checkout'
+#       uses: actions/checkout@v3
 
-    - name: Setup MSYS2
-      uses: msys2/setup-msys2@v2
-      with:
-        msystem: CLANG64
-        update: true
-        install: >-
-          git
-          base-devel
-        pacboy: >-
-          toolchain:p
-          cmake:p
-          ninja:p
-          libssp:p
+#     - name: Setup MSYS2
+#       uses: msys2/setup-msys2@v2
+#       with:
+#         msystem: CLANG64
+#         update: true
+#         install: >-
+#           git
+#           base-devel
+#         pacboy: >-
+#           toolchain:p
+#           cmake:p
+#           ninja:p
+#           libssp:p
 
-    - name: Uname
-      run: uname -a
+#     - name: Uname
+#       run: uname -a
 
-    - name: Show CMake version
-      run: cmake --version
+#     - name: Show CMake version
+#       run: cmake --version
 
-    - name: Configure CMake
-      run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+#     - name: Configure CMake
+#       run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: '🚧 Build FujiNet-PC'
-      run: cmake --build build
+#     - name: '🚧 Build FujiNet-PC'
+#       run: cmake --build build
 
-    - name: 'Prepare dist'
-      run: |
-        cmake --build build --target=dist
+#     - name: 'Prepare dist'
+#       run: |
+#         cmake --build build --target=dist
 
-    # Windows runner is pre-installed with some openssl
-    # dist target skippes libssl and libvrypto in /c/Windows/SYSTEM32/
-    - name: 'Update dist with OpenSSL from CLANG64'
-      run: |
-        cp -pv /clang64/bin/libssl-*-x64.dll build/dist
-        cp -pv /clang64/bin/libcrypto-*-x64.dll build/dist
+#     # Windows runner is pre-installed with some openssl
+#     # dist target skippes libssl and libvrypto in /c/Windows/SYSTEM32/
+#     - name: 'Update dist with OpenSSL from CLANG64'
+#       run: |
+#         cp -pv /clang64/bin/libssl-*-x64.dll build/dist
+#         cp -pv /clang64/bin/libcrypto-*-x64.dll build/dist
 
-    - name: 'List dist'
-      working-directory: build/dist
-      run: |
-        ls -la .
-        ldd fujinet.exe
+#     - name: 'List dist'
+#       working-directory: build/dist
+#       run: |
+#         ls -la .
+#         ldd fujinet.exe
 
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: fujinet-pc_windows-x64
-        path: build/dist/**
+#     - name: Upload build artifact
+#       uses: actions/upload-artifact@v3
+#       with:
+#         name: fujinet-pc_windows-x64
+#         path: build/dist/**
