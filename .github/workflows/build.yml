@@ -38,7 +38,7 @@ jobs:
         echo 'releaseBuild: ${{ github.event.inputs.releaseBuild }}'
         echo 'releaseVersion: ${{ github.event.inputs.releaseVersion }}'
     - name: Create release tag
-      if: $(( github.event.inputs.releaseBuild == 'true' }}
+      if: ${{ github.event.inputs.releaseBuild == 'true' }}
       run: python build_version.py release ${{ github.event.inputs.releaseVersion }}'
 
 #   build-ubuntu-22:
