@@ -29,7 +29,7 @@ env:
 jobs:
   release-prep:
     # prepare to build a release: create tag release-{version} pointing to head
-    runs-on: ubuntu-lates
+    runs-on: ubuntu-latest
     name: Prepare for release
     steps:
     - name: Create release tag
