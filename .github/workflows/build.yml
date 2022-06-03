@@ -10,18 +10,38 @@ on:
       buildType:
         description: 'Build Type'
         required: true
+        type: choice
+        options:
+        - Debug
+        - Release
         default: 'Debug'
+      releaseBuild:
+        description: 'Release build'
+        type: boolean
+        default: false
+      releaseVersion:
+        description: 'Release version, blank for auto-generated version'
+        
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: ${{ github.event.inputs.buildType }}
 
 jobs:
+  release-prep:
+    # prepare to build a release: create tag release-{version} pointing to head
+    runs-on: ubuntu-lates
+    name: Prepare for release
+    steps:
+    - name: Create release tag
+      if: ${{ github.event.inputs.releaseBuild }}
+      run: echo 'TODO run python build_version.py release ${{ github.event.inputs.releaseVersion }}'
   build-ubuntu-22:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ubuntu-22.04
     name: Ubuntu 22.04
+    needs: release-prep
 
     steps:
     - name: '🧰 Checkout'
@@ -47,6 +67,7 @@ jobs:
   build-ubuntu-18:
     runs-on: ubuntu-18.04
     name: Ubuntu 18.04
+    needs: release-prep
 
     steps:
     - name: '🧰 Checkout'
@@ -70,6 +91,7 @@ jobs:
   build-macos-catalina:
     runs-on: macos-10.15
     name: macOS 10.15 Catalina
+    needs: release-prep
 
     steps:
     - name: '🧰 Checkout'
@@ -93,6 +115,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     name: Windows
+    needs: release-prep
 
     defaults:
       run:
