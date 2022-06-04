@@ -193,17 +193,25 @@ class Version:
         return self._head_tags
 
 
-def create_release_tag(ver):
+def create_release_tag(ver, push):
     tag = ver.get_tag()
     if tag in ver.head_tags:
         print("Release tag alredy on HEAD:", tag)
         return 0
+    print("Create release tag:", tag)
     try:
-        print("Create release tag:", tag)
         out = subprocess.check_output(["git", "tag", tag], universal_newlines=True).splitlines()
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         print("Failed to create tag", tag)
         return -1
+    if push:
+        print("Push tag to origin")
+        try:
+            out = subprocess.check_output(["git", "push", "origin", tag], universal_newlines=True).splitlines()
+        except subprocess.CalledProcessError:
+            print("Failed to push tag")
+            return -1
+
     return 0
 
 
@@ -245,12 +253,15 @@ def main():
     #     return 0
 
     release = False
+    push = False
     rel_ver = None
     rel_msg = None
 
     # arguments
-    if len(sys.argv) > 1 and sys.argv[1] == "release":
+    if len(sys.argv) > 1 and (sys.argv[1] == "release" or sys.argv[1].startswith("release:")):
         release = True
+        if sys.argv[1].startswith("release:") and sys.argv[1][8:] == "push":
+            push = True
         if len(sys.argv) > 2:
             rel_ver = sys.argv[2]
             if len(sys.argv) > 3:
@@ -264,7 +275,7 @@ def main():
     print("Version date:", ver.date)
 
     if release:
-        return(create_release_tag(ver))
+        return(create_release_tag(ver, push))
 
     return(update_version_file(ver))
 
