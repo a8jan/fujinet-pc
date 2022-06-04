@@ -30,7 +30,7 @@ jobs:
   release-prep:
     # prepare to build a release: create tag release-{version} pointing to head
     runs-on: ubuntu-latest
-    name: Prepare for release
+    name: Release check
     steps:
     - name: List inputs
       run: |
@@ -40,6 +40,10 @@ jobs:
     - name: '🧰 Checkout'
       if: ${{ github.event.inputs.releaseBuild == 'true' }}
       uses: actions/checkout@v3
+    - name: Fetch tags
+      if: ${{ github.event.inputs.releaseBuild == 'true' }}
+#       run: git fetch --prune --unshallow --tags
+      run: git tag --list
     - name: Create release tag
       if: ${{ github.event.inputs.releaseBuild == 'true' }}
       run: python build_version.py release:push ${{ github.event.inputs.releaseVersion }}
