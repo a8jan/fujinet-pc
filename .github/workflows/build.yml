@@ -16,7 +16,7 @@ on:
         - Release
         default: 'Debug'
       releaseBuild:
-        description: 'Release build'
+        description: 'New release build'
         type: boolean
         default: false
       releaseVersion:
@@ -30,22 +30,26 @@ jobs:
   release-prep:
     # prepare to build a release: create tag release-{version} pointing to head
     runs-on: ubuntu-latest
-    name: Release check
+    name: Prepare for build
     steps:
-    - name: List inputs
-      run: |
-        echo 'buildType: ${{ github.event.inputs.buildType }}'
-        echo 'releaseBuild: ${{ github.event.inputs.releaseBuild }}'
-        echo 'releaseVersion: ${{ github.event.inputs.releaseVersion }}'
+#     - name: List inputs
+#       run: |
+#         echo 'buildType: ${{ github.event.inputs.buildType }}'
+#         echo 'releaseBuild: ${{ github.event.inputs.releaseBuild }}'
+#         echo 'releaseVersion: ${{ github.event.inputs.releaseVersion }}'
+    - name: Not a release build
+      if: ${{ github.event.inputs.releaseBuild == 'false' }}
+      run: echo 'This build in not a release build'
+    - name: New release build
+      if: ${{ github.event.inputs.releaseBuild == 'true' }}
+      run: echo 'This build is new release build'
     - name: '🧰 Checkout'
       if: ${{ github.event.inputs.releaseBuild == 'true' }}
       uses: actions/checkout@v3
     - name: Fetch tags
       if: ${{ github.event.inputs.releaseBuild == 'true' }}
-      run: |
-        git fetch --prune --unshallow --tags
-        git tag --list
-    - name: Create release tag
+      run: git fetch --prune --unshallow --tags
+    - name: Prepare release tag
       if: ${{ github.event.inputs.releaseBuild == 'true' }}
       run: python build_version.py release:push ${{ github.event.inputs.releaseVersion }}
 
@@ -60,6 +64,9 @@ jobs:
 #     steps:
 #     - name: '🧰 Checkout'
 #       uses: actions/checkout@v3
+
+#     - name: Fetch tags
+#       run: git fetch --prune --unshallow --tags
 
 #     - name: Configure CMake
 #       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
