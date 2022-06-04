@@ -195,23 +195,24 @@ class Version:
 
 def create_release_tag(ver, push):
     tag = ver.get_tag()
+    print("Release tag:", tag)
     if tag in ver.head_tags:
-        print("Release tag alredy on HEAD:", tag)
+        print("Release tag alredy on HEAD")
         return 0
-    print("Create release tag:", tag)
     try:
+        print("Adding tag")
         out = subprocess.check_output(["git", "tag", tag], universal_newlines=True).splitlines()
     except subprocess.CalledProcessError:
-        print("Failed to create tag", tag)
+        print("Failed to add tag:", tag)
         return -1
     if push:
-        print("Push tag to origin")
+        print("Pushing tag to origin")
         try:
             out = subprocess.check_output(["git", "push", "origin", tag], universal_newlines=True).splitlines()
         except subprocess.CalledProcessError:
             print("Failed to push tag")
             return -1
-
+    print("Done")
     return 0
 
 
