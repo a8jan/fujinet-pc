@@ -84,7 +84,7 @@ jobs:
             target: windows-x64
             runner: windows-latest
     continue-on-error: true
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-latest
 
     steps:
     - name: Build ${{ matrix.name }}
