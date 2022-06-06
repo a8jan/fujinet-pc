@@ -84,10 +84,11 @@ jobs:
             target: windows-x64
             runner: windows-latest
     continue-on-error: true
+    runs-on: ${{ matrix.runner }}
 
     steps:
     - name: Build ${{ matrix.name }}
-      run: echo "Building ${{ matrix.name }} (${{ matrix.target }}) on ${{ matrix.runner }}""
+      run: echo "Building ${{ matrix.name }} (${{ matrix.target }}) on ${{ matrix.runner }}"
 
   # build-ubuntu-22:
   #   # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
