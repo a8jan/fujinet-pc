@@ -67,13 +67,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: []
-        target: []
-        runner: []
+        name: [Ubuntu 22.04]
+        target: [ubuntu-22.04-amd64]
+        runner: [ubuntu-22.04]
         include:
-          - name: Ubuntu 22.04
-            target: ubuntu-22.04-amd64
-            runner: ubuntu-22.04
           - name: Ubuntu 18.04
             target: ubuntu-18.04-amd64
             runner: ubuntu-18.04
