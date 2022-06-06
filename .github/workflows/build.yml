@@ -70,25 +70,25 @@ jobs:
         name: [Ubuntu 22.04]
         target: [ubuntu-22.04-amd64]
         runner: [ubuntu-22.04]
-        default_shell: [bash]
+        default-shell: [bash]
         include:
           - name: Ubuntu 18.04
             target: ubuntu-18.04-amd64
             runner: ubuntu-18.04
-            default_shell: [bash]
+            default-shell: [bash]
           - name: macOS 10.15 Catalina
             target: macos-10.15
             runner: macos-10.15
-            default_shell: [bash]
+            default-shell: [bash]
           - name: Windows
             target: windows-x64
             runner: windows-latest
-            default_shell: [msys2 {0}]
+            default-shell: [msys2 {0}]
     continue-on-error: true
     runs-on: ${{ matrix.runner }}
     defaults:
       run:
-        shell: ${{ matrix.default_shell }}
+        shell: ${{ matrix.default-shell }}
 
     steps:
     - name: About ${{ matrix.name }}
