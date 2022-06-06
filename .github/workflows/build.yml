@@ -83,7 +83,7 @@ jobs:
           - name: Windows
             target: windows-x64
             runner: windows-latest
-            default-shell: [msys2 {0}]
+            default-shell: [msys2]
     continue-on-error: true
     runs-on: ${{ matrix.runner }}
     defaults:
