@@ -92,7 +92,7 @@ jobs:
 
     steps:
     # Setup MSYS2 on Windows
-    - name: [Windows] Setup MSYS2
+    - name: '[Windows] Setup MSYS2'
       if: ${{ startsWith(matrix.target, 'windows') }}
       uses: msys2/setup-msys2@v2
       with:
