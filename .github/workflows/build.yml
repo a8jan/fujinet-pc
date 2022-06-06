@@ -127,9 +127,9 @@ jobs:
     - name: Prepare dist
       run: cmake --build build --target=dist
 
-    # - name: Test run
-    #   working-directory: build/dist
-    #   run: ./fujinet -v
+    - name: Test run
+      working-directory: build/dist
+      run: ./fujinet -v
 
     # Windows runner is pre-installed with some openssl
     # dist target skippes libssl and libcrypto in /c/Windows/SYSTEM32/
