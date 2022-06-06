@@ -33,6 +33,7 @@
 // #endif
 
 #include "fnTaskManager.h"
+#include "version.h"
 
 // fnSystem is declared and defined in fnSystem.h/cpp
 // fnBtManager is declared and defined in fnBluetooth.h/cpp
@@ -63,9 +64,44 @@ void sighandler(int signum)
     exit(0);
 }
 
+void print_version()
+{
+    printf("FujiNet-PC " FN_VERSION_FULL "\n");
+    printf(FN_VERSION_DATE "\n");
+#if defined(_WIN32)
+    printf("Window\n");
+#elif defined(__linux__)
+    printf("Linux\n");
+#elif defined(__APPLE__)
+    printf("macOS\n");
+#endif
+}
+
 // Initial setup
 void main_setup(int argc, char *argv[])
 {
+    // program arguments
+    int opt;
+    while ((opt = getopt(argc, argv, "vu:c:s:")) != -1) {
+        switch (opt) {
+            case 'v':
+                print_version();
+                exit(EXIT_SUCCESS);
+            case 'u':
+                Config.store_general_interface_url(optarg);
+                break;
+            case 'c':
+                Config.store_general_config_path(optarg);
+                break;
+            case 's':
+                Config.store_general_SD_path(optarg);
+                break;
+            default: /* '?' */
+                fprintf(stderr, "Usage: %s [-v] [-u URL] [-c config_file] [-s SD_directory]\n", argv[0]);
+                exit(EXIT_FAILURE);
+        }
+    }
+
 #ifdef DEBUG
     // fnUartDebug.begin(DEBUG_SPEED);
     unsigned long startms = fnSystem.millis();
@@ -117,25 +153,6 @@ void main_setup(int argc, char *argv[])
 #if defined(_WIN32)
     signal(SIGBREAK, sighandler);
 #endif
-
-    // program arguments
-    int opt;
-    while ((opt = getopt(argc, argv, "u:c:s:")) != -1) {
-        switch (opt) {
-            case 'u':
-                Config.store_general_interface_url(optarg);
-                break;
-            case 'c':
-                Config.store_general_config_path(optarg);
-                break;
-            case 's':
-                Config.store_general_SD_path(optarg);
-                break;
-            default: /* '?' */
-                fprintf(stderr, "Usage: %s [-u URL] [-c config_file] [-s SD_directory]\n", argv[0]);
-                exit(EXIT_FAILURE);
-        }
-    }
 
     fnSystem.check_hardware_ver();
     Debug_printf("Detected Hardware Version: %s\n", fnSystem.get_hardware_ver_str());
