@@ -90,14 +90,8 @@ jobs:
       run:
         shell: ${{ matrix.default-shell }}
 
-    steps:
-    - name: About ${{ matrix.name }}
-      run: |
-        echo "Building ${{ matrix.name }} (${{ matrix.target }}) on ${{ matrix.runner }}"
-        uname -a
-
     # Setup MSYS2 on Windows
-    - name: Setup MSYS2
+    - name: [Windows] Setup MSYS2
       if: ${{ startsWith(matrix.target, 'windows') }}
       uses: msys2/setup-msys2@v2
       with:
@@ -111,6 +105,12 @@ jobs:
           cmake:p
           ninja:p
           libssp:p
+
+    steps:
+    - name: About ${{ matrix.name }}
+      run: |
+        echo "Building ${{ matrix.name }} (${{ matrix.target }}) on ${{ matrix.runner }}"
+        uname -a
 
     - name: '🧰 Checkout'
       uses: actions/checkout@v3
@@ -139,7 +139,7 @@ jobs:
     # Windows runner is pre-installed with some openssl
     # dist target skippes libssl and libcrypto in /c/Windows/SYSTEM32/
     # add missing libs now
-    - name: 'Update dist with OpenSSL from CLANG64'
+    - name: '[Windows] Update dist with OpenSSL from CLANG64'
       if: ${{ startsWith(matrix.target, 'windows') }}
       run: |
         cp -pv /clang64/bin/libssl-*-x64.dll build/dist
