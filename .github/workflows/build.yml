@@ -91,7 +91,7 @@ jobs:
 
     # Setup MSYS2 on Windows
     - name: Setup MSYS2
-      if: startsWith(${{ matrix.target }}, 'windows')
+      if: ${{ startsWith(matrix.target, 'windows') }}
       uses: msys2/setup-msys2@v2
       with:
         msystem: CLANG64
