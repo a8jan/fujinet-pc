@@ -67,9 +67,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [""]
-        target: [""]
-        runner: [""]
+        name: []
+        target: []
+        runner: []
         include:
           - name: Ubuntu 22.04
             target: ubuntu-22.04-amd64
@@ -84,7 +84,7 @@ jobs:
             target: windows-x64
             runner: windows-latest
     continue-on-error: true
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
 
     steps:
     - name: Build ${{ matrix.name }}
