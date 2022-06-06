@@ -16,18 +16,22 @@ on:
         - Release
         default: 'Debug'
       releaseBuild:
-        description: 'New release build'
+        description: 'Make a release build'
         type: boolean
         default: false
       releaseVersion:
-        description: 'Release version, blank for auto-generated version'
+        description: 'Release version, blank for auto'
+      doRelease:
+        description: 'Create GH Release'
+        type: boolean
+        default: false
         
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: ${{ github.event.inputs.buildType }}
 
 jobs:
-  release-prep:
+  build-prep:
     # prepare to build a release: create tag release-{version} pointing to head
     runs-on: ubuntu-latest
     name: Prepare for build
@@ -37,12 +41,17 @@ jobs:
 #         echo 'buildType: ${{ github.event.inputs.buildType }}'
 #         echo 'releaseBuild: ${{ github.event.inputs.releaseBuild }}'
 #         echo 'releaseVersion: ${{ github.event.inputs.releaseVersion }}'
-    - name: Not a release build
+    - name: Not release build
       if: ${{ github.event.inputs.releaseBuild == 'false' }}
-      run: echo 'This build in not a release build'
-    - name: New release build
+      run: |
+        echo 'This build in not a release build.'
+        echo 'Release tag will not be created.'
+        echo 'However if release tag exists on HEAD, it will be used to make a release build.'
+    - name: Prepeare for release build
       if: ${{ github.event.inputs.releaseBuild == 'true' }}
-      run: echo 'This build is new release build'
+      run: |
+        echo 'This build is release build.'
+        echo 'New release tag will be created (or existing tag on HEAD will be used) to make a release build.'
     - name: '🧰 Checkout'
       if: ${{ github.event.inputs.releaseBuild == 'true' }}
       uses: actions/checkout@v3
@@ -53,40 +62,67 @@ jobs:
       if: ${{ github.event.inputs.releaseBuild == 'true' }}
       run: python build_version.py release:push ${{ github.event.inputs.releaseVersion }}
 
-  build-ubuntu-22:
-    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
-    # You can convert this to a matrix build if you need cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-22.04
-    name: Ubuntu 22.04
-    needs: release-prep
+  build-target:
+    needs: build-prep
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [""]
+        target: [""]
+        runner: [""]
+        include:
+          - name: Ubuntu 22.04
+            target: ubuntu-22.04-amd64
+            runner: ubuntu-22.04
+          - name: Ubuntu 18.04
+            target: ubuntu-18.04-amd64
+            runner: ubuntu-18.04
+          - name: macOS 10.15 Catalina
+            target: macos-10.15
+            runner: macos-10.15
+          - name: Windows
+            target: windows-x64
+            runner: windows-latest
+    continue-on-error: true
 
     steps:
-    - name: '🧰 Checkout'
-      uses: actions/checkout@v3
+    - name: Build ${{ matrix.name }}
+      run: echo "Building ${{ matrix.name }} (${{ matrix.target }}) on ${{ matrix.runner }}""
 
-    - name: Fetch tags
-      run: git fetch --prune --unshallow --tags
+  # build-ubuntu-22:
+  #   # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+  #   # You can convert this to a matrix build if you need cross-platform coverage.
+  #   # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  #   runs-on: ubuntu-22.04
+  #   name: Ubuntu 22.04
+  #   needs: build-prep
 
-    - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+  #   steps:
+  #   - name: '🧰 Checkout'
+  #     uses: actions/checkout@v3
 
-    - name: '🚧 Build FujiNet-PC'
-      run: cmake --build build
+  #   - name: Fetch tags
+  #     run: git fetch --prune --unshallow --tags
 
-    - name: 'Prepare dist'
-      run: cmake --build build --target=dist
+  #   - name: Configure CMake
+  #     run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: fujinet-pc_ubuntu-22.04-amd64
-        path: build/dist/**
+  #   - name: '🚧 Build FujiNet-PC'
+  #     run: cmake --build build
+
+  #   - name: 'Prepare dist'
+  #     run: cmake --build build --target=dist
+
+  #   - name: Upload build artifact
+  #     uses: actions/upload-artifact@v3
+  #     with:
+  #       name: fujinet-pc_ubuntu-22.04-amd64
+  #       path: build/dist/**
         
 #   build-ubuntu-18:
 #     runs-on: ubuntu-18.04
 #     name: Ubuntu 18.04
-#     needs: release-prep
+#     needs: build-prep
 
 #     steps:
 #     - name: '🧰 Checkout'
@@ -110,7 +146,7 @@ jobs:
 #   build-macos-catalina:
 #     runs-on: macos-10.15
 #     name: macOS 10.15 Catalina
-#     needs: release-prep
+#     needs: build-prep
 
 #     steps:
 #     - name: '🧰 Checkout'
@@ -134,7 +170,7 @@ jobs:
 #   build-windows:
 #     runs-on: windows-latest
 #     name: Windows
-#     needs: release-prep
+#     needs: build-prep
 
 #     defaults:
 #       run:

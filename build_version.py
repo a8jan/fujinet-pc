@@ -31,7 +31,7 @@ class Version:
         self.release_ver = ver
         self.release_msg = msg
         if self.release:
-            print("Release")
+            print("Prepeare for Release")
             # prepare release tag
             if self.release_ver is not None:
                 self.from_release_ver() # from provided release version
@@ -41,7 +41,7 @@ class Version:
                     # else prepare version based on commit date
                     self.from_date()
         else:
-            print("Build")
+            print("Prepare for Build")
             # make version based on information from repository
             # first, try to get version from release tag
             if not self.from_release_tag():
@@ -210,7 +210,7 @@ def create_release_tag(ver, push):
         try:
             out = subprocess.check_output(["git", "push", "origin", tag], universal_newlines=True).splitlines()
         except subprocess.CalledProcessError:
-            print("Failed to push tag")
+            print("Failed to push tag:", tag)
             return -1
     print("Done")
     return 0
