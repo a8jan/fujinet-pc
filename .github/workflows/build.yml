@@ -70,18 +70,25 @@ jobs:
         name: [Ubuntu 22.04]
         target: [ubuntu-22.04-amd64]
         runner: [ubuntu-22.04]
+        default_shell: [bash]
         include:
           - name: Ubuntu 18.04
             target: ubuntu-18.04-amd64
             runner: ubuntu-18.04
+            default_shell: [bash]
           - name: macOS 10.15 Catalina
             target: macos-10.15
             runner: macos-10.15
+            default_shell: [bash]
           - name: Windows
             target: windows-x64
             runner: windows-latest
+            default_shell: [msys2 {0}]
     continue-on-error: true
     runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: ${{ matrix.default_shell }}
 
     steps:
     - name: About ${{ matrix.name }}
@@ -112,11 +119,11 @@ jobs:
       run: git fetch --prune --unshallow --tags
 
     - name: Configure CMake
-      # if: !startsWith(${{ matrix.target }}, 'windows')
+      # if: ${{ !startsWith(matrix.target, 'windows') }}
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     # - name: Configure CMake (Ninja onWindows/MSYS2)
-    #   if: startsWith(${{ matrix.target }}, 'windows')
+    #   if: ${{ startsWith(matrix.target, 'windows') }}
     #   run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: '🚧 Build FujiNet-PC'
@@ -125,15 +132,15 @@ jobs:
     - name: Prepare dist
       run: cmake --build build --target=dist
 
-    - name: Test run
-      working-directory: build/dist
-      run: ./fujinet -v
+    # - name: Test run
+    #   working-directory: build/dist
+    #   run: ./fujinet -v
 
     # Windows runner is pre-installed with some openssl
     # dist target skippes libssl and libcrypto in /c/Windows/SYSTEM32/
     # add missing libs now
     - name: 'Update dist with OpenSSL from CLANG64'
-      if: startsWith(${{ matrix.target }}, 'windows')
+      if: ${{ startsWith(matrix.target, 'windows') }}
       run: |
         cp -pv /clang64/bin/libssl-*-x64.dll build/dist
         cp -pv /clang64/bin/libcrypto-*-x64.dll build/dist
