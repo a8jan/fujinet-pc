@@ -75,15 +75,15 @@ jobs:
           - name: Ubuntu 18.04
             target: ubuntu-18.04-amd64
             runner: ubuntu-18.04
-            default-shell: [bash]
+            default-shell: bash
           - name: macOS 10.15 Catalina
             target: macos-10.15
             runner: macos-10.15
-            default-shell: [bash]
+            default-shell: bash
           - name: Windows
             target: windows-x64
             runner: windows-latest
-            default-shell: [msys2]
+            default-shell: msys2 {0}
     continue-on-error: true
     runs-on: ${{ matrix.runner }}
     defaults:
