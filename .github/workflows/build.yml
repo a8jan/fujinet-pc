@@ -20,7 +20,7 @@ on:
         type: boolean
         default: false
       doRelease:
-        description: 'Create GH Release'
+        description: 'Create GitHub Release'
         type: boolean
         default: false
       releaseVersion:
@@ -84,8 +84,10 @@ jobs:
     runs-on: ${{ matrix.runner }}
 
     steps:
-    - name: Build ${{ matrix.name }}
-      run: echo "Building ${{ matrix.name }} (${{ matrix.target }}) on ${{ matrix.runner }}"
+    - name: About ${{ matrix.name }}
+      run: |
+        echo "Building ${{ matrix.name }} (${{ matrix.target }}) on ${{ matrix.runner }}"
+        uname -a
 
   # build-ubuntu-22:
   #   # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
