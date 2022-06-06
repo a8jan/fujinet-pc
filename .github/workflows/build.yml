@@ -19,12 +19,12 @@ on:
         description: 'Make a release build'
         type: boolean
         default: false
-      releaseVersion:
-        description: 'Release version, blank for auto'
       doRelease:
         description: 'Create GH Release'
         type: boolean
         default: false
+      releaseVersion:
+        description: 'Release version, blank for auto'
         
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
