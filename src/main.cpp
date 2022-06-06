@@ -69,7 +69,7 @@ void print_version()
     printf("FujiNet-PC " FN_VERSION_FULL "\n");
     printf(FN_VERSION_DATE "\n");
 #if defined(_WIN32)
-    printf("Window\n");
+    printf("Windows\n");
 #elif defined(__linux__)
     printf("Linux\n");
 #elif defined(__APPLE__)
