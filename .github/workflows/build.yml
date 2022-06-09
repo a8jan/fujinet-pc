@@ -76,14 +76,14 @@ jobs:
             target: ubuntu-18.04-amd64
             runner: ubuntu-18.04
             default-shell: bash
-          - name: macOS 10.15 Catalina
-            target: macos-10.15
-            runner: macos-10.15
-            default-shell: bash
-          - name: Windows
-            target: windows-x64
-            runner: windows-latest
-            default-shell: msys2 {0}
+          # - name: macOS 10.15 Catalina
+          #   target: macos-10.15
+          #   runner: macos-10.15
+          #   default-shell: bash
+          # - name: Windows
+          #   target: windows-x64
+          #   runner: windows-latest
+          #   default-shell: msys2 {0}
     # continue-on-error: true
     runs-on: ${{ matrix.runner }}
     defaults:
@@ -148,14 +148,21 @@ jobs:
         echo "::set-output name=fujinet::$(./fujinet -v | awk '{if(tolower($1)=="fujinet-pc") print $2}')"
         echo "::set-output name=release::$(./fujinet -v | awk '{if(tolower($1)=="fujinet-pc") print $2}' | sed 's/\(\.[1-9]\)\..*/\1/')"
 
-    - name: Upload build artifact
+    - name: 'Tar files'
+      working-directory: build
+      run: |
+        mv dist fujinet-pc
+        tar -cvf fujinet-pc_${{ steps.version.outputs.release }}_${{ matrix.target }}.tar fujinet-pc
+
+    - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
         name: fujinet-pc_${{ steps.version.outputs.release }}_${{ matrix.target }}
-        path: build/dist/**
+        path: fujinet-pc_${{ steps.version.outputs.release }}_${{ matrix.target }}.tar
         
   release:
-    # prepare to build a release: create tag release-{version} pointing to head
+    # if: ${{ github.event.inputs.releaseBuild == 'true' }}
+    # Create release
     runs-on: ubuntu-latest
     name: Create GitHub Release
     needs: build
@@ -163,6 +170,8 @@ jobs:
     steps:
     - name: Download build artifact
       uses: actions/download-artifact@v3
+      with:
+        path: release
 
     - name: Display structure of downloaded files
-      run: ls -R
+      run: ls -R release
