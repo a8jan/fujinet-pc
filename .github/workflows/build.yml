@@ -62,7 +62,7 @@ jobs:
       if: ${{ github.event.inputs.releaseBuild == 'true' }}
       run: python build_version.py release:push ${{ github.event.inputs.releaseVersion }}
 
-  build-target:
+  build:
     needs: build-prep
     strategy:
       fail-fast: false
@@ -154,4 +154,16 @@ jobs:
         name: fujinet-pc_${{ steps.version.outputs.release }}_${{ matrix.target }}
         path: build/dist/**
         
+jobs:
+  release:
+    # prepare to build a release: create tag release-{version} pointing to head
+    runs-on: ubuntu-latest
+    name: Create GitHub Release
+    needs: build
+    steps:
 
+    - name: Download build artifact
+      uses: actions/download-artifact@v3
+
+    - name: Display structure of downloaded files
+      run: ls -R
