@@ -145,8 +145,8 @@ jobs:
       working-directory: build/dist
       run: |
         ./fujinet -v
-        echo "::set-output name=fujinet::$(./fujinet -v | awk 'BEGIN{IGNORECASE = 1} /^fujinet-pc/ {print $2}')"
-        echo "::set-output name=release::$(./fujinet -v | awk 'BEGIN{IGNORECASE = 1} /^fujinet-pc/ {print $2}' | sed 's/\(\.[1-9]\)\..*/\1/')"
+        echo "::set-output name=fujinet::$(./fujinet -v | awk '{if(tolower($1)=="fujinet-pc") print $2}')"
+        echo "::set-output name=release::$(./fujinet -v | awk '{if(tolower($1)=="fujinet-pc") print $2}' | sed 's/\(\.[1-9]\)\..*/\1/')"
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
