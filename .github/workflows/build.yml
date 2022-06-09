@@ -34,7 +34,7 @@ jobs:
   build-prep:
     # prepare to build a release: create tag release-{version} pointing to head
     runs-on: ubuntu-latest
-    name: Prepare for build
+    name: Prepare
     steps:
 #     - name: List inputs
 #       run: |
@@ -158,13 +158,13 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: fujinet-pc_${{ steps.version.outputs.release }}_${{ matrix.target }}
-        path: fujinet-pc_${{ steps.version.outputs.release }}_${{ matrix.target }}.tar
+        path: build/fujinet-pc_${{ steps.version.outputs.release }}_${{ matrix.target }}.tar
         
   release:
     # if: ${{ github.event.inputs.releaseBuild == 'true' }}
     # Create release
     runs-on: ubuntu-latest
-    name: Create GitHub Release
+    name: Release
     needs: build
 
     steps:
