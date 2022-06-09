@@ -127,14 +127,6 @@ jobs:
     - name: Prepare dist
       run: cmake --build build --target=dist
 
-    - name: 'Get build version'
-      id: version
-      working-directory: build/dist
-      run: |
-        ./fujinet -v
-        "echo ::set-output name=fujinet::$(./fujinet -v | awk 'BEGIN{IGNORECASE = 1} /^fujinet-pc/ {print $2}')"
-        "echo ::set-output name=release::$(./fujinet -v | awk 'BEGIN{IGNORECASE = 1} /^fujinet-pc/ {print $2}') | sed 's/\(\.[1-9]\)\..*/\1/'"
-
     # Windows runner is pre-installed with some openssl
     # dist target skippes libssl and libcrypto in /c/Windows/SYSTEM32/
     # add missing libs now
@@ -147,6 +139,14 @@ jobs:
     - name: List dist
       working-directory: build/dist
       run: ls -la .
+
+    - name: 'Get build version'
+      id: version
+      working-directory: build/dist
+      run: |
+        ./fujinet -v
+        "echo ::set-output name=fujinet::$(./fujinet -v | awk 'BEGIN{IGNORECASE = 1} /^fujinet-pc/ {print $2}')"
+        "echo ::set-output name=release::$(./fujinet -v | awk 'BEGIN{IGNORECASE = 1} /^fujinet-pc/ {print $2}' | sed 's/\(\.[1-9]\)\..*/\1/')"
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
