@@ -16,11 +16,15 @@ on:
         - Release
         default: 'Debug'
       releaseBuild:
-        description: 'Make a release build'
+        description: 'Make a release build (adds tag)'
         type: boolean
         default: false
       doRelease:
         description: 'Create GitHub Release'
+        type: boolean
+        default: false
+      draftRelease:
+        description: 'Draft'
         type: boolean
         default: false
       releaseVersion:
@@ -165,7 +169,7 @@ jobs:
         path: build/fujinet-pc_${{ steps.version.outputs.release }}_${{ matrix.target }}.tar
         
   release:
-    if: ${{ github.event.inputs.releaseBuild == 'true' }}
+    if: ${{ github.event.inputs.releaseBuild == 'true' && github.event.inputs.doRelease == 'true'}}
     # Create release
     runs-on: ubuntu-latest
     name: Release
@@ -188,6 +192,7 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
-          files: release/fujinet-pc_*/fujinet-pc_*.tar.gz
-          draft: true
+          name: "FujiNet-PC ${{ needs.build.outputs.release_version }}"
           tag_name: release-${{ needs.build.outputs.release_version }}
+          draft: ${{ github.event.inputs.draftRelease }}
+          files: release/fujinet-pc_*/fujinet-pc_*.tar.gz
