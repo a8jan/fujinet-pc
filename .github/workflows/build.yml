@@ -63,6 +63,7 @@ jobs:
       run: python build_version.py release:push ${{ github.event.inputs.releaseVersion }}
 
   build:
+    name: Build
     needs: build-prep
     strategy:
       fail-fast: false
@@ -89,6 +90,9 @@ jobs:
     defaults:
       run:
         shell: ${{ matrix.default-shell }}
+    outputs:
+      release_version: ${{ steps.version.outputs.release }}
+      fujinet_version: ${{ steps.version.outputs.fujinet }}
 
     steps:
     # Setup MSYS2 on Windows
@@ -161,7 +165,7 @@ jobs:
         path: build/fujinet-pc_${{ steps.version.outputs.release }}_${{ matrix.target }}.tar
         
   release:
-    # if: ${{ github.event.inputs.releaseBuild == 'true' }}
+    if: ${{ github.event.inputs.releaseBuild == 'true' }}
     # Create release
     runs-on: ubuntu-latest
     name: Release
@@ -186,4 +190,4 @@ jobs:
       with:
           files: release/fujinet-pc_*/fujinet-pc_*.tar.gz
           draft: true
-          
+          tag_name: release-${{ needs.build.outputs.release_version }}
