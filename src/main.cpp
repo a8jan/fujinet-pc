@@ -82,9 +82,9 @@ void main_setup(int argc, char *argv[])
 {
     // program arguments
     int opt;
-    while ((opt = getopt(argc, argv, "vu:c:s:")) != -1) {
+    while ((opt = getopt(argc, argv, "Vu:c:s:")) != -1) {
         switch (opt) {
-            case 'v':
+            case 'V':
                 print_version();
                 exit(EXIT_SUCCESS);
             case 'u':
@@ -97,7 +97,7 @@ void main_setup(int argc, char *argv[])
                 Config.store_general_SD_path(optarg);
                 break;
             default: /* '?' */
-                fprintf(stderr, "Usage: %s [-v] [-u URL] [-c config_file] [-s SD_directory]\n", argv[0]);
+                fprintf(stderr, "Usage: %s [-V] [-u URL] [-c config_file] [-s SD_directory]\n", argv[0]);
                 exit(EXIT_FAILURE);
         }
     }

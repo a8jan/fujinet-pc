@@ -152,9 +152,9 @@ jobs:
       id: version
       working-directory: build/dist
       run: |
-        ./fujinet -v
-        echo "::set-output name=fujinet::$(./fujinet -v | awk '{if(tolower($1)=="fujinet-pc") print $2}')"
-        echo "::set-output name=release::$(./fujinet -v | awk '{if(tolower($1)=="fujinet-pc") print $2}' | sed 's/\(\.[1-9]\)\..*/\1/')"
+        ./fujinet -V
+        echo "::set-output name=fujinet::$(./fujinet -V | awk '{if(tolower($1)=="fujinet-pc") print $2}')"
+        echo "::set-output name=release::$(./fujinet -V | awk '{if(tolower($1)=="fujinet-pc") print $2}' | sed 's/\(\.[1-9]\)\..*/\1/')"
 
     - name: 'Tar files'
       working-directory: build
