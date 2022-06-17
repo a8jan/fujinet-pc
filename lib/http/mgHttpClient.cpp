@@ -451,6 +451,7 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
     {
         Debug_printf("mgHttpClient: Error - %s\n", (const char*)ev_data);
         client->_processed = true;  // Error, tell event loop to stop
+        client->_status_code = 901; // Fake HTTP status code to indicate connection error
         break;
     }
     
@@ -629,9 +630,6 @@ int mgHttpClient::_perform()
 {
     Debug_printf("%08lx _perform\n", (unsigned long)fnSystem.millis());
 
-    _buffer_len = 0;
-    _buffer_total_read = 0;
-
     // We want to process the response body (if any)
     _ignore_response_body = false;
 
@@ -641,7 +639,8 @@ int mgHttpClient::_perform()
     bool done = false;
 
     uint64_t ms_update = fnSystem.millis();
-    mg_http_connect(_handle, _url.c_str(), _httpevent_handler, this);  // Create client connection
+    // create client connection
+    _perform_connect();
 
     while (!done)
     {
@@ -663,11 +662,12 @@ int mgHttpClient::_perform()
         if (!_processed)
         {
             Debug_printf("Timed-out waiting for HTTP response\n");
-            return -1;
+            _status_code = 408; // 408 Request Timeout
         }
-
-        // request/response processing done, check the response
+        // request/response processing done
         done = true;
+
+        // check the response
         if (_status_code == 301 || _status_code == 302)
         {
             // handle HTTP redirect
@@ -680,10 +680,11 @@ int mgHttpClient::_perform()
                     // new client connection
                     _url = _location;
                     _location.clear();
-                    mg_http_connect(_handle, _url.c_str(), _httpevent_handler, this);
                     // need more processing
                     _processed = false;
                     done = false;
+                    // create new connection
+                    _perform_connect();
                 }
                 else
                 {
@@ -724,6 +725,19 @@ int mgHttpClient::_perform()
 
     Debug_printf("%08lx _perform status = %d, length = %d, chunked = %d\n", (unsigned long)fnSystem.millis(), status, length, chunked ? 1 : 0);
     return status;
+}
+
+/*
+ Resets variables and begins http transaction
+ */
+void mgHttpClient::_perform_connect()
+{
+    _status_code = -1;
+    _content_length = 0;
+    _buffer_len = 0;
+    _buffer_total_read = 0;
+    
+    mg_http_connect(_handle, _url.c_str(), _httpevent_handler, this);  // Create client connection
 }
 
 /*

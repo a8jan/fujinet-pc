@@ -86,6 +86,7 @@ private:
     void _flush_response();
 
     int _perform();
+    void _perform_connect();
     // int _perform_stream(esp_http_client_method_t method, uint8_t *write_data, int write_size);
 
 public:
