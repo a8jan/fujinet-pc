@@ -958,6 +958,14 @@ void fnConfig::_read_section_wifi(std::stringstream &ss)
             {
                 _wifi.passphrase = value;
             }
+            else if (strcasecmp(name.c_str(), "enabled") == 0)
+            {
+                if (strcasecmp(value.c_str(), "1") == 0)
+                    _wifi.enabled = true;
+                else
+                    _wifi.enabled = false; 
+            }
+
         }
     }
 }
