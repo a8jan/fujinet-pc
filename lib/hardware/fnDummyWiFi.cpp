@@ -66,17 +66,19 @@ bool DummyWiFiManager::connected()
 */
 uint8_t DummyWiFiManager::scan_networks(uint8_t maxresults)
 {
-    return 1;
+    return 16;
 }
 
 int DummyWiFiManager::get_scan_result(uint8_t index, char ssid[32], uint8_t *rssi, uint8_t *channel, char bssid[18], uint8_t *encryption)
 {
+    /*
     if (index > 1)
         return -1;
+    */
 
     if (ssid != nullptr) {
         memset(ssid, 0, 32);
-        strlcpy(ssid, "Dummy Cafe", 32);
+        sprintf(ssid, "Dummy Cafe %d", index);
     }
 
     if (bssid != nullptr)
