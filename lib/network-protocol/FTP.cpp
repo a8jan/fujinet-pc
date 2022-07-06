@@ -6,6 +6,7 @@
 
 #include <cstring>
 #include "FTP.h"
+#include "../../include/debug.h"
 #include "status_error_codes.h"
 #include "utils.h"
 

@@ -1,23 +1,15 @@
-#include <sstream>
-#include <string>
-#include <cstdio>
-#include <stdlib.h>
-
-#include <string>
-#include <map>
-
-// #include "esp_task.h"
-// #include "esp_heap_task_info.h"
-
 #include "httpServiceConfigurator.h"
-#include "fnConfig.h"
-// #include "fnUART.h"
-#include "fnSioCom.h"
-#include "printerlist.h"
-#include "utils.h"
 
+#include "../../include/debug.h"
+
+#include "printer.h"
 #include "fuji.h"
-extern sioFuji theFuji;
+
+#include "fnSystem.h"
+#include "fnConfig.h"
+#include "sio/siocom/fnSioCom.h"
+
+#include "utils.h"
 
 // TODO: This was copied from another source and needs some bounds-checking!
 char *fnHttpServiceConfigurator::url_decode(char *dst, const char *src, size_t dstsize)

@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "../sio/printer.h"
+#include "printer.h"
 
 #define CONFIG_FILENAME "fnconfig.ini"
 #define SD_CARD_DIR "SD"

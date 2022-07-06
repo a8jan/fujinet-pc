@@ -1,38 +1,29 @@
+#include "httpService.h"
+
+#include <sstream>
 #include <vector>
 #include <map>
-#include <sstream>
-
-// #include <esp_wifi.h>
-// #include <esp_event.h>
-// #include <esp_log.h>
-// #include <esp_system.h>
-// #include <nvs_flash.h>
-// #include "esp_wps.h"
-
-#include "httpService.h"
-#include "httpServiceParser.h"
-#include "httpServiceConfigurator.h"
-#include "httpServiceBrowser.h"
-#include "printerlist.h"
-// #include "fnWiFi.h"
-#include "fnDummyWiFi.h"
-// #include "keys.h"
-#include "fnConfig.h"
-#include "fnSystem.h"
-
-#include "../../lib/modem-sniffer/modem-sniffer.h"
-#include "../../lib/sio/modem.h"
 
 #include "../../include/debug.h"
 
+#include "fnSystem.h"
+#include "fnConfig.h"
+#include "fnDummyWiFi.h"
+#include "fnFsSPIF.h"
+#include "modem.h"
+#include "printer.h"
 #include "fuji.h"
+
+#include "httpServiceConfigurator.h"
+#include "httpServiceParser.h"
+#include "httpServiceBrowser.h"
+
+
 
 using namespace std;
 
 // Global HTTPD
 fnHttpService fnHTTPD;
-
-extern sioModem *sioR;
 
 /* Send some meaningful(?) error message to client
 */

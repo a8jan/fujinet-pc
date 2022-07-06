@@ -7,6 +7,7 @@
 #include <errno.h>
 #include "compat_inet.h"
 #include "Protocol.h"
+#include "../../include/debug.h"
 #include "status_error_codes.h"
 #include "../utils/utils.h"
 

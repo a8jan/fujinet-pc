@@ -11,7 +11,7 @@ set(FUJINET_BUILD_PLATFORM BUILD_ATARI)
 # fujinet.build_bus
 set(FUJINET_BUILD_BUS SIO)
 # platformio.data_dir
-set(FUJINET_DATA_DIR ${CMAKE_SOURCE_DIR}/${FUJINET_BUILD_PLATFORM}/data)
+set(FUJINET_DATA_DIR ${CMAKE_SOURCE_DIR}/data/${FUJINET_BUILD_PLATFORM})
 
 # add -DNO_DEBUG_PRINT to supress Debug_print output in Release build
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D${FUJINET_BUILD_PLATFORM} -DSKIP_SERVER_CERT_VERIFY")
@@ -31,7 +31,7 @@ set(INCLUDE_DIRS include
     lib/tcpip lib/ftp lib/TNFSlib lib/telnet lib/fnjson
     lib/mongoose lib/webdav lib/http lib/task
     lib/modem-sniffer lib/printer-emulator lib/network-protocol 
-    lib/bus lib/device lib/media
+    lib/fuji lib/bus lib/device lib/media
     components/cJSON components/libsmb2/include
 )
 

@@ -12,7 +12,6 @@
 // #include "siocpm.h"
 // #include "printer.h"
 // #include "../hardware/fnUART.h"
-#include "fnSioCom.h"
 #include "../../include/debug.h"
 
 // Helper functions outside the class defintions

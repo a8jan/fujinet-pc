@@ -1,23 +1,20 @@
+#include "httpServiceParser.h"
+
 #include <sstream>
 #include <string>
 #include <cstdio>
 #include <locale>
+#include <vector>
+
 
 #include "../../include/debug.h"
+
+#include "fnSystem.h"
 #include "fnConfig.h"
-
-#include "httpServiceParser.h"
-
-#include "fuji.h"
-#include "printerlist.h"
-
-#include "../hardware/fnSystem.h"
-// #include "../hardware/fnWiFi.h"
-#include "../hardware/fnDummyWiFi.h"
+#include "fnDummyWiFi.h"
 #include "fnFsSPIF.h"
 #include "fnFsSD.h"
-
-extern sioFuji theFuji;
+#include "fuji.h"
 
 using namespace std;
 

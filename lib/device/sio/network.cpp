@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "fnSystem.h"
-#include "fnSioCom.h"
 #include "utils.h"
 
 #include "TCP.h"

@@ -1,8 +1,9 @@
 #ifndef _DISKTYPE_
 #define _DISKTYPE_
 
-#include <stdio.h>
+// #include <stdio.h>
 #include "fnFile.h"
+#include <stdint.h>
 
 #define INVALID_SECTOR_VALUE 65536
 

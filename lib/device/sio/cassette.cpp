@@ -1,7 +1,6 @@
 #include "cassette.h"
 #include "fnSystem.h"
 // #include "fnUART.h"
-#include "fnSioCom.h"
 #include "led.h"
 #include "../../include/debug.h"
 

@@ -30,9 +30,10 @@ If a file has an extention pre-determined to support parsing (see/update
 #define HTTPSERVICE_H
 
 // #include <esp_http_server.h>
-#include <string>
-
 #include "mongoose.h"
+
+// #include <map>
+
 #include "fnFS.h"
 
 // FNWS_FILE_ROOT should end in a slash '/'
@@ -63,11 +64,11 @@ class fnHttpService
         fnwserr_post_fail
     };
 
-    struct queryparts {
-        std::string full_uri;
-        std::string path;
-        std::string query;
-    };
+    // struct queryparts {
+    //     std::string full_uri;
+    //     std::string path;
+    //     std::string query;
+    // };
 
     // static void custom_global_ctx_free(void * ctx);
     // static httpd_handle_t start_server(serverstate &state);

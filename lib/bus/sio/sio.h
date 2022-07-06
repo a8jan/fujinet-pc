@@ -2,9 +2,8 @@
 #define SIO_H
 
 #include <forward_list>
-#include "fnSystem.h"
 
-// #include "../../include/pinmap.h"
+#include "sio/siocom/fnSioCom.h"
 
 #define DELAY_T4 850
 #define DELAY_T5 250

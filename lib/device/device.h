@@ -5,21 +5,21 @@
 # include "sio/apetime.h"
 # include "sio/cassette.h"
 # include "sio/disk.h"
-# include "sio/udpstream.h"
+// # include "sio/udpstream.h"
 # include "sio/modem.h"
 # include "sio/network.h"
 # include "sio/printer.h"
 # include "sio/printerlist.h"
 # include "sio/siocpm.h"
-# include "sio/voice.h"
+// # include "sio/voice.h"
 # include "sio/fuji.h"
 
     sioApeTime apeTime;
-    sioVoice sioV;
-    sioUDPStream udpDev;
+    // sioVoice sioV;
+    // sioUDPStream udpDev;
     // sioCassette sioC; // now part of sioFuji theFuji object
     sioModem *sioR;
-    sioCPM sioZ;
+    // sioCPM sioZ;
 #endif
 
 #ifdef BUILD_CBM

@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include "HTTP.h"
+#include "../../include/debug.h"
 #include "status_error_codes.h"
 #include "../webdav/WebDAV.h"
 #include "../utils/utils.h"

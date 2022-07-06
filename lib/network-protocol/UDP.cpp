@@ -11,6 +11,7 @@
 // #include <netinet/in.h>
 // #include <arpa/inet.h>
 #include "UDP.h"
+#include "../../include/debug.h"
 #include "status_error_codes.h"
 #include "../tcpip/fnDNS.h"
 

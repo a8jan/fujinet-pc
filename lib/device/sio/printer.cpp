@@ -1,5 +1,10 @@
-#include "../../include/atascii.h"
 #include "printer.h"
+
+#include "../../include/debug.h"
+#include "../../include/atascii.h"
+
+#include "fnSystem.h"
+#include "fnConfig.h"
 
 #include "file_printer.h"
 #include "html_printer.h"

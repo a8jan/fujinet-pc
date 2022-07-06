@@ -30,7 +30,7 @@
 #include "fnFsSD.h"
 #include "fnFsSPIF.h"
 #include "fnDummyWiFi.h"
-#include "sio.h"
+#include "bus.h"
 
 /*
 static xQueueHandle card_detect_evt_queue = NULL;

@@ -1,5 +1,7 @@
 #include "apetime.h"
 
+#include "../../include/debug.h"
+
 #define SIO_APETIMECMD_GETTIME 0x93
 
 void sioApeTime::_sio_get_time()

@@ -3,37 +3,25 @@
 #include <unistd.h>
 
 #include "debug.h"
+#include "bus.h"
+#include "device.h"
+// #include "keys.h"
+// #include "led.h"
 
 #include "fnSystem.h"
+#include "fnConfig.h"
 #include "fnDummyWiFi.h"
 #include "fnFsSD.h"
 #include "fnFsSPIF.h"
-#include "fnConfig.h"
-// #include "keys.h"
-// #include "led.h"
-#include "sio.h"
-#include "fuji.h"
-#include "modem.h"
-#include "apetime.h"
-// #include "voice.h"
+
 #include "httpService.h"
-#include "printerlist.h"
-// #include "midimaze.h"
-// #include "siocpm.h"
-// #include "samlib.h"
-
-// #include <esp_system.h>
-// #include <nvs_flash.h>
-
-// #include <esp32/spiram.h>
-// #include <esp32/himem.h>
-
-// #ifdef BLUETOOTH_SUPPORT
-// #include "fnBluetooth.h"
-// #endif
 
 #include "fnTaskManager.h"
 #include "version.h"
+
+#ifdef BLUETOOTH_SUPPORT
+// #include "fnBluetooth.h"
+#endif
 
 // fnSystem is declared and defined in fnSystem.h/cpp
 // fnBtManager is declared and defined in fnBluetooth.h/cpp
@@ -41,14 +29,7 @@
 // fnKeyManager is declared and defined in keys.h/cpp
 // fnHTTPD is declared and defineid in HttpService.h/cpp
 
-// // sioFuji theFuji; // moved to fuji.h/.cpp
-sioApeTime apeTime;
-// sioVoice sioV;
-// sioMIDIMaze sioMIDI;
-// // sioCassette sioC; // now part of sioFuji theFuji object
-sioModem *sioR;
-// sioCPM sioZ;
-
+// sioFuji theFuji; // moved to fuji.h/.cpp
 
 void main_shutdown_handler()
 {

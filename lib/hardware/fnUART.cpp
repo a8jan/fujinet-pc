@@ -27,13 +27,15 @@
 
 #include "fnSystem.h"
 #include "fnUART.h"
-#include "sioport.h" // SIOPORT_DEFAULT_BAUD
 #include "../../include/debug.h"
 
+#define UART_PROBE_DEV1 "/dev/ttyUSB0"
+#define UART_PROBE_DEV2 "/dev/ttyS0"
+#define UART_DEFAULT_BAUD 19200
+
 // #define UART_DEBUG UART_NUM_0
-// #define UART_SIO   UART_NUM_2
-#define SIO_PROBE_DEV1  "/dev/ttyUSB0"
-#define SIO_PROBE_DEV2  "/dev/ttyS0"
+// #define UART_ADAMNET UART_NUM_2
+// #define UART_SIO UART_NUM_2
 
 // Number of RTOS ticks to wait for data in TX buffer to complete sending
 #define MAX_FLUSH_WAIT_TICKS 200
@@ -46,11 +48,11 @@
 
 // Constructor
 // UARTManager::UARTManager(uart_port_t uart_num) : _uart_num(uart_num), _uart_q(NULL) {}
-UARTManager::UARTManager() : 
+UARTManager::UARTManager() :
     _initialized(false),
     _fd(-1),
     _device{0},
-    _baud(SIOPORT_DEFAULT_BAUD)
+    _baud(UART_DEFAULT_BAUD)
 {};
 
 void UARTManager::end()
@@ -238,14 +240,14 @@ void UARTManager::begin(int baud)
     if (*_device == 0)
     {
         // Probe some serial ports
-        Debug_println("Trying " SIO_PROBE_DEV1);
-        if ((_fd = open(SIO_PROBE_DEV1, O_RDWR | O_NOCTTY | O_NONBLOCK)) >= 0)
-            strlcpy(_device, SIO_PROBE_DEV1, sizeof(_device));
+        Debug_println("Trying " UART_PROBE_DEV1);
+        if ((_fd = open(UART_PROBE_DEV1, O_RDWR | O_NOCTTY | O_NONBLOCK)) >= 0)
+            strlcpy(_device, UART_PROBE_DEV1, sizeof(_device));
         else
         {
-            Debug_println("Trying " SIO_PROBE_DEV2);
-            if ((_fd = open(SIO_PROBE_DEV2, O_RDWR | O_NOCTTY | O_NONBLOCK)) >= 0)
-                strlcpy(_device, SIO_PROBE_DEV2, sizeof(_device));
+            Debug_println("Trying " UART_PROBE_DEV2);
+            if ((_fd = open(UART_PROBE_DEV2, O_RDWR | O_NOCTTY | O_NONBLOCK)) >= 0)
+                strlcpy(_device, UART_PROBE_DEV2, sizeof(_device));
         }
 
         // successfull probe
