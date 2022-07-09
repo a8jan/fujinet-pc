@@ -5,10 +5,20 @@
 #ifndef ABSTRACTION_FUJINET_H
 #define ABSTRACTION_FUJINET_H
 
-#include "globals.h"
 #include <string.h>
+
+#include "globals.h"
+
+#include "../../include/debug.h"
+
+#include "fnSystem.h"
+#include "fnWiFi.h"
+#include "fnFsSD.h"
+#include "fnUART.h"
 #include "fnTcpServer.h"
 #include "fnTcpClient.h"
+
+#include "fuji.h"
 
 #define HostOS 0x07 // FUJINET
 
@@ -52,7 +62,7 @@ char *full_path(char *fn)
 /*===============================================================================*/
 bool _RamLoad(char *fn, uint16_t address)
 {
-	FILE *f = fnSDFAT.file_open(full_path(fn), FILE_READ);
+	FILE *f = fnSDFAT.file_open(full_path(fn), "r");
 	bool result = false;
 	uint8_t b;
 
@@ -101,7 +111,7 @@ int _sys_select(uint8_t *disk)
 long _sys_filesize(uint8_t *fn)
 {
 	unsigned long fs = -1;
-	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), FILE_READ);
+	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), "r");
 
 	if (fp)
 	{
@@ -115,7 +125,7 @@ long _sys_filesize(uint8_t *fn)
 
 int _sys_openfile(uint8_t *fn)
 {
-	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), FILE_READ);
+	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), "r");
 	if (fp)
 	{
 		fclose(fp);
@@ -127,7 +137,7 @@ int _sys_openfile(uint8_t *fn)
 
 int _sys_makefile(uint8_t *fn)
 {
-	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), FILE_WRITE);
+	FILE *fp = fnSDFAT.file_open(full_path((char *)fn), "w");
 	if (fp)
 	{
 		fclose(fp);
@@ -191,7 +201,7 @@ uint8_t _sys_readseq(uint8_t *fn, long fpos)
 	uint8_t dmabuf[BlkSZ];
 	int seekErr;
 
-	f = fnSDFAT.file_open(full_path((char *)fn), FILE_READ);
+	f = fnSDFAT.file_open(full_path((char *)fn), "r");
 	seekErr = fseek(f, fpos, SEEK_SET);
 	if (f)
 	{
@@ -471,16 +481,16 @@ uint8_t _sys_makedisk(uint8_t drive)
 int _kbhit(void)
 {
 	if (teeMode == true)
-		return client.available() | fnSioCom.available();
+		return client.available() | (fnUartSIO.available()>0);
 	else
-		return fnSioCom.available();
+		return min(0, fnUartSIO.available());
 }
 
 uint8_t _getch(void)
 {
 	if (teeMode == true)
 	{
-		while (!fnSioCom.available())
+		while (fnUartSIO.available() > 0)
 		{
 			if (client.available())
 			{
@@ -489,21 +499,21 @@ uint8_t _getch(void)
 				return ch & 0x7F;
 			}
 		}
-		return fnSioCom.read() & 0x7F;
+		return fnUartSIO.read() & 0x7F;
 	}
 	else
 	{
-		while (!fnSioCom.available())
+		while (fnUartSIO.available() <= 0)
 		{
 		}
-		return fnSioCom.read() & 0x7f;
+		return fnUartSIO.read() & 0x7f;
 	}
 }
 
 uint8_t _getche(void)
 {
 	uint8_t ch = _getch() & 0x7f;
-	fnSioCom.write(ch);
+	fnUartSIO.write(ch);
 	if (teeMode == true)
 		client.write(ch);
 	return ch;
@@ -511,7 +521,7 @@ uint8_t _getche(void)
 
 void _putch(uint8_t ch)
 {
-	fnSioCom.write(ch & 0x7f);
+	fnUartSIO.write(ch & 0x7f);
 	if (teeMode == true)
 		client.write(ch);
 }
