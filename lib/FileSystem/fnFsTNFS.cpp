@@ -1,13 +1,16 @@
-#include <errno.h>
+#include "fnFsTNFS.h"
+
+#include <sys/stat.h>
 #include "compat_inet.h"
 #include "compat_string.h"
 
-#include "fnFsTNFS.h"
-#include "fnFileTNFS.h"
-#include "../TNFSlib/tnfslib.h"
-#include "../tcpip/fnDNS.h"
-#include "../hardware/fnSystem.h"
 #include "../../include/debug.h"
+
+#include "fnFileTNFS.h"
+#include "fnSystem.h"
+#include "fnDNS.h"
+#include "tnfslib.h"
+
 // #include "fnFsTNFSvfs.h"
 
 FileSystemTNFS::FileSystemTNFS()
@@ -61,8 +64,6 @@ bool FileSystemTNFS::start(const char *host, uint16_t port, const char * mountpa
     else
         _mountinfo.password[0] = '\0';
 
-    // struct in_addr vs in_addr_t
-    // Debug_printf("TNFS mount %s[%s]:%hu\n", _mountinfo.hostname, inet_ntoa(_mountinfo.host_ip), _mountinfo.port);
     Debug_printf("TNFS mount %s[%s]:%hu\n", _mountinfo.hostname, compat_inet_ntoa(_mountinfo.host_ip), _mountinfo.port);
 
     int r = tnfs_mount(&_mountinfo);
@@ -130,6 +131,14 @@ FILE * FileSystemTNFS::file_open(const char* path, const char* mode)
     FILE * result = fopen(fpath, mode);
     free(fpath);
     return result;
+}
+
+bool FileSystemTNFS::is_dir(const char *path)
+{
+    char * fpath = _make_fullpath(path);
+    struct stat info;
+    stat( fpath, &info);
+    return (info.st_mode == S_IFDIR) ? true: false;
 }
 
 FileHandler * FileSystemTNFS::filehandler_open(const char* path, const char* mode)

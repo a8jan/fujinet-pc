@@ -1,3 +1,5 @@
+#ifdef BUILD_ATARI
+
 #include "disk.h"
 
 #include <cstring>
@@ -50,7 +52,7 @@ void sioDisk::sio_read()
     bool err = _disk->read(UINT16_FROM_HILOBYTES(cmdFrame.aux2, cmdFrame.aux1), &readcount);
 
     // Send result to Atari
-    sio_to_computer(_disk->_disk_sectorbuff, readcount, err);
+    bus_to_computer(_disk->_disk_sectorbuff, readcount, err);
 }
 
 // Write disk data from computer
@@ -65,7 +67,7 @@ void sioDisk::sio_write(bool verify)
 
         memset(_disk->_disk_sectorbuff, 0, DISK_SECTORBUF_SIZE);
 
-        uint8_t ck = sio_to_peripheral(_disk->_disk_sectorbuff, sectorSize);
+        uint8_t ck = bus_to_peripheral(_disk->_disk_sectorbuff, sectorSize);
 
         if (ck == sio_checksum(_disk->_disk_sectorbuff, sectorSize))
         {
@@ -130,7 +132,7 @@ void sioDisk::sio_status()
 
     Debug_printf("response: 0x%02x, 0x%02x, 0x%02x\n", _status[0], _status[1], _status[2]);
 
-    sio_to_computer(_status, sizeof(_status), false);
+    bus_to_computer(_status, sizeof(_status), false);
 }
 
 // Disk format
@@ -148,7 +150,7 @@ void sioDisk::sio_format()
     bool err = _disk->format(&responsesize);
 
     // Send to computer
-    sio_to_computer(_disk->_disk_sectorbuff, responsesize, err);
+    bus_to_computer(_disk->_disk_sectorbuff, responsesize, err);
 }
 
 // Read percom block
@@ -165,7 +167,7 @@ void sioDisk::sio_read_percom_block()
 #ifdef VERBOSE_DISK
     _disk->dump_percom_block();
 #endif
-    sio_to_computer((uint8_t *)&_disk->_percomBlock, sizeof(_disk->_percomBlock), false);
+    bus_to_computer((uint8_t *)&_disk->_percomBlock, sizeof(_disk->_percomBlock), false);
 }
 
 // Write percom block
@@ -179,7 +181,7 @@ void sioDisk::sio_write_percom_block()
         return;
     }
 
-    sio_to_peripheral((uint8_t *)&_disk->_percomBlock, sizeof(_disk->_percomBlock));
+    bus_to_peripheral((uint8_t *)&_disk->_percomBlock, sizeof(_disk->_percomBlock));
 #ifdef VERBOSE_DISK
     _disk->dump_percom_block();
 #endif
@@ -188,51 +190,51 @@ void sioDisk::sio_write_percom_block()
 
 /* Mount Disk
    We determine the type of image based on the filename extension.
-   If the disk_type value passed is not DISKTYPE_UNKNOWN then that's used instead.
-   If filename has no extension or is NULL and disk_type is DISKTYPE_UNKOWN,
-   then we assume it's DISKTYPE_ATR.
-   Return value is DISKTYPE_UNKNOWN in case of failure.
+   If the disk_type value passed is not MEDIATYPE_UNKNOWN then that's used instead.
+   If filename has no extension or is NULL and disk_type is MEDIATYPE_UNKOWN,
+   then we assume it's MEDIATYPE_ATR.
+   Return value is MEDIATYPE_UNKNOWN in case of failure.
 */
-disktype_t sioDisk::mount(FileHandler *f, const char *filename, uint32_t disksize, disktype_t disk_type)
+mediatype_t sioDisk::mount(FileHandler *f, const char *filename, uint32_t disksize, mediatype_t disk_type)
 {
     // TAPE or CASSETTE: use this function to send file info to cassette device
     //  DiskType::discover_disktype(filename) can detect CAS and WAV files
     Debug_printf("disk MOUNT (%d)\n", disk_type);
 
-    // Destroy any existing DiskType
+    // Destroy any existing MediaType
     if (_disk != nullptr)
     {
         delete _disk;
         _disk = nullptr;
     }
 
-    // Determine DiskType based on filename extension
-    if (disk_type == DISKTYPE_UNKNOWN && filename != nullptr)
-        disk_type = DiskType::discover_disktype(filename);
+    // Determine MediaType based on filename extension
+    if (disk_type == MEDIATYPE_UNKNOWN && filename != nullptr)
+        disk_type = MediaType::discover_disktype(filename);
 
-    // Now mount based on DiskType
+    // Now mount based on MediaType
     switch (disk_type)
     {
-    // case DISKTYPE_CAS:
-    // case DISKTYPE_WAV:
+    // case MEDIATYPE_CAS:
+    // case MEDIATYPE_WAV:
     //     // open the cassette file
     //     theFuji.cassette()->mount_cassette_file(f, disksize);
     //     return disk_type;
     //     // TODO left off here for tape cassette
     //     break;
-    case DISKTYPE_XEX:
+    case MEDIATYPE_XEX:
         device_active = true;
-        _disk = new DiskTypeXEX();
+        _disk = new MediaTypeXEX();
         return _disk->mount(f, disksize);
-    // case DISKTYPE_ATX:
+    // case MEDIATYPE_ATX:
     //     device_active = true;
-    //     _disk = new DiskTypeATX();
+    //     _disk = new MediaTypeATX();
     //     return _disk->mount(f, disksize);
-    case DISKTYPE_ATR:
-    case DISKTYPE_UNKNOWN:
+    case MEDIATYPE_ATR:
+    case MEDIATYPE_UNKNOWN:
     default:
         device_active = true;
-        _disk = new DiskTypeATR();
+        _disk = new MediaTypeATR();
         return _disk->mount(f, disksize);
     }
 }
@@ -263,7 +265,7 @@ bool sioDisk::write_blank(FileHandler *f, uint16_t sectorSize, uint16_t numSecto
 {
     Debug_print("disk CREATE NEW IMAGE\n");
 
-    return DiskTypeATR::create(f, sectorSize, numSectors);
+    return MediaTypeATR::create(f, sectorSize, numSectors);
 }
 
 // Process command
@@ -272,7 +274,7 @@ void sioDisk::sio_process(uint32_t commanddata, uint8_t checksum)
     cmdFrame.commanddata = commanddata;
     cmdFrame.checksum = checksum;
 
-    if (_disk == nullptr || _disk->_disktype == DISKTYPE_UNKNOWN)
+    if (_disk == nullptr || _disk->_disktype == MEDIATYPE_UNKNOWN)
         return;
 
     if (device_active == false &&
@@ -313,16 +315,16 @@ void sioDisk::sio_process(uint32_t commanddata, uint8_t checksum)
         {
             if (theFuji.boot_config == true)
             {
-                if (status_wait_count == 0)
+                if ( status_wait_count > 0 && theFuji.status_wait_enabled )
+                {
+                    Debug_print("ignoring status command\n");
+                    status_wait_count--;
+                }
+                else
                 {
                     device_active = true;
                     sio_ack();
                     sio_status();
-                }
-                else
-                {
-                    Debug_print("ignoring status command\n");
-                    status_wait_count--;
                 }
             }
         }
@@ -380,3 +382,5 @@ void sioDisk::sio_process(uint32_t commanddata, uint8_t checksum)
 
     sio_nak();
 }
+
+#endif /* BUILD_ATARI */

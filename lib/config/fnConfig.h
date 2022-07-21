@@ -78,7 +78,8 @@ public:
     int get_general_hsioindex() { return _general.hsio_index; };
     std::string get_general_timezone() { return _general.timezone; };
     bool get_general_rotation_sounds() { return _general.rotation_sounds; };
-    std::string get_network_midimaze_host() { return _network.midimaze_host; };
+    std::string get_network_udpstream_host() { return _network.udpstream_host; };
+    int get_network_udpstream_port() { return _network.udpstream_port; };
     bool get_general_config_enabled() { return _general.config_enabled; };
     void store_general_devicename(const char *devicename);
     void store_general_hsioindex(int hsio_index);
@@ -87,7 +88,12 @@ public:
     void store_general_config_enabled(bool config_enabled);
     bool get_general_boot_mode() { return _general.boot_mode; }
     void store_general_boot_mode(uint8_t boot_mode);
-    void store_midimaze_host(const char host_ip[64]);
+    void store_udpstream_host(const char host_ip[64]);
+    void store_udpstream_port(int port);
+    bool get_general_fnconfig_spifs() { return _general.fnconfig_spifs; };
+    void store_general_fnconfig_spifs(bool fnconfig_spifs);
+    bool get_general_status_wait_enabled() { return _general.status_wait_enabled; }
+    void store_general_status_wait_enabled(bool status_wait_enabled);
     std::string get_general_interface_url() { return _general.interface_url; };
     void store_general_interface_url(const char *url);
     std::string get_general_config_path() { return _general.config_file_path; };
@@ -145,20 +151,51 @@ public:
     void clear_mount(uint8_t num, mount_type_t mounttype = mount_type_t::MOUNTTYPE_DISK);
 
     // PRINTERS
-    sioPrinter::printer_type get_printer_type(uint8_t num);
+#ifdef PRINTER_CLASS
+    PRINTER_CLASS::printer_type get_printer_type(uint8_t num);
     int get_printer_port(uint8_t num);
-    void store_printer_type(uint8_t num, sioPrinter::printer_type ptype);
+    void store_printer_enabled(bool printer_enabled);
+    bool get_printer_enabled() { return _general.printer_enabled; };
+    void store_printer_type(uint8_t num, PRINTER_CLASS::printer_type ptype);
     void store_printer_port(uint8_t num, int port);
+#endif
 
     // MODEM
-    void store_modem_sniffer_enabled(bool enabled);
-    bool get_modem_sniffer_enabled() { return _modem.sniffer_enabled; }
+    void store_modem_enabled(bool modem_enabled);
+    bool get_modem_enabled() { return _modem.modem_enabled; };
+    void store_modem_sniffer_enabled(bool modem_sniffer_enabled);
+    bool get_modem_sniffer_enabled() { return _modem.sniffer_enabled; };
 
     // CASSETTE
     bool get_cassette_buttons();
     bool get_cassette_pulldown();
+    bool get_cassette_enabled();
     void store_cassette_buttons(bool button);
     void store_cassette_pulldown(bool pulldown);
+    void store_cassette_enabled(bool cassette_enabled);
+
+    // CPM
+    std::string get_ccp_filename(){ return _cpm.ccp; };
+    void store_ccp_filename(std::string filename);
+
+    // ENABLE/DISABLE DEVICE SLOTS
+    bool get_device_slot_enable_1();
+    bool get_device_slot_enable_2();
+    bool get_device_slot_enable_3();
+    bool get_device_slot_enable_4();
+    bool get_device_slot_enable_5();
+    bool get_device_slot_enable_6();
+    bool get_device_slot_enable_7();
+    bool get_device_slot_enable_8();
+    void store_device_slot_enable_1(bool enabled);
+    void store_device_slot_enable_2(bool enabled);
+    void store_device_slot_enable_3(bool enabled);
+    void store_device_slot_enable_4(bool enabled);
+    void store_device_slot_enable_5(bool enabled);
+    void store_device_slot_enable_6(bool enabled);
+    void store_device_slot_enable_7(bool enabled);
+    void store_device_slot_enable_8(bool enabled);
+
 
     // NETSIO (Connection to Atari emulator)
     bool get_netsio_enabled() { return _netsio.netsio_enabled; }
@@ -170,6 +207,8 @@ public:
 
     void load();
     void save();
+
+    void mark_dirty() { _dirty = true; };
 
     fnConfig();
 
@@ -190,6 +229,8 @@ private:
     void _read_section_modem(std::stringstream &ss);
     void _read_section_cassette(std::stringstream &ss);
     void _read_section_phonebook(std::stringstream &ss, int index);
+    void _read_section_cpm(std::stringstream &ss);
+    void _read_section_device_enable(std::stringstream &ss);
     void _read_section_netsio(std::stringstream &ss);
 
     enum section_match
@@ -205,6 +246,8 @@ private:
         SECTION_MODEM,
         SECTION_CASSETTE,
         SECTION_PHONEBOOK,
+        SECTION_CPM,
+        SECTION_DEVICE_ENABLE,
         SECTION_SERIAL,
         SECTION_NETSIO,
         SECTION_UNKNOWN
@@ -249,7 +292,9 @@ private:
 
     struct printer_info
     {
-        sioPrinter::printer_type type = sioPrinter::printer_type::PRINTER_INVALID;
+#ifdef PRINTER_CLASS
+        PRINTER_CLASS::printer_type type = PRINTER_CLASS::printer_type::PRINTER_INVALID;
+#endif
         int port = 0;
     };
 
@@ -271,20 +316,21 @@ private:
     {
         std::string ssid;
         std::string passphrase;
-        bool enabled=true;
+        bool enabled = true;
     };
 
     struct bt_info
     {
         bool bt_status = false;
         int bt_baud = 19200;
-        std::string bt_devname = "FujiNetSIO2BT";
+        std::string bt_devname = "SIO2BTFujiNet";
     };
 
     struct network_info
     {
         char sntpserver [40];
-        char midimaze_host [64];
+        char udpstream_host [64];
+        int udpstream_port;
     };
 
     struct general_info
@@ -295,6 +341,13 @@ private:
         bool rotation_sounds = true;
         bool config_enabled = true;
         int boot_mode = 0;
+        bool fnconfig_spifs = true;
+        bool status_wait_enabled = true;
+    #ifdef BUILD_ADAM
+        bool printer_enabled = false; // Not by default.
+    #else
+        bool printer_enabled = true;
+    #endif
         std::string interface_url = WEB_SERVER_LISTEN_URL; // default URL to serve web interface
         std::string config_file_path = CONFIG_FILENAME; // default path to load/save config file (program CWD)
         std::string SD_dir_path = SD_CARD_DIR; // default path to load/save config file
@@ -316,13 +369,32 @@ private:
 
     struct modem_info
     {
+        bool modem_enabled = true;
         bool sniffer_enabled = false;
     };
 
     struct cassette_info
     {
-        bool pulldown = false;
+        bool cassette_enabled = true;
+        bool pulldown = true;
         bool button = false;
+    };
+
+    struct cpm_info
+    {
+        std::string ccp;
+    };
+
+    struct device_enable_info
+    {
+        bool device_1_enabled = true;
+        bool device_2_enabled = true;
+        bool device_3_enabled = true;
+        bool device_4_enabled = true;
+        bool device_5_enabled = true;
+        bool device_6_enabled = true;
+        bool device_7_enabled = true;
+        bool device_8_enabled = true;
     };
 
     struct phbook_info
@@ -345,7 +417,8 @@ private:
     cassette_info _cassette;
     serial_info _serial;
     netsio_info _netsio;
-
+    cpm_info _cpm;
+    device_enable_info _denable;
     phbook_info _phonebook_slots[MAX_PB_SLOTS];
 };
 

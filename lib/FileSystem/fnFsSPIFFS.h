@@ -1,15 +1,18 @@
-#ifndef _FN_FSSPIF_
-#define _FN_FSSPIF_
+#ifndef _FN_FSSPIFFS_
+#define _FN_FSSPIFFS_
 
 #include "compat_dirent.h"
 #include <stdio.h>
+
 #include "fnFS.h"
+
 
 class FileSystemSPIFFS : public FileSystem
 {
 private:
     DIR * _dir;
 public:
+    FileSystemSPIFFS();
     bool start();
     
     fsType type() override { return FSTYPE_SPIFFS; };
@@ -26,6 +29,7 @@ public:
 
     bool rename(const char* pathFrom, const char* pathTo) override;
 
+    bool is_dir(const char *path) override;
     bool dir_open(const char * path, const char *pattern, uint16_t diropts) override;
     fsdir_entry *dir_read() override;
     void dir_close() override;
@@ -38,4 +42,4 @@ public:
 
 extern FileSystemSPIFFS fnSPIFFS;
 
-#endif // _FN_FSSPIF_
+#endif // _FN_FSSPIFFS_

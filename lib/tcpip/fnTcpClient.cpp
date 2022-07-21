@@ -1,14 +1,10 @@
 /* Modified version of ESP-Arduino fnTcpClient.cpp/h */
 
-// #include <lwip/sockets.h>
+#include "fnTcpClient.h"
+
 // #include <lwip/netdb.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <string.h>
+#include <cstring>
 #include <fcntl.h>
-#include "compat_inet.h"
-// #include <sys/socket.h>
 
 #if defined(_WIN32)
 #define MSG_DONTWAIT 0 // !! TODO this is to compile the code but it is unlikely to work
@@ -17,12 +13,10 @@
 #include <netinet/tcp.h>
 #endif
 
-#include <string>
-
 #include "../../include/debug.h"
 
 #include "fnDNS.h"
-#include "fnTcpClient.h"
+
 
 #define FNTCP_MAX_WRITE_RETRY (10)
 #define FNTCP_SELECT_TIMEOUT_US (1000000)
@@ -65,7 +59,6 @@ private:
         }
 #else
         int count;
-        // int res = lwip_ioctl(_fd, FIONREAD, &count);
         int res = ioctl(_fd, FIONREAD, &count);
         if (res < 0)
         {
@@ -204,7 +197,7 @@ public:
     int fd() { return _sockfd; }
     int close()
     {
-        int res = (_sockfd >= 0) ? ::closesocket(_sockfd) : -1;
+        int res = (_sockfd >= 0) ? closesocket(_sockfd) : -1;
         _sockfd = -1;
         return res;
     }
@@ -274,7 +267,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
 #endif
     {
         Debug_printf("connect on fd %d, errno: %d, \"%s\"\n", sockfd, err, compat_sockstrerror(err));
-        ::closesocket(sockfd);
+        closesocket(sockfd);
         // re-set errno for errno_to_error()
         compat_setsockerr(err);
         return 0;
@@ -300,7 +293,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     {
         err = compat_getsockerr();
         Debug_printf("select on fd %d, errno: %d, \"%s\"\n", sockfd, err, compat_sockstrerror(err));
-        ::closesocket(sockfd);
+        closesocket(sockfd);
         // re-set errno
         compat_setsockerr(err);
         return 0;
@@ -309,7 +302,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     else if (res == 0)
     {
         Debug_printf("select returned due to timeout %d ms for fd %d\n", timeout, sockfd);
-        ::closesocket(sockfd);
+        closesocket(sockfd);
 #if defined(_WIN32)
         err = WSAETIMEDOUT;
 #else
@@ -331,7 +324,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
             // Failed to retrieve SO_ERROR
             err = compat_getsockerr();
             Debug_printf("getsockopt on fd %d, errno: %d, \"%s\"\n", sockfd, err ,compat_sockstrerror(err));
-            ::closesocket(sockfd);
+            closesocket(sockfd);
             // set errno
             compat_setsockerr(err);
             return 0;
@@ -340,7 +333,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         if (sockerr != 0)
         {
             Debug_printf("socket error on fd %d, errno: %d, \"%s\"\n", sockfd, sockerr, compat_sockstrerror(sockerr));
-            ::closesocket(sockfd);
+            closesocket(sockfd);
             // set errno
             compat_setsockerr(sockerr);
             return 0;
@@ -412,7 +405,6 @@ int fnTcpClient::setOption(int option, int *value)
 // Get TCP option
 int fnTcpClient::getOption(int option, int *value)
 {
-    // size_t size = sizeof(int);
     socklen_t size = sizeof(int);
     int res = getsockopt(fd(), IPPROTO_TCP, option, (char *)value, &size);
     if (res < 0)

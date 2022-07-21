@@ -1,13 +1,13 @@
-// #include <esp_vfs.h>
-// #include "esp_vfs_fat.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include "compat_string.h"
 
 #include "fnFS.h"
+
+#include <cstring>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include "compat_string.h"
 #include "../../include/debug.h"
 
 

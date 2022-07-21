@@ -3,9 +3,8 @@
 #ifndef _FN_TCPCLIENT_H_
 #define _FN_TCPCLIENT_H_
 
-
 #include <memory>
-//#include <lwip/sockets.h>
+
 #include "compat_inet.h"
 
 class fnTcpClientSocketHandle;

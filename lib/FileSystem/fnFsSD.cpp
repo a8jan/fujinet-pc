@@ -1,31 +1,34 @@
 /* TODO: Check why using the SD/FAT routines takes up a large amount of the stack (around 4.5K)
 */
 
-#include <memory>
-#include <time.h>
-
-#include <vector>
-#include <algorithm>
+#include "fnFsSD.h"
 
 // #include <esp_vfs.h>
-// #include "esp_vfs_fat.h"
-#include <sys/types.h>
+// #include <esp_vfs_fat.h>
+
+#include <algorithm>
+#include <memory>
+#include <vector>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
 #include "compat_string.h"
 
-#include "fnFsSD.h"
-#include "fnFileLocal.h"
-#include "../utils/utils.h"
 #include "../../include/debug.h"
 // #include "../../include/pinmap.h"
+
+#include "fnFileLocal.h"
 
 #if defined(_WIN32)
 #include <direct.h>
 #define mkdir(A, B) _mkdir(A)
 #endif
 
+
+#include "utils.h"
+
+
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+#define HSPI_HOST SPI3_HOST
+#endif
 
 // Our global SD interface
 FileSystemSDFAT fnSDFAT;
@@ -108,9 +111,18 @@ typedef bool (*sort_fn_t)(fsdir_entry &left, fsdir_entry &right);
 // }
 
 
+bool FileSystemSDFAT::is_dir(const char *path)
+{
+    char * fpath = _make_fullpath(path);
+    struct stat info;
+    stat( fpath, &info);
+    return (info.st_mode == S_IFDIR) ? true: false;
+}
+
 bool FileSystemSDFAT::dir_open(const char * path, const char * pattern, uint16_t diropts)
 {
     Debug_printf("FileSystemSDFAT::dir_open \"%s\"\n", path);
+    // TODO: Add pattern and sorting options
 
     // Throw out any existing directory entry data
     _dir_entries.clear();
@@ -255,7 +267,7 @@ FILE * FileSystemSDFAT::file_open(const char* path, const char* mode)
     free(fpath);
     //Debug_printf("sdfileopen2: task hwm %u, %p\n", uxTaskGetStackHighWaterMark(NULL), pxTaskGetStackStart(NULL));
 #ifdef DEBUG
-    //Debug_printf("fopen = %s\n", result == nullptr ? "err" : "ok");
+    Debug_printf("fopen = %s\n", result == nullptr ? "err" : "ok");
 #endif    
     return result;
 }

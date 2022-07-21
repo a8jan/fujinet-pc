@@ -4,11 +4,14 @@
  * Implementation
  */
 
-#include <string.h>
 #include "TNFS.h"
+
+#include <string.h>
+
 #include "../../include/debug.h"
+
 #include "status_error_codes.h"
-#include "utils.h"
+
 
 NetworkProtocolTNFS::NetworkProtocolTNFS(string *rx_buf, string *tx_buf, string *sp_buf)
     : NetworkProtocolFS(rx_buf, tx_buf, sp_buf)

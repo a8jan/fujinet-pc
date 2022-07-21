@@ -60,7 +60,7 @@ public:
     int8_t service(uint8_t b);
 };
 
-class sioCassette : public sioDevice
+class sioCassette : public virtualDevice
 {
 protected:
     // FileSystem *_FS = nullptr;
@@ -87,6 +87,9 @@ protected:
     // have to populate virtual functions to complete class
     void sio_status() override{}; // $53, 'S', Status
     void sio_process(uint32_t commanddata, uint8_t checksum) override{};
+
+    void open_cassette_file(FileSystem *filesystem);
+    void close_cassette_file();
 
 public:
     void umount_cassette_file();

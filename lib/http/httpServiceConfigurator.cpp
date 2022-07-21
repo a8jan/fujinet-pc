@@ -7,9 +7,17 @@
 
 #include "fnSystem.h"
 #include "fnConfig.h"
-#include "sio/siocom/fnSioCom.h"
+#include "bus.h"
 
 #include "utils.h"
+
+
+#ifdef BUILD_APPLE
+#include "iwm/printerlist.h"
+#include "iwm/fuji.h"
+#define PRINTER_CLASS applePrinter
+extern iwmFuji theFuji;
+#endif /* BUILD_APPLE */
 
 // TODO: This was copied from another source and needs some bounds-checking!
 char *fnHttpServiceConfigurator::url_decode(char *dst, const char *src, size_t dstsize)
@@ -111,8 +119,10 @@ std::map<std::string, std::string> fnHttpServiceConfigurator::parse_postdata(con
     return results;
 }
 
+
 void fnHttpServiceConfigurator::config_hsio(std::string hsioindex)
 {
+#ifdef BUILD_ATARI
     Debug_printf("New HSIO index value: %s\n", hsioindex.c_str());
 
     int index = atoi(hsioindex.c_str());
@@ -128,7 +138,9 @@ void fnHttpServiceConfigurator::config_hsio(std::string hsioindex)
     Config.store_general_hsioindex(index);
     SIO.setHighSpeedIndex(index);
     Config.save();
+#endif /* BUILD_ATARI */
 }
+
 
 void fnHttpServiceConfigurator::config_timezone(std::string timezone)
 {
@@ -175,6 +187,45 @@ void fnHttpServiceConfigurator::config_enable_config(std::string enable_config)
     Config.save();
 }
 
+void fnHttpServiceConfigurator::config_status_wait_enable(std::string status_wait_enable)
+{
+    Debug_printf("New status_wait_enable value: %s\n", status_wait_enable.c_str());
+    // Store our change in Config
+    Config.store_general_status_wait_enabled(util_string_value_is_true(status_wait_enable));
+    // Save change
+    Config.save();
+}
+
+void fnHttpServiceConfigurator::config_printer_enabled(std::string printer_enabled)
+{
+    Debug_printf("New Printer Enable Value: %s\n",printer_enabled.c_str());
+
+    // Store
+    Config.store_printer_enabled(atoi(printer_enabled.c_str()));
+    // Save
+    Config.save();
+}
+
+void fnHttpServiceConfigurator::config_modem_enabled(std::string modem_enabled)
+{
+    Debug_printf("New Modem Enable Value: %s\n",modem_enabled.c_str());
+
+    // Store
+    Config.store_modem_enabled(atoi(modem_enabled.c_str()));
+    // Save*
+    Config.save();
+}
+
+void fnHttpServiceConfigurator::config_modem_sniffer_enabled(std::string modem_sniffer_enabled)
+{
+    Debug_printf("New Modem Sniffer Enable Value: %s\n",modem_sniffer_enabled.c_str());
+
+    // Store
+    Config.store_modem_sniffer_enabled(atoi(modem_sniffer_enabled.c_str()));
+    // Save*
+    Config.save();
+}
+
 void fnHttpServiceConfigurator::config_boot_mode(std::string boot_mode)
 {
     Debug_printf("New CONFIG Boot Mode value: %s\n", boot_mode.c_str());
@@ -185,8 +236,19 @@ void fnHttpServiceConfigurator::config_boot_mode(std::string boot_mode)
     Config.save();
 }
 
+void fnHttpServiceConfigurator::config_cassette_enabled(std::string cassette_enabled)
+{
+    Debug_printf("New Cassette Enable Value: %s\n",cassette_enabled.c_str());
+
+    // Store
+    Config.store_cassette_enabled(atoi(cassette_enabled.c_str()));
+    // Save*
+    Config.save();
+}
+
 void fnHttpServiceConfigurator::config_cassette(std::string play_record, std::string resistor, bool rew)
 {
+#ifdef BUILD_ATARI
     // call the cassette buttons function passing play_record.c_str()
     // find cassette via thefuji object?
     Debug_printf("New play/record button value: %s - not implemented\n", play_record.c_str());
@@ -206,18 +268,55 @@ void fnHttpServiceConfigurator::config_cassette(std::string play_record, std::st
     //     SIO.getCassette()->rewind();
     // }
     // Config.save();
+#endif /* ATARI */
 }
 
-void fnHttpServiceConfigurator::config_midimaze(std::string hostname)
+void fnHttpServiceConfigurator::config_udpstream(std::string hostname)
 {
-    Debug_printf("Set MIDIMaze host: %s - not implemented\n", hostname.c_str());
+    int port = 0;
+    std::string delim = ":";
 
-    // // Update the host ip variable
-    // SIO.setMIDIHost(hostname.c_str());
-    // // Save change
-    // Config.store_midimaze_host(hostname.c_str());
-    // Config.save();
+    // Turn off if hostname is STOP
+    if (hostname.compare("STOP") == 0)
+    {
+        Debug_println("UDPStream Stop Request");
+#ifdef BUILD_ATARI
+        SIO.setUDPHost("STOP", port);
+#endif /* ATARI */
+#ifdef BUILD_LYNX
+        ComLynx.setUDPHost("STOP", port);
+#endif /* LYNX */
+        Config.store_udpstream_host("");
+        Config.store_udpstream_port(0);
+        Config.save();
+
+        return;
+    }
+    // Get the port from the hostname
+    if (hostname.find(delim) != std::string::npos)
+        port = stoi(hostname.substr(hostname.find(delim)+1));
+    else
+        port = 5004; // Default to MIDI port of 5004
+
+    // Get the hostname
+    std::string newhostname = hostname.substr(0, hostname.find(delim));
+
+    Debug_printf("Set UDPStream host: %s\n", newhostname.c_str());
+    Debug_printf("Set UDPStream port: %d\n", port);
+
+    // Update the host ip variable
+#ifdef BUILD_ATARI
+    SIO.setUDPHost(newhostname.c_str(), port);
+#endif /* ATARI */
+#ifdef BUILD_LYNX
+    ComLynx.setUDPHost(newhostname.c_str(), port);
+#endif /* LYNX */
+    // Save change
+    Config.store_udpstream_host(newhostname.c_str());
+    Config.store_udpstream_port(port);
+    Config.save();
 }
+
 
 void fnHttpServiceConfigurator::config_printer(std::string printernumber, std::string printermodel, std::string printerport)
 {
@@ -239,8 +338,8 @@ void fnHttpServiceConfigurator::config_printer(std::string printernumber, std::s
 
     if (printerport.empty())
     {
-        sioPrinter::printer_type t = sioPrinter::match_modelname(printermodel);
-        if (t == sioPrinter::printer_type::PRINTER_INVALID)
+        PRINTER_CLASS::printer_type t = PRINTER_CLASS::match_modelname(printermodel);
+        if (t == PRINTER_CLASS::printer_type::PRINTER_INVALID)
         {
             Debug_printf("Unknown printer type: \"%s\"\n", printermodel.c_str());
             return;
@@ -274,9 +373,14 @@ void fnHttpServiceConfigurator::config_printer(std::string printernumber, std::s
         Config.store_printer_port(pn - 1, port);
         // Store our change in the printer list
         fnPrinters.set_port(0, port);
+#ifdef BUILD_ATARI
         // Tell the SIO daisy chain to change the device ID for this printer
         SIO.changeDeviceId(fnPrinters.get_ptr(0), SIO_DEVICEID_PRINTER + port);
+#endif
     }
+    fnSioCom.reset_sio_port(Config.get_netsio_enabled() ? SioCom::sio_mode::NETSIO : SioCom::sio_mode::SERIAL);
+
+    // Save change
     Config.save();
 }
 
@@ -351,9 +455,9 @@ void fnHttpServiceConfigurator::config_netsio(std::string enable_netsio, std::st
 
 int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t postlen)
 {
-// #ifdef DEBUG
-//     Debug_printf("process_config_post: %s\n", postdata);
-// #endif
+#ifdef DEBUG
+    Debug_printf("process_config_post: %s\n", postdata);
+#endif
     // Create a new buffer for the url-decoded version of the data
     char *decoded_buf = (char *)malloc(postlen + 1);
     url_decode(decoded_buf, postdata, postlen);
@@ -388,9 +492,9 @@ int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t 
         {
             config_hostname(i->second);
         }
-        else if (i->first.compare("midimaze_host") == 0)
+        else if (i->first.compare("udpstream_host") == 0)
         {
-            config_midimaze(i->second);
+            config_udpstream(i->second);
         }
         else if (i->first.compare("play_record") == 0)
         {
@@ -404,6 +508,10 @@ int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t 
         {
             config_cassette(std::string(), std::string(), true);
         }
+        else if (i->first.compare("cassette_enabled") == 0)
+        {
+            config_cassette_enabled(i->second);
+        }
         else if (i->first.compare("rotation_sounds") == 0)
         {
             config_rotation_sounds(i->second);
@@ -412,9 +520,25 @@ int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t 
         {
             config_enable_config(i->second);
         }
+        else if (i->first.compare("status_wait_enable") == 0)
+        {
+            config_status_wait_enable(i->second);
+        }
         else if (i->first.compare("boot_mode") == 0)
         {
             config_boot_mode(i->second);
+        }
+        else if (i->first.compare("printer_enabled") == 0)
+        {
+            config_printer_enabled(i->second);
+        }
+        else if (i->first.compare("modem_enabled") == 0)
+        {
+            config_modem_enabled(i->second);
+        }
+        else if (i->first.compare("modem_sniffer_enabled") == 0)
+        {
+            config_modem_sniffer_enabled(i->second);
         }
         else if (i->first.compare("serialport") == 0)
         {

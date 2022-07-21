@@ -2,9 +2,11 @@
 #define NETWORKPROTOCOLHTTP_H
 
 #include "FS.h"
-#include "../http/mgHttpClient.h"
-#include "../webdav/WebDAV.h"
+
 #include <expat.h>
+
+#include "mgHttpClient.h"
+#include "WebDAV.h"
 
 class NetworkProtocolHTTP : public NetworkProtocolFS
 {

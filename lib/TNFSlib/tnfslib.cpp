@@ -1,13 +1,17 @@
-#include <memory>
-#include <string.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include "compat_string.h"
 
 #include "tnfslib.h"
-#include "../tcpip/fnUDP.h"
-#include "../utils/utils.h"
-#include "../hardware/fnSystem.h"
+
+#include <sys/stat.h>
+#include <cstring>
+#include "compat_string.h"
+
+#include "../../include/debug.h"
+
+#include "fnSystem.h"
+#include "fnUDP.h"
+
+#include "utils.h"
+
 
 // ESTALE not in errno.h on Windows/MinGW
 #ifndef ESTALE
@@ -620,7 +624,6 @@ int tnfs_lseek(tnfsMountInfo *m_info, int16_t file_handle, int32_t position, uin
             if(pFileInf->file_position != response_pos)
             {
                 Debug_print("CALCULATED AND RESPONSE POS DON'T MATCH!\n");
-                // vTaskDelay(5000 / portTICK_PERIOD_MS);
                 fnSystem.delay(5000);
             }
         }
@@ -1278,7 +1281,6 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
                             Debug_printf("Server asked us to TRY AGAIN after %ums\n", backoffms);
                             if (backoffms > TNFS_MAX_BACKOFF_DELAY)
                                 backoffms = TNFS_MAX_BACKOFF_DELAY;
-                            // vTaskDelay(backoffms / portTICK_PERIOD_MS);
                             fnSystem.delay(backoffms);
                         }
                         // Check for invalid (expired) session
@@ -1310,7 +1312,6 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
                         }
                     }
                 }
-                // fnSystem.yield();
                 fnSystem.delay_microseconds(5000); // wait more time for (remote) data to arrive
 
             } while ((fnSystem.millis() - ms_start) < m_info->timeout_ms);
@@ -1321,7 +1322,6 @@ bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t payload_
 
         if (retry != -1)
             // Make sure we wait before retrying
-            // vTaskDelay(m_info->min_retry_ms / portTICK_PERIOD_MS);
             fnSystem.delay(m_info->min_retry_ms);
         retry++;
     }

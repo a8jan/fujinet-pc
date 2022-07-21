@@ -1,11 +1,12 @@
 #ifndef FNWIFI_H
 #define FNWIFI_H
 
+#include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
+#include <esp_netif.h>
+
 #include <string>
 
-#include "freertos/event_groups.h"
-#include "esp_event.h"
-#include "esp_netif.h"
 
 #define FNWIFI_RECONNECT_RETRIES 8
 #define FNWIFI_SCAN_RESULTS_MAX 20
@@ -32,6 +33,7 @@ private:
     static void _wifi_event_handler(void *arg, esp_event_base_t event_base,
                                     int32_t event_id, void *event_data);
     EventGroupHandle_t _wifi_event_group;
+    int remove_duplicate_scan_results(wifi_ap_record_t scan_records[], uint16_t record_count);
 
 public:
     int retries;

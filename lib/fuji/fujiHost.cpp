@@ -1,14 +1,14 @@
+#include "fujiHost.h"
+
+#include <cstring>
 #include "compat_string.h"
 
-#include "fuji.h"
+#include "../../include/debug.h"
 
-#include "../FileSystem/fnFS.h"
-#include "../FileSystem/fnFsSD.h"
-#include "../FileSystem/fnFsTNFS.h"
+#include "fnFsSD.h"
+#include "fnFsTNFS.h"
 
-#include "../utils/utils.h"
-
-#include "fujiHost.h"
+#include "utils.h"
 
 void fujiHost::unmount()
 {

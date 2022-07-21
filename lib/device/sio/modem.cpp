@@ -1,18 +1,17 @@
+#ifdef BUILD_ATARI
 
-#include <stdlib.h>
-#include <string.h>
-// #include <lwip/netdb.h>
-
-#include "../../include/atascii.h"
 #include "modem.h"
-// #include "../hardware/fnUART.h"
-// #include "fnWiFi.h"
-#include "fnDummyWiFi.h"
-#include "fnFsSPIF.h"
+
+#include "../../../include/debug.h"
+#include "../../../include/atascii.h"
+
+#include "modem-sniffer.h"
 #include "fnSystem.h"
-#include "../utils/utils.h"
-#include "siocpm.h"
 #include "fnConfig.h"
+#include "fnDummyWiFi.h"
+#include "siocpm.h"
+
+#include "utils.h"
 
 #define RECVBUFSIZE 1024
 
@@ -181,7 +180,7 @@ void sioModem::sio_poll_3(uint8_t device, uint8_t aux1, uint8_t aux2)
 
     fnSystem.delay_microseconds(DELAY_FIRMWARE_DELIVERY);
 
-    sio_to_computer(type4response, sizeof(type4response), false);
+    bus_to_computer(type4response, sizeof(type4response), false);
 
     // TODO: Handle the subsequent request to load the handler properly by providing the relocation blocks
 }
@@ -235,7 +234,7 @@ void sioModem::sio_poll_1()
 
     fnSystem.delay_microseconds(DELAY_FIRMWARE_DELIVERY * 2);
 
-    sio_to_computer(bootBlock, sizeof(bootBlock), false);
+    bus_to_computer(bootBlock, sizeof(bootBlock), false);
 }
 
 // 0x21 / '!' - RELOCATOR DOWNLOAD
@@ -278,7 +277,7 @@ void sioModem::sio_send_firmware(uint8_t loadcommand)
     Debug_printf("Modem sending %d bytes of %s code\n", codesize,
                  loadcommand == SIO_MODEMCMD_LOAD_RELOCATOR ? "relocator" : "handler");
 
-    sio_to_computer(code, codesize, false);
+    bus_to_computer(code, codesize, false);
 
     // Free the buffer!
     free(code);
@@ -304,7 +303,7 @@ void sioModem::sio_write()
     {
         memset(txBuf, 0, sizeof(txBuf));
 
-        ck = sio_to_peripheral(txBuf, 64);
+        ck = bus_to_peripheral(txBuf, 64);
 
         if (ck != sio_checksum(txBuf, 64))
         {
@@ -376,7 +375,7 @@ void sioModem::sio_status()
 
     Debug_printf("sioModem::sio_status(%02x,%02x)\n", mdmStatus[0], mdmStatus[1]);
 
-    sio_to_computer(mdmStatus, sizeof(mdmStatus), false);
+    bus_to_computer(mdmStatus, sizeof(mdmStatus), false);
 }
 
 // 0x41 / 'A' - CONTROL
@@ -563,7 +562,7 @@ void sioModem::sio_stream()
         break;
     }
 
-    sio_to_computer((uint8_t *)response, sizeof(response), false);
+    bus_to_computer((uint8_t *)response, sizeof(response), false);
 
     // Debug_printf("Flush serial data\n");
     // fnSioCom.flush();
@@ -1070,6 +1069,9 @@ void sioModem::at_handle_dial()
         answered = false;
         answerTimer = fnSystem.millis();
         // This is so macros in Bobterm can do the actual connect.
+        fnSystem.delay(ANSWER_TIMER_MS);
+        at_cmd_println("CONNECT ", false);
+        at_cmd_println(modemBaud);
     }
     else
     {
@@ -1473,7 +1475,7 @@ void sioModem::modemCommand()
         break;
     // case AT_CPM:
     //     modemActive = false;
-    //     SIO.getCPM()->init_cpm();
+    //     SIO.getCPM()->init_cpm(modemBaud);
     //     SIO.getCPM()->cpmActive = true;
     //     break;
     case AT_PHONEBOOKLIST:
@@ -1670,7 +1672,6 @@ int sioModem::sio_handle_modem()
             }
         }
 
-        //int sioBytesAvail = SIO_UART.available();
         int sioBytesAvail = fnSioCom.available();
 
         // send from Atari to Fujinet
@@ -1781,8 +1782,8 @@ int sioModem::sio_handle_modem()
         CRX = false;
         if (listenPort > 0)
         {
-            tcpServer.stop();
-            tcpServer.begin(listenPort);
+            // tcpServer.stop();
+            // tcpServer.begin(listenPort);
         }
     }
     else if ((!tcpClient.connected()) && (cmdMode == false))
@@ -1800,8 +1801,8 @@ int sioModem::sio_handle_modem()
         CRX = false;
         if (listenPort > 0)
         {
-            tcpServer.stop();
-            tcpServer.begin(listenPort);
+            // tcpServer.stop();
+            // tcpServer.begin(listenPort);
         }
     }
     return rc;
@@ -1822,71 +1823,81 @@ void sioModem::sio_process(uint32_t commanddata, uint8_t checksum)
     cmdFrame.commanddata = commanddata;
     cmdFrame.checksum = checksum;
 
-    Debug_println("sioModem::sio_process() called");
-
-    switch (cmdFrame.comnd)
+    if (!Config.get_modem_enabled())
+        Debug_println("sioModem::disabled, ignoring");
+    else
     {
-    case SIO_MODEMCMD_LOAD_RELOCATOR:
-        Debug_printf("MODEM $21 RELOCATOR #%d\n", ++count_ReqRelocator);
-        sio_send_firmware(cmdFrame.comnd);
-        break;
+        Debug_println("sioModem::sio_process() called");
 
-    case SIO_MODEMCMD_LOAD_HANDLER:
-        Debug_printf("MODEM $26 HANDLER DL #%d\n", ++count_ReqHandler);
-        sio_send_firmware(cmdFrame.comnd);
-        break;
+        switch (cmdFrame.comnd)
+        {
+        case SIO_MODEMCMD_LOAD_RELOCATOR:
+            Debug_printf("MODEM $21 RELOCATOR #%d\n", ++count_ReqRelocator);
+            sio_send_firmware(cmdFrame.comnd);
+            break;
 
-    case SIO_MODEMCMD_TYPE1_POLL:
-        Debug_printf("MODEM TYPE 1 POLL #%d\n", ++count_PollType1);
-        // The 850 is only supposed to respond to this if AUX1 = 1 or on the 26th poll attempt
-        if (cmdFrame.aux1 == 1 || count_PollType1 == 16)
-            sio_poll_1();
-        break;
+        case SIO_MODEMCMD_LOAD_HANDLER:
+            Debug_printf("MODEM $26 HANDLER DL #%d\n", ++count_ReqHandler);
+            sio_send_firmware(cmdFrame.comnd);
+            break;
 
-    case SIO_MODEMCMD_TYPE3_POLL:
-        sio_poll_3(cmdFrame.device, cmdFrame.aux1, cmdFrame.aux2);
-        break;
+        case SIO_MODEMCMD_TYPE1_POLL:
+            Debug_printf("MODEM TYPE 1 POLL #%d\n", ++count_PollType1);
+            // The 850 is only supposed to respond to this if AUX1 = 1 or on the 26th poll attempt
+            if (cmdFrame.aux1 == 1 || count_PollType1 == 16)
+            {
+                sio_poll_1();
+                count_PollType1 = 0; // Reset the counter so we can respond again if asked
+            }
+            break;
 
-    case SIO_MODEMCMD_CONTROL:
-        sio_ack();
-        sio_control();
-        break;
-    case SIO_MODEMCMD_CONFIGURE:
-        sio_ack();
-        sio_config();
-        break;
-    case SIO_MODEMCMD_SET_DUMP:
-        sio_ack();
-        sio_set_dump();
-        break;
-    case SIO_MODEMCMD_LISTEN:
-        sio_listen();
-        break;
-    case SIO_MODEMCMD_UNLISTEN:
-        sio_unlisten();
-        break;
-    case SIO_MODEMCMD_BAUDLOCK:
-        sio_baudlock();
-        break;
-    case SIO_MODEMCMD_AUTOANSWER:
-        sio_autoanswer();
-        break;
-    case SIO_MODEMCMD_STATUS:
-        sio_ack();
-        sio_status();
-        break;
-    case SIO_MODEMCMD_WRITE:
-        if (cmdFrame.aux1 == 0)
+        case SIO_MODEMCMD_TYPE3_POLL:
+            sio_poll_3(cmdFrame.device, cmdFrame.aux1, cmdFrame.aux2);
+            break;
+
+        case SIO_MODEMCMD_CONTROL:
             sio_ack();
-        else
-            sio_late_ack();
-        sio_write();
-        break;
-    case SIO_MODEMCMD_STREAM:
-        sio_ack();
-        sio_stream();
-        break;
-    default:
-        sio_nak();
+            sio_control();
+            break;
+        case SIO_MODEMCMD_CONFIGURE:
+            sio_ack();
+            sio_config();
+            break;
+        case SIO_MODEMCMD_SET_DUMP:
+            sio_ack();
+            sio_set_dump();
+            break;
+        case SIO_MODEMCMD_LISTEN:
+            sio_listen();
+            break;
+        case SIO_MODEMCMD_UNLISTEN:
+            sio_unlisten();
+            break;
+        case SIO_MODEMCMD_BAUDLOCK:
+            sio_baudlock();
+            break;
+        case SIO_MODEMCMD_AUTOANSWER:
+            sio_autoanswer();
+            break;
+        case SIO_MODEMCMD_STATUS:
+            sio_ack();
+            sio_status();
+            break;
+        case SIO_MODEMCMD_WRITE:
+            if (cmdFrame.aux1 == 0)
+                sio_ack();
+            else
+                sio_late_ack();
+            sio_write();
+            break;
+        case SIO_MODEMCMD_STREAM:
+            sio_ack();
+            sio_stream();
+            break;
+        default:
+            sio_nak();
+        }
     }
 }
+
+#endif /* BUILD_ATARI */

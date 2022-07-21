@@ -1,8 +1,9 @@
 #ifndef FUJI_H
 #define FUJI_H
-#include <cstdint>
 
-#include "../../include/debug.h"
+#include <cstdint>
+#include <cstring>
+
 #include "bus.h"
 #include "network.h"
 #include "cassette.h"
@@ -51,10 +52,10 @@ struct appkey
     uint8_t reserved = 0;
 } __attribute__((packed));
 
-class sioFuji : public sioDevice
+class sioFuji : public virtualDevice
 {
 private:
-    sioBus *_sio_bus;
+    systemBus *_sio_bus;
 
     fujiHost _fnHosts[MAX_HOSTS];
 
@@ -91,7 +92,8 @@ protected:
     void sio_write_host_slots();       // 0xF3
     void sio_read_device_slots();      // 0xF2
     void sio_write_device_slots();     // 0xF1
-    void sio_net_get_wifi_enabled();   // 0xEA    
+    void sio_enable_udpstream();       // 0xF0
+    void sio_net_get_wifi_enabled();   // 0xEA
     int sio_disk_image_umount(bool siomode=true, int slot=-1);  // 0xE9
     void sio_get_adapter_config();     // 0xE8
     void sio_new_disk();               // 0xE7
@@ -122,6 +124,9 @@ protected:
 
 public:
     bool boot_config = true;
+
+    bool status_wait_enabled = true;
+    
     sioDisk *bootdisk();
 
     sioNetwork *network();
@@ -131,7 +136,7 @@ public:
 
     void insert_boot_device(uint8_t d);
 
-    void setup(sioBus *siobus);
+    void setup(systemBus *siobus);
 
     void image_rotate();
     int get_disk_id(int drive_slot);

@@ -20,7 +20,8 @@ typedef uint32_t in_addr_t;
 #include <sys/socket.h>
 
 #ifndef closesocket
-#define closesocket(x) close(x)
+#include <unistd.h>
+#define closesocket(x) ::close(x)
 #endif
 
 #endif

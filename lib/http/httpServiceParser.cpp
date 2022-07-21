@@ -1,10 +1,11 @@
+
 #include "httpServiceParser.h"
 
 #include <sstream>
 #include <string>
 #include <cstdio>
-#include <locale>
-#include <vector>
+// #include <locale>
+// #include <vector>
 
 
 #include "../../include/debug.h"
@@ -12,11 +13,16 @@
 #include "fnSystem.h"
 #include "fnConfig.h"
 #include "fnDummyWiFi.h"
-#include "fnFsSPIF.h"
+#include "fnFsSPIFFS.h"
 #include "fnFsSD.h"
+#include "httpService.h"
 #include "fuji.h"
 
+#define ALL_THE_DEBUGS
+
 using namespace std;
+
+#define MAX_PRINTER_LIST_BUFFER (2048)
 
 const string fnHttpServiceParser::substitute_tag(const string &tag)
 {
@@ -44,7 +50,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_CURRENTTIME,
         FN_TIMEZONE,
         FN_ROTATION_SOUNDS,
-        FN_MIDIMAZE_HOST,
+        FN_UDPSTREAM_HOST,
         FN_HEAPSIZE,
         FN_SYSSDK,
         FN_SYSCPUREV,
@@ -55,8 +61,13 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_PRINTER1_PORT,
         FN_PLAY_RECORD,
         FN_PULLDOWN,
+        FN_CASSETTE_ENABLED,
         FN_CONFIG_ENABLED,
+        FN_STATUS_WAIT_ENABLED,
         FN_BOOT_MODE,
+        FN_PRINTER_ENABLED,
+        FN_MODEM_ENABLED,
+        FN_MODEM_SNIFFER_ENABLED,
         FN_SERIALPORT,
         FN_SERIALCOMMAND,
         FN_SERIALPROCEED,
@@ -111,6 +122,9 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_HOST6PREFIX,
         FN_HOST7PREFIX,
         FN_HOST8PREFIX,
+        FN_ERRMSG,
+        FN_HARDWARE_VER,
+        FN_PRINTER_LIST,
         FN_LASTTAG
     };
 
@@ -138,7 +152,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_CURRENTTIME",
         "FN_TIMEZONE",
         "FN_ROTATION_SOUNDS",
-        "FN_MIDIMAZE_HOST",
+        "FN_UDPSTREAM_HOST",
         "FN_HEAPSIZE",
         "FN_SYSSDK",
         "FN_SYSCPUREV",
@@ -149,8 +163,13 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_PRINTER1_PORT",
         "FN_PLAY_RECORD",
         "FN_PULLDOWN",
+        "FN_CASSETTE_ENABLED",
         "FN_CONFIG_ENABLED",
+        "FN_STATUS_WAIT_ENABLED",
         "FN_BOOT_MODE",
+        "FN_PRINTER_ENABLED",
+        "FN_MODEM_ENABLED",
+        "FN_MODEM_SNIFFER_ENABLED",
         "FN_SERIALPORT",
         "FN_SERIALCOMMAND",
         "FN_SERIALPROCEED",
@@ -204,12 +223,16 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_HOST5PREFIX",
         "FN_HOST6PREFIX",
         "FN_HOST7PREFIX",
-        "FN_HOST8PREFIX"
+        "FN_HOST8PREFIX",
+        "FN_ERRMSG",
+        "FN_HARDWARE_VER",
+        "FN_PRINTER_LIST"
     };
 
     stringstream resultstream;
-#ifdef DEBUG
-    //Debug_printf("Substituting tag '%s'\n", tag.c_str());
+
+#ifdef ALL_THE_DEBUGS
+    Debug_printf("Substituting tag '%s'\n", tag.c_str());
 #endif
 
     int tagid;
@@ -295,8 +318,11 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     case FN_ROTATION_SOUNDS:
         resultstream << Config.get_general_rotation_sounds();
         break;
-    case FN_MIDIMAZE_HOST:
-        resultstream << Config.get_network_midimaze_host();
+    case FN_UDPSTREAM_HOST:
+        if (Config.get_network_udpstream_port() > 0)
+            resultstream << Config.get_network_udpstream_host() << ":" << Config.get_network_udpstream_port();
+        else
+            resultstream << Config.get_network_udpstream_host();
         break;
     case FN_HEAPSIZE:
         resultstream << fnSystem.get_free_heap_size();
@@ -310,6 +336,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     case FN_SIOVOLTS:
         resultstream << ((float)fnSystem.get_sio_voltage()) / 1000.00 << "V";
         break;
+#ifdef BUILD_ATARI
     case FN_SIO_HSINDEX:
         resultstream << SIO.getHighSpeedIndex();
         break;
@@ -323,6 +350,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     case FN_SIO_HSBAUD:
         resultstream << SIO.getHighSpeedBaud();
         break;
+#endif /* BUILD_ATARI */
     case FN_SERIALPORT:
         resultstream << Config.get_serial_port();
         break;
@@ -333,11 +361,36 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         resultstream << Config.get_serial_proceed();
         break;
     case FN_PRINTER1_MODEL:
-        resultstream << fnPrinters.get_ptr(0)->getPrinterPtr()->modelname();
+        {
+#ifdef BUILD_ADAM
+            adamPrinter *ap = fnPrinters.get_ptr(0);
+            if (ap != nullptr)
+            {
+                resultstream << fnPrinters.get_ptr(0)->getPrinterPtr()->modelname();
+            } else
+                resultstream << "No Virtual Printer";
+#endif /* BUILD_ADAM */
+#ifdef BUILD_ATARI
+            resultstream << fnPrinters.get_ptr(0)->getPrinterPtr()->modelname();
+#endif /* BUILD_ATARI */
+        }
         break;
     case FN_PRINTER1_PORT:
-        resultstream << (fnPrinters.get_port(0) + 1);
+        {
+#ifdef BUILD_ADAM
+            adamPrinter *ap = fnPrinters.get_ptr(0);
+            if (ap != nullptr)
+            {
+                resultstream << (fnPrinters.get_port(0) + 1);
+            } else
+                resultstream << "";
+#endif/* BUILD_ADAM */
+#ifdef BUILD_ATARI
+            resultstream << (fnPrinters.get_port(0) + 1);
+#endif /* BUILD_ATARI */
+        }
         break;
+#ifdef BUILD_ATARI        
     case FN_PLAY_RECORD:
     //     if (theFuji.cassette()->get_buttons())
     //         resultstream << "0 PLAY";
@@ -351,11 +404,27 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     //         resultstream << "0 B Button Press";
         resultstream << "TBD";
         break;
+    case FN_CASSETTE_ENABLED:
+        resultstream << Config.get_cassette_enabled();
+        break;
+#endif /* BUILD_ATARI */
     case FN_CONFIG_ENABLED:
         resultstream << Config.get_general_config_enabled();
         break;
+    case FN_STATUS_WAIT_ENABLED:
+        resultstream << Config.get_general_status_wait_enabled();
+        break;
     case FN_BOOT_MODE:
         resultstream << Config.get_general_boot_mode();
+        break;
+    case FN_PRINTER_ENABLED:
+        resultstream << Config.get_printer_enabled();
+        break;
+    case FN_MODEM_ENABLED:
+        resultstream << Config.get_modem_enabled();
+        break;
+    case FN_MODEM_SNIFFER_ENABLED:
+        resultstream << Config.get_modem_sniffer_enabled();
         break;
     case FN_NETSIO_ENABLED:
         resultstream << Config.get_netsio_enabled();
@@ -463,6 +532,35 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
 	        resultstream << theFuji.get_host_prefix(host_slot);
         } else {
             resultstream << "";
+        }
+        break;
+    case FN_ERRMSG:
+        resultstream << fnHTTPD.getErrMsg();
+        break;
+    case FN_HARDWARE_VER:
+        resultstream << fnSystem.get_hardware_ver_str();
+        break;
+    case FN_PRINTER_LIST:
+        {
+            char *result = (char *) malloc(MAX_PRINTER_LIST_BUFFER);
+            if (result != NULL)
+            {
+                strcpy(result, "");
+
+                for(int i=0; i<(int) PRINTER_CLASS::PRINTER_INVALID; i++)
+                {
+#ifndef BUILD_APPLE
+                    strncat(result, "<option value=\"", MAX_PRINTER_LIST_BUFFER-1);
+                    strncat(result, PRINTER_CLASS::printer_model_str[i], MAX_PRINTER_LIST_BUFFER-1);
+                    strncat(result, "\">", MAX_PRINTER_LIST_BUFFER);
+                    strncat(result, PRINTER_CLASS::printer_model_str[i], MAX_PRINTER_LIST_BUFFER-1);
+                    strncat(result, "</option>\n", MAX_PRINTER_LIST_BUFFER-1);
+#endif /* BUILD_APPLE */
+                }
+                resultstream << result;
+                free(result);
+            } else
+                resultstream << "Insufficent memory";
         }
         break;
     default:

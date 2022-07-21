@@ -1,21 +1,36 @@
+#include "fnFsSPIFFS.h"
+
 // #include <esp_vfs.h>
-// #include "esp_spiffs.h"
-#include "errno.h"
-#include <sys/types.h>
-#include <sys/stat.h>
+// #include <esp_spiffs.h>
+#include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "compat_string.h"
 
-#include "fnFsSPIF.h"
 #include "fnFileLocal.h"
 #include "../../include/debug.h"
 
+
 #define SPIFFS_MAXPATH 512
 
-// Our global SD interface
+// Our global SPIFFS interface
 FileSystemSPIFFS fnSPIFFS;
+
+FileSystemSPIFFS::FileSystemSPIFFS()
+{
+    // memset(_dir,0,sizeof(DIR));
+}
+
+bool FileSystemSPIFFS::is_dir(const char *path)
+{
+    char * fpath = _make_fullpath(path);
+    struct stat info;
+    stat( fpath, &info);
+    return (info.st_mode == S_IFDIR) ? true: false;
+}
 
 bool FileSystemSPIFFS::dir_open(const char * path, const char * pattern, uint16_t diropts)
 {

@@ -33,6 +33,7 @@ If a file has an extention pre-determined to support parsing (see/update
 #include "mongoose.h"
 
 // #include <map>
+#include "string"
 
 #include "fnFS.h"
 
@@ -92,6 +93,14 @@ class fnHttpService
     friend class fnHttpServiceBrowser; // allow browser to call above functions
 
 public:    
+
+    std::string errMsg; 
+
+    std::string getErrMsg() { return errMsg; }
+    void clearErrMsg() { errMsg.clear(); }
+    void addToErrMsg(const std::string _e) { errMsg += _e; }
+    bool errMsgEmpty() { return errMsg.empty(); }
+
     // static esp_err_t get_handler_test(httpd_req_t *req);
     // static esp_err_t get_handler_index(httpd_req_t *req);
     // static esp_err_t get_handler_file_in_query(httpd_req_t *req);

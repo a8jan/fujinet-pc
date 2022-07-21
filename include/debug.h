@@ -1,7 +1,8 @@
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
 
-#ifdef __PC_BUILD_DEBUG__
+// __PLATFORMIO_BUILD_DEBUG__ is set when build_type is set to debug in platformio.ini
+#if defined(__PLATFORMIO_BUILD_DEBUG__) || defined(__PC_BUILD_DEBUG__) || defined(DBUG2)
 #define DEBUG
 #endif
 

@@ -1,16 +1,18 @@
+#ifdef BUILD_ATARI
+
 #define CCP_INTERNAL
 
 #include "siocpm.h"
-#include "../hardware/fnSystem.h"
-#include "../hardware/fnUART.h"
+
+#include "fnSystem.h"
+#include "fnUART.h"
 #include "fnWiFi.h"
 #include "fuji.h"
 #include "fnFS.h"
 #include "fnFsSD.h"
+
 #include "../runcpm/globals.h"
 #include "../runcpm/abstraction_fujinet.h"
-#include "../hardware/fnUART.h"
-#include "../hardware/fnSystem.h"
 #include "../runcpm/ram.h"     // ram.h - Implements the RAM
 #include "../runcpm/console.h" // console.h - implements console.
 #include "../runcpm/cpu.h"     // cpu.h - Implements the emulated CPU
@@ -18,9 +20,9 @@
 #include "../runcpm/host.h"    // host.h - Custom host-specific BDOS call
 #include "../runcpm/cpm.h"     // cpm.h - Defines the CPM structures and calls
 #ifdef CCP_INTERNAL
-#include "../runcpm/ccp.h" // ccp.h - Defines a simple internal CCP
+# include "../runcpm/ccp.h" // ccp.h - Defines a simple internal CCP
 #endif
-#include <string.h>
+
 
 void sioCPM::sio_status()
 {
@@ -54,9 +56,9 @@ void sioCPM::sio_handle_cpm()
     }
 }
 
-void sioCPM::init_cpm()
+void sioCPM::init_cpm(int baud)
 {
-    fnSioCom.set_baudrate(9600);
+    fnSioCom.set_baudrate(baud);
     Status = Debug = 0;
     Break = Step = -1;
     RAM = (uint8_t *)malloc(MEMSIZE);
@@ -79,7 +81,7 @@ void sioCPM::sio_process(uint32_t commanddata, uint8_t checksum)
         fnSystem.delay(10);
         sio_complete();
         fnSystem.delay(5000);
-        init_cpm();
+        init_cpm(9600);
         cpmActive = true;
         break;
     default:
@@ -87,3 +89,5 @@ void sioCPM::sio_process(uint32_t commanddata, uint8_t checksum)
         break;
     }
 }
+
+#endif /* BUILD_ATARI */

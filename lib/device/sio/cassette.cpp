@@ -1,10 +1,16 @@
+#ifdef BUILD_ATARI
+
 #include "cassette.h"
-#include "fnSystem.h"
-// #include "fnUART.h"
-#include "led.h"
+
+#include <cstring>
+
 #include "../../include/debug.h"
 
-#include "cstring"
+#include "fnSystem.h"
+#include "fnUART.h"
+#include "fnFsSD.h"
+
+#include "led.h"
 
 /** thinking about state machine
  * boolean states:
@@ -17,7 +23,7 @@
  * */
 
 //#define CASSETTE_FILE "/test.cas" // zaxxon
-#define CASSETTE_FILE "/test" // basic program
+#define CASSETTE_FILE "/csave" // basic program
 
 // copied from fuUART.cpp - figure out better way
 #define UART2_RX (33)
@@ -124,6 +130,54 @@ int8_t softUART::service(uint8_t b)
     return 0;
 }
 
+
+//************************************************************************************************************
+// ***** nerd at work! ******
+
+void sioCassette::close_cassette_file()
+{
+    // for closing files used for writing
+    if (_file != nullptr)
+    {
+        fclose(_file);
+#ifdef DEBUG
+        Debug_println("CAS file closed.");
+#endif
+    }
+}
+
+void sioCassette::open_cassette_file(FileSystem *_FS)
+{
+    // to open files for writing
+    char fn[32];
+    char mm[21];
+    strcpy(fn, CASSETTE_FILE);
+    if (cassetteMode == cassette_mode_t::record)
+    {
+        sprintf(mm, "%020llu", (unsigned long long)fnSystem.millis());
+        strcat(fn, mm);
+    }
+    strcat(fn, ".cas");
+
+    close_cassette_file();
+    _file = _FS->file_open(fn, "w+"); // use "w+" for CSAVE test
+    if (!_file)
+    {
+        _mounted = false;
+        Debug_print("Could not open CAS file :( ");
+        Debug_println(fn);
+        return;
+    }
+#ifdef DEBUG
+    Debug_printf("%s - ", fn);
+    Debug_println("CAS file opened succesfully!");
+#endif
+}
+
+
+//************************************************************************************************************
+
+
 void sioCassette::umount_cassette_file()
 {
 #ifdef DEBUG
@@ -143,26 +197,25 @@ void sioCassette::mount_cassette_file(FILE *f, size_t fz)
 
     tape_offset = 0;
     if (cassetteMode == cassette_mode_t::playback)
+    {
+        Debug_printf("Cassette image filesize = %u\n", (unsigned)fz);
+        _file = f;
+        filesize = fz;
         check_for_FUJI_file();
-
-#ifdef DEBUG
-    if (tape_flags.FUJI)
-    {
-        Debug_println("FUJI File Found");
-    }
-    else if (cassetteMode == cassette_mode_t::playback)
-    {
-        Debug_println("Not a FUJI File");
     }
     else
     {
-        Debug_println("A File for Recording");
+        // CONFIG does not mount a CAS file for writing - only read only.
+        // disk mount (mediatype_t sioDisk::mount(FILE *f, const char *filename, uint32_t disksize, mediatype_t disk_type))
+        // mounts a CAS file by calling this function.
+        // There is no facility to specify an output file for writing to C: or CSAVE
+        // so instead of using the file mounted in slot 8 by CONFIG, create an output file with some serial number
+        // files are created with the cassette is enabled.
+ 
     }
-#endif
 
     _mounted = true;
 }
-
 
 void sioCassette::sio_enable_cassette()
 {
@@ -173,11 +226,17 @@ void sioCassette::sio_enable_cassette()
 
     if (cassetteMode == cassette_mode_t::record && tape_offset == 0)
     {
+        open_cassette_file(&fnSDFAT); // hardcode SD card?
         fnSioCom.end();
         // fnSystem.set_pin_mode(UART2_RX, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_NONE, GPIO_INTR_ANYEDGE);
 
-        // // hook isr handler for specific gpio pin
-        // gpio_isr_handler_add((gpio_num_t)UART2_RX, cas_isr_handler, (void *)UART2_RX);
+        // hook isr handler for specific gpio pin
+        // if (gpio_isr_handler_add((gpio_num_t)UART2_RX, cas_isr_handler, (void *)UART2_RX) != ESP_OK)
+        //     {
+        //         Debug_println("error attaching cassette data reading interrupt");
+        //         return;
+        //     }
+        // TODO: do i need to unhook isr handler when cassette is disabled?
 
 #ifdef DEBUG
         Debug_println("stopped hardware UART");
@@ -216,8 +275,11 @@ void sioCassette::sio_disable_cassette()
         if (cassetteMode == cassette_mode_t::playback)
             fnSioCom.set_baudrate(SIO_STANDARD_BAUDRATE);
         else
+        {
+            close_cassette_file();
+            //TODO: gpio_isr_handler_remove((gpio_num_t)UART2_RX);
             fnSioCom.begin(SIO_STANDARD_BAUDRATE);
-
+        }
 #ifdef DEBUG
         Debug_println("Cassette Mode disabled");
 #endif
@@ -351,10 +413,12 @@ void sioCassette::check_for_FUJI_file()
         p[3] == 'I')
     {
         tape_flags.FUJI = 1;
+            Debug_println("FUJI File Found");
     }
     else
     {
         tape_flags.FUJI = 0;
+          Debug_println("Not a FUJI File");
     }
 
     if (tape_flags.turbo) //set fix to
@@ -419,17 +483,17 @@ size_t sioCassette::send_FUJI_tape_block(size_t offset)
 #endif
 
     // TO DO : turn on LED
-    // fnLedManager.set(eLed::LED_SIO, true);
+    // fnLedManager.set(eLed::LED_BUS, true);
     while (gap--)
     {
         fnSystem.delay_microseconds(999); // shave off a usec for the MOTOR pin check
         if (has_pulldown() && !motor_line() && gap > 1000)
         {
-            // fnLedManager.set(eLed::LED_SIO, false);
+            // fnLedManager.set(eLed::LED_BUS, false);
             return starting_offset;
         }
     }
-    // fnLedManager.set(eLed::LED_SIO, false);
+    // fnLedManager.set(eLed::LED_BUS, false);
 
 #ifdef DEBUG
     // wait until after delay for new line so can see it in timestamp
@@ -496,6 +560,7 @@ size_t sioCassette::send_FUJI_tape_block(size_t offset)
 
 size_t sioCassette::receive_FUJI_tape_block(size_t offset)
 {
+    Debug_println("Start listening for tape block from Atari");
     Clear_atari_sector_buffer(BLOCK_LEN + 4);
     uint8_t idx = 0;
 
@@ -583,9 +648,9 @@ uint8_t sioCassette::decode_fsk()
 
     if (delta > 0)
     {
-        // #ifdef DEBUG
-        //         Debug_printf("delta: %u\n", delta);
-        // #endif
+        #ifdef DEBUG
+           Debug_printf("%u ", delta);
+        #endif
         if (delta > 90 && delta < 97)
             out = 0;
         if (delta > 119 && delta < 130)
@@ -598,3 +663,4 @@ uint8_t sioCassette::decode_fsk()
     // #endif
     return out;
 }
+#endif /* BUILD_ATARI */

@@ -1,26 +1,20 @@
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
 
-#include "esp_system.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include "esp_log.h"
+#include "fnWiFi.h"
+
+#include <esp_wifi.h>
+#include <esp_event.h>
+#include <mdns.h>
 
 #include <cstring>
 
 #include "../../include/debug.h"
-#include "../utils/utils.h"
-#include "fnWiFi.h"
-#include "fnSystem.h"
-#include "../config/fnConfig.h"
 
+#include "fuji.h"
+#include "fnSystem.h"
+#include "fnConfig.h"
 #include "httpService.h"
 #include "led.h"
 
-#include "mdns.h"
-
-#include "fuji.h"
 
 // Global object to manage WiFi
 WiFiManager fnWiFi;
@@ -83,6 +77,7 @@ int WiFiManager::start()
         // Configure basic WiFi settings
         wifi_init_config_t wifi_init_cfg = WIFI_INIT_CONFIG_DEFAULT();
         ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_cfg));
+        Debug_printf("WiFiManager::start() complete\n");
     }
 
     // TODO: Provide way to change WiFi region/country?
@@ -146,7 +141,7 @@ int WiFiManager::connect(const char *ssid, const char *password)
         // Debug_printf("WiFi config double-check: \"%s\", \"%s\"\n", (char *)wifi_config.sta.ssid, (char *)wifi_config.sta.password );
 
         wifi_config.sta.pmf_cfg.capable = true;
-        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     }
 
     // Now connect
@@ -197,7 +192,9 @@ uint8_t WiFiManager::scan_networks(uint8_t maxresults)
     {
         e = esp_wifi_scan_get_ap_num(&result);
         if (e != ESP_OK)
+        {
             Debug_printf("esp_wifi_scan_get_ap_num returned error %d\n", e);
+        }
     }
     else
     {
@@ -231,7 +228,7 @@ uint8_t WiFiManager::scan_networks(uint8_t maxresults)
             }
             else
             {
-                _scan_record_count = numloaded;
+                _scan_record_count = remove_duplicate_scan_results(_scan_records, numloaded);
                 final_count = _scan_record_count;
             }
         }
@@ -242,6 +239,46 @@ uint8_t WiFiManager::scan_networks(uint8_t maxresults)
         esp_wifi_connect();
 
     return final_count;
+}
+
+/* Remove duplicate entries in the scan results
+*/
+int WiFiManager::remove_duplicate_scan_results(wifi_ap_record_t scan_records[], uint16_t record_count)
+{
+    if (record_count <= 1)
+        return record_count;
+
+    int current_index = 0;
+    while (current_index < record_count - 1)
+    {
+        char *current_ssid = (char *) &scan_records[current_index].ssid;
+        int compare_index = current_index + 1;
+        // Compare current SSID to others in array
+        while (compare_index < record_count)
+        {
+            if (strcmp(current_ssid, (char *) &scan_records[compare_index].ssid) == 0)
+            {
+                // Keep the entry with better signal strength
+                if(scan_records[compare_index].rssi > scan_records[current_index].rssi)
+                    memcpy(&scan_records[current_index], &scan_records[compare_index], sizeof(wifi_ap_record_t));
+
+                int move_index = compare_index + 1;
+                // Move up all following records one position
+                while (move_index < record_count)
+                {
+                    memcpy(&scan_records[move_index - 1], &scan_records[move_index], sizeof(wifi_ap_record_t));
+                    move_index++;
+                }
+                memset(&scan_records[move_index - 1], 0, sizeof(wifi_ap_record_t));
+                // We now have one record less
+                record_count--;
+            }
+            else
+                compare_index++;
+        }
+        current_index++;
+    }
+    return record_count;
 }
 
 int WiFiManager::get_scan_result(uint8_t index, char ssid[32], uint8_t *rssi, uint8_t *channel, char bssid[18], uint8_t *encryption)
@@ -442,8 +479,13 @@ void WiFiManager::_wifi_event_handler(void *arg, esp_event_base_t event_base,
             fnLedManager.set(eLed::LED_WIFI, true);
             fnSystem.Net.start_sntp_client();
             fnHTTPD.start();
+// #ifdef BUILD_APPLE
+//             IWM.startup_hack();
+// #endif
+#ifdef BUILD_ATARI // temporary
             if (Config.get_general_config_enabled() == false)
                 theFuji.sio_mount_all();
+#endif /* BUILD_ATARI */
             mdns_init();
             mdns_hostname_set(Config.get_general_devicename().c_str());
             mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);

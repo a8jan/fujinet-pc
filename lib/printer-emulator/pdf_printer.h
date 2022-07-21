@@ -6,8 +6,10 @@
 */
 #include <string>
 
-#include "printer_emulator.h"
 #include "../../include/atascii.h"
+
+#include "printer_emulator.h"
+
 
 #define MAXFONTS 33 // maximum number of fonts can use
 
@@ -23,10 +25,6 @@ enum class colorMode_t
 class pdfPrinter : public printer_emu
 {
 protected:
-    // ATARI THINGS
-    bool translate850 = false;  // default to sio printer
-    uint8_t _eol = ATASCII_EOL; // default to atascii eol
-
     // PDF THINGS
     double pageWidth;
     double pageHeight;
@@ -77,7 +75,10 @@ protected:
     virtual void pre_close_file() override;
 
 public:
+
+    // virtual const char *modelname(void) = 0;
     pdfPrinter() { _paper_type = PDF; };
+
 };
 
 #endif // guard

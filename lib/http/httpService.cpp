@@ -9,7 +9,7 @@
 #include "fnSystem.h"
 #include "fnConfig.h"
 #include "fnDummyWiFi.h"
-#include "fnFsSPIF.h"
+#include "fnFsSPIFFS.h"
 #include "modem.h"
 #include "printer.h"
 #include "fuji.h"
@@ -390,7 +390,7 @@ int fnHttpService::get_handler_print(struct mg_connection *c)
     do
     {
         count = fread((uint8_t *)buf, 1, FNWS_SEND_BUFF_SIZE, poutput);
-        //count = currentPrinter->readFromOutput((uint8_t *)buf, FNWS_SEND_BUFF_SIZE);
+        // count = currentPrinter->readFromOutput((uint8_t *)buf, FNWS_SEND_BUFF_SIZE);
         total += count;
 
         // Debug_printf("Read %u bytes from print file\n", count);
@@ -655,7 +655,7 @@ struct mg_mgr * fnHttpService::start_server(serverstate &srvstate)
 
 
 /* Set up and start the web server
-*/
+ */
 void fnHttpService::start()
 {
     if (state.hServer != nullptr)
@@ -666,8 +666,8 @@ void fnHttpService::start()
 
     // Register event notifications to let us know when WiFi is up/down
     // Missing the constants used here.  Need to find that...
-    //esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &(state.hServer));
-    //esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &(state.hServer));
+    // esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &(state.hServer));
+    // esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &(state.hServer));
 
     // Go ahead and attempt starting the server for the first time
     start_server(state);

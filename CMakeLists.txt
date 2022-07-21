@@ -29,7 +29,7 @@ set(INCLUDE_DIRS include
     lib/compat lib/config lib/utils lib/hardware
     lib/FileSystem lib/EdUrlParser
     lib/tcpip lib/ftp lib/TNFSlib lib/telnet lib/fnjson
-    lib/mongoose lib/webdav lib/http lib/task
+    lib/mongoose lib/webdav lib/http lib/sam lib/task
     lib/modem-sniffer lib/printer-emulator lib/network-protocol 
     lib/fuji lib/bus lib/device lib/media
     components/cJSON components/libsmb2/include
@@ -43,7 +43,7 @@ set(SOURCES src/main.cpp
     lib/hardware/fnUART.h lib/hardware/fnUART.cpp
     lib/hardware/fnSystem.h lib/hardware/fnSystem.cpp lib/hardware/fnSystemNet.cpp
     lib/FileSystem/fnFS.h lib/FileSystem/fnFS.cpp
-    lib/FileSystem/fnFsSPIF.h lib/FileSystem/fnFsSPIF.cpp
+    lib/FileSystem/fnFsSPIFFS.h lib/FileSystem/fnFsSPIFFS.cpp
     lib/FileSystem/fnFsSD.h lib/FileSystem/fnFsSD.cpp
     lib/FileSystem/fnFsTNFS.h lib/FileSystem/fnFsTNFS.cpp
     lib/FileSystem/fnFile.h lib/FileSystem/fnFile.cpp

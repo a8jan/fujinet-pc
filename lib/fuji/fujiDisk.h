@@ -1,9 +1,15 @@
 #ifndef _FUJI_DISK_
 #define _FUJI_DISK_
 
-#include <string>
+#include "../device/disk.h"
 
-#include "disk.h"
+// #ifdef BUILD_APPLE
+// #include "../device/iwm/disk.h"
+// #define MEDIA_TYPE mediatype_t
+// #define MEDIA_TYPE_UNKNOWN MEDIATYPE_UNKNOWN
+// #define DEVICE_TYPE iwmDisk
+// #endif
+
 #include "fujiHost.h"
 
 #define MAX_DISPLAY_FILENAME_LEN 36
@@ -20,12 +26,12 @@ class fujiDisk
 public:    
     FileHandler* fileh = nullptr;
     uint8_t access_mode = DISK_ACCESS_MODE_READ;
-    disktype_t disk_type = DISKTYPE_UNKNOWN;
+    mediatype_t disk_type = MEDIATYPE_UNKNOWN;
     uint32_t disk_size = 0;
     fujiHost *host = nullptr;
     uint8_t host_slot = INVALID_HOST_SLOT;
     char filename[MAX_FILENAME_LEN] = { '\0' };
-    sioDisk disk_dev;
+    DEVICE_TYPE disk_dev;
 
     void reset();
     void reset(const char *filename, uint8_t hostslot, uint8_t access_mode);

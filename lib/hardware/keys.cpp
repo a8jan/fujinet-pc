@@ -1,20 +1,15 @@
-#include <cstring>
 
-#include "fnSystem.h"
-#include "fnBluetooth.h"
-#include "fnWiFi.h"
-#include "led.h"
 #include "keys.h"
-#include "bus.h"
-#include "fnConfig.h"
 
+#include "../../include/debug.h"
 #include "../../include/pinmap.h"
 
-#define LONGPRESS_TIME 1500 // 1.5 seconds to detect long press
-#define DOUBLETAP_DETECT_TIME 400 // ms to wait to see if it's a single/double tap
+#include "fnSystem.h"
+#include "fnConfig.h"
+#include "fnWiFi.h"
+#include "fnBluetooth.h"
 
-
-#define IGNORE_KEY_EVENT -1
+#include "led.h"
 
 // Global KeyManager object
 KeyManager fnKeyManager;
@@ -23,14 +18,26 @@ static const int mButtonPin[eKey::KEY_COUNT] = {PIN_BUTTON_A, PIN_BUTTON_B, PIN_
 
 void KeyManager::setup()
 {
-    fnSystem.set_pin_mode(PIN_BUTTON_A, gpio_mode_t::GPIO_MODE_INPUT);
-    fnSystem.set_pin_mode(PIN_BUTTON_B, gpio_mode_t::GPIO_MODE_INPUT);
-
+#ifdef NO_BUTTONS
+    fnSystem.set_pin_mode(PIN_BUTTON_A, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_UP);
+    fnSystem.set_pin_mode(PIN_BUTTON_B, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_UP);
+#elif defined(BUILD_APPLE) && !defined(USE_ATARI_FN10)
+    fnSystem.set_pin_mode(PIN_BUTTON_A, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_UP);
+#else
+    fnSystem.set_pin_mode(PIN_BUTTON_A, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_NONE);
+#endif /* NO_BUTTONS */
+#if !defined(BUILD_LYNX) && !defined(BUILD_APPLE)
+    fnSystem.set_pin_mode(PIN_BUTTON_B, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_NONE);
+#endif /* NOT LYNX OR A2 */
     // Enable safe reset on Button C if available
     if (fnSystem.get_hardware_ver() >= 2)
     {
         has_button_c = true;
+#if defined(BUILD_APPLE) && !defined(USE_ATARI_FN10)
+        fnSystem.set_pin_mode(PIN_BUTTON_C, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_UP);
+#else
         fnSystem.set_pin_mode(PIN_BUTTON_C, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_NONE);
+#endif
         Debug_println("Enabled Safe Reset Button C");
     }
 
@@ -135,6 +142,7 @@ eKeyStatus KeyManager::getKeyStatus(eKey key)
 
 void KeyManager::_keystate_task(void *param)
 {
+#ifndef NO_BUTTONS
     #define BLUETOOTH_LED eLed::LED_BT
 
     KeyManager *pKM = (KeyManager *)param;
@@ -195,10 +203,12 @@ void KeyManager::_keystate_task(void *param)
             else
 #endif
             {
+#ifdef BUILD_ATARI
                 Debug_println("ACTION: Send image_rotate message to SIO queue");
                 sio_message_t msg;
                 msg.message_id = SIOMSG_DISKSWAP;
                 xQueueSend(SIO.qSioMessages, &msg, 0);
+#endif /* BUILD_ATARI */
             }
             break;
 
@@ -230,12 +240,13 @@ void KeyManager::_keystate_task(void *param)
 
         case eKeyStatus::SHORT_PRESS:
             Debug_println("BUTTON_B: SHORT PRESS");
+#ifdef BUILD_ATARI
             Debug_println("ACTION: Send debug_tape message to SIO queue");
             sio_message_t msg;
             msg.message_id = SIOMSG_DEBUG_TAPE;
             xQueueSend(SIO.qSioMessages, &msg, 0);
+#endif /* BUILD_ATARI */
             break;
-
         case eKeyStatus::DOUBLE_TAP:
             Debug_println("BUTTON_B: DOUBLE-TAP");
             fnSystem.debug_print_tasks();
@@ -269,4 +280,8 @@ void KeyManager::_keystate_task(void *param)
             } // BUTTON_C
         }
     }
+#else
+    while (1) {vTaskDelay(1000);};
+
+#endif /* NO_BUTTON */
 }

@@ -4,17 +4,19 @@
  * TCP Protocol Adapter Implementation
  */
 
+#include "TCP.h"
+
+// #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <string.h>
 #include "compat_inet.h"
-// #include <sys/socket.h>
-// #include <netinet/in.h>
-// #include <arpa/inet.h>
-#include "TCP.h"
+
 #include "../../include/debug.h"
+
 #include "status_error_codes.h"
+
 
 /**
  * @brief ctor
@@ -375,7 +377,6 @@ bool NetworkProtocolTCP::special_accept_connection()
         {
             remoteIP = client.remoteIP();
             remotePort = client.remotePort();
-            // remoteIPString = inet_ntoa(remoteIP);
             remoteIPString = compat_inet_ntoa(remoteIP);
             Debug_printf("Accepted connection from %s:%u\n", remoteIPString, remotePort);
             return false;
@@ -418,7 +419,6 @@ bool NetworkProtocolTCP::special_close_client_connection()
 
     remoteIP = client.remoteIP();
     remotePort = client.remotePort();
-    // remoteIPString = inet_ntoa(remoteIP);
     remoteIPString = compat_inet_ntoa(remoteIP);
 
     Debug_printf("Disconnecting client %s:%u\n", remoteIPString, remotePort);

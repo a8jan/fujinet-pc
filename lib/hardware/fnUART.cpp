@@ -281,6 +281,11 @@ void UARTManager::begin(int baud)
         Debug_printf("TIOCSSERIAL error %d: %s\n", errno, strerror(errno));
 #endif
 
+#ifdef BUILD_ADAM
+    if (_uart_num == 2)
+        uart_set_line_inverse(_uart_num, UART_SIGNAL_TXD_INV | UART_SIGNAL_RXD_INV);
+#endif /* BUILD_ADAM */
+
     // Read in existing settings
     struct termios tios;
     if(tcgetattr(_fd, &tios) != 0)
@@ -324,7 +329,7 @@ void UARTManager::begin(int baud)
 
     Debug_printf("### UART initialized ###\n");
     // Set initialized.
-    _initialized=true;
+    _initialized = true;
     set_baudrate(baud);
 }
 
@@ -339,7 +344,7 @@ void UARTManager::suspend(int sec)
 }
 
 /* Discards anything in the input buffer
-*/
+ */
 void UARTManager::flush_input()
 {
     if (_initialized)
@@ -356,7 +361,7 @@ void UARTManager::flush()
 }
 
 /* Returns number of bytes available in receive buffer or -1 on error
-*/
+ */
 int UARTManager::available()
 {
     int result;
@@ -558,7 +563,7 @@ bool UARTManager::waitReadable(uint32_t timeout_ms)
 }
 
 /* Returns a single byte from the incoming stream
-*/
+ */
 int UARTManager::read(void)
 {
     uint8_t byte;
@@ -566,8 +571,8 @@ int UARTManager::read(void)
 }
 
 /* Since the underlying Stream calls this Read() multiple times to get more than one
-*  character for ReadBytes(), we override with a single call to uart_read_bytes
-*/
+ *  character for ReadBytes(), we override with a single call to uart_read_bytes
+ */
 size_t UARTManager::readBytes(uint8_t *buffer, size_t length, bool command_mode)
 {
     if (!_initialized)
@@ -708,7 +713,7 @@ size_t UARTManager::write(const char *str)
 /*
 size_t UARTManager::printf(const char * fmt...)
 {
-    char * result = nullptr;
+    char *result = nullptr;
     va_list vargs;
 
     if (!_initialized)
@@ -718,17 +723,17 @@ size_t UARTManager::printf(const char * fmt...)
 
     int z = vasprintf(&result, fmt, vargs);
 
-    if(z > 0)
+    if (z > 0)
         uart_write_bytes(_uart_num, result, z);
 
     va_end(vargs);
 
-    if(result != nullptr)
+    if (result != nullptr)
         free(result);
 
-    //uart_wait_tx_done(_uart_num, MAX_WRITE_BUFFER_TICKS);
+    // uart_wait_tx_done(_uart_num, MAX_WRITE_BUFFER_TICKS);
 
-    return z >=0 ? z : 0;
+    return z >= 0 ? z : 0;
 }
 */
 
@@ -743,15 +748,16 @@ size_t UARTManager::_print_number(unsigned long n, uint8_t base)
     *str = '\0';
 
     // prevent crash if called with base == 1
-    if(base < 2)
+    if (base < 2)
         base = 10;
 
-    do {
+    do
+    {
         unsigned long m = n;
         n /= base;
         char c = m - base * n;
         *--str = c < 10 ? c + '0' : c + 'A' - 10;
-    } while(n);
+    } while (n);
 
     return write(str);
 }
@@ -780,7 +786,7 @@ size_t UARTManager::print(int n, int base)
     if (!_initialized)
         return 0;
 
-    return print((long) n, base);
+    return print((long)n, base);
 }
 
 size_t UARTManager::print(unsigned int n, int base)
@@ -788,7 +794,7 @@ size_t UARTManager::print(unsigned int n, int base)
     if (!_initialized)
         return 0;
 
-    return print((unsigned long) n, base);
+    return print((unsigned long)n, base);
 }
 
 size_t UARTManager::print(long n, int base)
@@ -796,17 +802,23 @@ size_t UARTManager::print(long n, int base)
     if (!_initialized)
         return 0;
 
-    if(base == 0) {
+    if (base == 0)
+    {
         return write(n);
-    } else if(base == 10) {
-        if(n < 0) {
+    }
+    else if (base == 10)
+    {
+        if (n < 0)
+        {
             // int t = print('-');
             int t = print("-");
             n = -n;
             return _print_number(n, 10) + t;
         }
         return _print_number(n, 10);
-    } else {
+    }
+    else
+    {
         return _print_number(n, base);
     }
 }
@@ -816,9 +828,12 @@ size_t UARTManager::print(unsigned long n, int base)
     if (!_initialized)
         return 0;
 
-    if(base == 0) {
+    if (base == 0)
+    {
         return write(n);
-    } else {
+    }
+    else
+    {
         return _print_number(n, base);
     }
 }

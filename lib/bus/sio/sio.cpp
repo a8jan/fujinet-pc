@@ -1,23 +1,24 @@
+#ifdef BUILD_ATARI
+
 #include "sio.h"
-#include "modem.h"
+
+#include "../../include/debug.h"
+
 #include "fuji.h"
-// #include "led.h"
-// #include "network.h"
+#include "udpstream.h"
+#include "modem.h"
+#include "siocpm.h"
+
 #include "fnSystem.h"
 #include "fnConfig.h"
-// #include "fnDNS.h"
+#include "fnDNS.h"
+// #include "led.h"
 #include "utils.h"
-// #include "midimaze.h"
-#include "cassette.h"
-// #include "siocpm.h"
-// #include "printer.h"
-// #include "../hardware/fnUART.h"
-#include "../../include/debug.h"
 
 // Helper functions outside the class defintions
 
 // Get requested buffer length from command frame
-unsigned short sioDevice::sio_get_aux()
+unsigned short virtualDevice::sio_get_aux()
 {
     return (cmdFrame.aux2 * 256) + cmdFrame.aux1;
 }
@@ -39,7 +40,7 @@ uint8_t sio_checksum(uint8_t *buf, unsigned short len)
    len = length of buffer
    err = along with data, send ERROR status to Atari rather than COMPLETE
 */
-void sioDevice::sio_to_computer(uint8_t *buf, uint16_t len, bool err)
+void virtualDevice::bus_to_computer(uint8_t *buf, uint16_t len, bool err)
 {
     // Write data frame to computer
     Debug_printf("->SIO write %hu bytes\n", len);
@@ -70,7 +71,7 @@ void sioDevice::sio_to_computer(uint8_t *buf, uint16_t len, bool err)
    len = length
    Returns checksum
 */
-uint8_t sioDevice::sio_to_peripheral(uint8_t *buf, unsigned short len)
+uint8_t virtualDevice::bus_to_peripheral(uint8_t *buf, unsigned short len)
 {
     // Retrieve data frame from computer
     Debug_printf("<-SIO read %hu bytes\n", len);
@@ -92,7 +93,7 @@ uint8_t sioDevice::sio_to_peripheral(uint8_t *buf, unsigned short len)
     uint8_t ck_tst = sio_checksum(buf, len);
 
 #ifdef VERBOSE_SIO
-    Debug_printf("RECV <%lu> BYTES, checksum: %hu\n\t", (unsigned long)l, ck_rcv);
+    Debug_printf("RECV <%u> BYTES, checksum: %hu\n\t", (unsigned int)l, ck_rcv);
     for (int i = 0; i < len; i++)
         Debug_printf("%02x ", buf[i]);
     Debug_print("\n");
@@ -112,7 +113,7 @@ uint8_t sioDevice::sio_to_peripheral(uint8_t *buf, unsigned short len)
 }
 
 // SIO NAK
-void sioDevice::sio_nak()
+void virtualDevice::sio_nak()
 {
     fnSioCom.write('N');
     fnSioCom.flush();
@@ -121,7 +122,7 @@ void sioDevice::sio_nak()
 }
 
 // SIO ACK
-void sioDevice::sio_ack()
+void virtualDevice::sio_ack()
 {
     fnSioCom.write('A');
     fnSystem.delay_microseconds(DELAY_T5); //?
@@ -131,7 +132,7 @@ void sioDevice::sio_ack()
 }
 
 // SIO ACK, delayed for NetSIO sync
-void sioDevice::sio_late_ack()
+void virtualDevice::sio_late_ack()
 {
     if (fnSioCom.get_sio_mode() == SioCom::sio_mode::NETSIO)
     {
@@ -146,7 +147,7 @@ void sioDevice::sio_late_ack()
 }
 
 // SIO COMPLETE
-void sioDevice::sio_complete()
+void virtualDevice::sio_complete()
 {
     fnSystem.delay_microseconds(DELAY_T5);
     fnSioCom.write('C');
@@ -154,7 +155,7 @@ void sioDevice::sio_complete()
 }
 
 // SIO ERROR
-void sioDevice::sio_error()
+void virtualDevice::sio_error()
 {
     fnSystem.delay_microseconds(DELAY_T5);
     fnSioCom.write('E');
@@ -162,16 +163,16 @@ void sioDevice::sio_error()
 }
 
 // SIO HIGH SPEED REQUEST
-void sioDevice::sio_high_speed()
+void virtualDevice::sio_high_speed()
 {
     Debug_print("sio HSIO INDEX\n");
     int index = SIO.getHighSpeedIndex();
     uint8_t hsd = index == HSIO_DISABLED_INDEX ? 40 : (uint8_t)index;
-    sio_to_computer((uint8_t *)&hsd, 1, false);
+    bus_to_computer((uint8_t *)&hsd, 1, false);
 }
 
 // Read and process a command frame from SIO
-void sioBus::_sio_process_cmd()
+void systemBus::_sio_process_cmd()
 {
     _command_processed = false;
 
@@ -236,7 +237,7 @@ void sioBus::_sio_process_cmd()
         if (tempFrame.device == SIO_DEVICEID_DISK && _fujiDev != nullptr && _fujiDev->boot_config)
         {
             _activeDev = _fujiDev->bootdisk();
-            if (_activeDev->status_wait_count > 0 && tempFrame.comnd == 'R')
+            if (_activeDev->status_wait_count > 0 && tempFrame.comnd == 'R' && _fujiDev->status_wait_enabled)
             {
                 Debug_printf("Disabling CONFIG boot.\n");
                 _fujiDev->boot_config = false;
@@ -302,7 +303,7 @@ void sioBus::_sio_process_cmd()
 }
 
 // Look to see if we have any waiting messages and process them accordingly
-void sioBus::_sio_process_queue()
+void systemBus::_sio_process_queue()
 {
     sio_message_t msg;
     // if (xQueueReceive(qSioMessages, &msg, 0) == pdTRUE)
@@ -329,7 +330,7 @@ void sioBus::_sio_process_queue()
  * Throw out stray input on SIO if neither of the above two are true
  * Give NETWORK devices an opportunity to signal available data
  */
-void sioBus::service()
+void systemBus::service()
 {
     bool idle = true;
     do
@@ -434,7 +435,7 @@ void sioBus::service()
 }
 
 // Setup SIO bus
-void sioBus::setup()
+void systemBus::setup()
 {
     Debug_println("SIO SETUP");
 
@@ -457,7 +458,7 @@ void sioBus::setup()
 }
 
 // Add device to SIO bus
-void sioBus::addDevice(sioDevice *pDevice, int device_id)
+void systemBus::addDevice(virtualDevice *pDevice, int device_id)
 {
     if (device_id == SIO_DEVICEID_FUJINET)
     {
@@ -473,7 +474,7 @@ void sioBus::addDevice(sioDevice *pDevice, int device_id)
     }
     // else if (device_id == SIO_DEVICEID_MIDI)
     // {
-    //     _midiDev = (sioMIDIMaze *)pDevice;
+    //     _udpDev = (sioUDPStream *)pDevice;
     // }
     // else if (device_id == SIO_DEVICEID_CASSETTE)
     // {
@@ -495,13 +496,13 @@ void sioBus::addDevice(sioDevice *pDevice, int device_id)
 
 // Removes device from the SIO bus.
 // Note that the destructor is called on the device!
-void sioBus::remDevice(sioDevice *p)
+void systemBus::remDevice(virtualDevice *p)
 {
     _daisyChain.remove(p);
 }
 
 // Should avoid using this as it requires counting through the list
-int sioBus::numDevices()
+int systemBus::numDevices()
 {
     int i = 0;
     // __BEGIN_IGNORE_UNUSEDVARS
@@ -511,7 +512,7 @@ int sioBus::numDevices()
     // __END_IGNORE_UNUSEDVARS
 }
 
-void sioBus::changeDeviceId(sioDevice *p, int device_id)
+void systemBus::changeDeviceId(virtualDevice *p, int device_id)
 {
     for (auto devicep : _daisyChain)
     {
@@ -520,7 +521,7 @@ void sioBus::changeDeviceId(sioDevice *p, int device_id)
     }
 }
 
-sioDevice *sioBus::deviceById(int device_id)
+virtualDevice *systemBus::deviceById(int device_id)
 {
     for (auto devicep : _daisyChain)
     {
@@ -531,7 +532,7 @@ sioDevice *sioBus::deviceById(int device_id)
 }
 
 // Give devices an opportunity to clean up before a reboot
-void sioBus::shutdown()
+void systemBus::shutdown()
 {
     for (auto devicep : _daisyChain)
     {
@@ -541,7 +542,7 @@ void sioBus::shutdown()
     Debug_printf("All devices shut down.\n");
 }
 
-void sioBus::toggleBaudrate()
+void systemBus::toggleBaudrate()
 {
     int baudrate = _sioBaud == SIO_STANDARD_BAUDRATE ? _sioBaudHigh : SIO_STANDARD_BAUDRATE;
 
@@ -553,12 +554,12 @@ void sioBus::toggleBaudrate()
     fnSioCom.set_baudrate(_sioBaud);
 }
 
-int sioBus::getBaudrate()
+int systemBus::getBaudrate()
 {
     return _sioBaud;
 }
 
-void sioBus::setBaudrate(int baud)
+void systemBus::setBaudrate(int baud)
 {
     if (_sioBaud == baud)
     {
@@ -572,7 +573,7 @@ void sioBus::setBaudrate(int baud)
 }
 
 // Set HSIO index. Sets high speed SIO baud and also returns that value.
-int sioBus::setHighSpeedIndex(int hsio_index)
+int systemBus::setHighSpeedIndex(int hsio_index)
 {
     int temp = _sioBaudHigh;
 
@@ -615,24 +616,24 @@ int sioBus::setHighSpeedIndex(int hsio_index)
     return _sioBaudHigh;
 }
 
-int sioBus::getHighSpeedIndex()
+int systemBus::getHighSpeedIndex()
 {
     return _sioHighSpeedIndex;
 }
 
-int sioBus::getHighSpeedBaud()
+int systemBus::getHighSpeedBaud()
 {
     return _sioBaudHigh;
 }
 
 // indicate command was handled by some device
-void sioBus::set_command_processed(bool processed)
+void systemBus::set_command_processed(bool processed)
 {
     _command_processed = processed;
 }
 
 // Empty acknowledgment message for NetSIO hub
-void sioBus::sio_empty_ack()
+void systemBus::sio_empty_ack()
 {
     if (fnSioCom.get_sio_mode() == SioCom::sio_mode::NETSIO)
     {
@@ -640,32 +641,50 @@ void sioBus::sio_empty_ack()
     }
 }
 
-void sioBus::setMIDIHost(const char *hostname)
+void systemBus::setUDPHost(const char *hostname, int port)
 {
+    // // Turn off if hostname is STOP
+    // if (!strcmp(hostname, "STOP"))
+    // {
+    //     if (_udpDev->udpstreamActive)
+    //         _udpDev->sio_disable_udpstream();
+
+    //     return;
+    // }
 
     // if (hostname != nullptr && hostname[0] != '\0')
     // {
     //     // Try to resolve the hostname and store that so we don't have to keep looking it up
-    //     _midiDev->midimaze_host_ip = get_ip4_addr_by_name(hostname);
+    //     _udpDev->udpstream_host_ip = get_ip4_addr_by_name(hostname);
 
-    //     if (_midiDev->midimaze_host_ip == IPADDR_NONE)
+    //     if (_udpDev->udpstream_host_ip == IPADDR_NONE)
     //     {
     //         Debug_printf("Failed to resolve hostname \"%s\"\n", hostname);
     //     }
     // }
     // else
     // {
-    //     _midiDev->midimaze_host_ip = IPADDR_NONE;
+    //     _udpDev->udpstream_host_ip = IPADDR_NONE;
     // }
 
-    // // Restart MIDIMaze mode if needed
-    // if (_midiDev->midimazeActive)
-    //     _midiDev->sio_disable_midimaze();
-    // if (_midiDev->midimaze_host_ip != IPADDR_NONE)
-    //     _midiDev->sio_enable_midimaze();
+    // if (port > 0 && port <= 65535)
+    // {
+    //     _udpDev->udpstream_port = port;
+    // }
+    // else
+    // {
+    //     _udpDev->udpstream_port = 5004;
+    //     Debug_printf("UDPStream port not provided or invalid (%d), setting to 5004\n", port);
+    // }
+
+    // // Restart UDP Stream mode if needed
+    // if (_udpDev->udpstreamActive)
+    //     _udpDev->sio_disable_udpstream();
+    // if (_udpDev->udpstream_host_ip != IPADDR_NONE)
+    //     _udpDev->sio_enable_udpstream();
 }
 
-void sioBus::setUltraHigh(bool _enable, int _ultraHighBaud)
+void systemBus::setUltraHigh(bool _enable, int _ultraHighBaud)
 {
     useUltraHigh = _enable;
 
@@ -709,4 +728,5 @@ void sioBus::setUltraHigh(bool _enable, int _ultraHighBaud)
     }
 }
 
-sioBus SIO; // Global SIO object
+systemBus SIO; // Global SIO object
+#endif /* BUILD_ATARI */

@@ -1,13 +1,15 @@
 // TODO: Figure out why time-outs against bad addresses seem to take about 18s no matter
 // what we set the timeout value to.
 
-#include <cstdlib>
-#include <string.h>
-//#include <FreeRTOS.h>
-#include "../../include/debug.h"
-#include "fnSystem.h"
 #include "fnHttpClient.h"
+
+#include "../../include/debug.h"
+
+#include "fnSystem.h"
+
 #include "utils.h"
+
+
 using namespace fujinet;
 
 #define HTTPCLIENT_WAIT_FOR_CONSUMER_TASK 20000 // 20s
@@ -60,8 +62,13 @@ int fnHttpClient::available()
         return 0;
 
     int result = 0;
+    int len = -1;
 
-    int len = esp_http_client_get_content_length(_handle);
+    if(esp_http_client_is_chunked_response(_handle))
+        len = esp_http_client_get_chunk_length(_handle);
+    else
+        len = esp_http_client_get_content_length(_handle);
+
     if (len - _buffer_total_read >= 0)
         result = len - _buffer_total_read;
 
@@ -220,19 +227,27 @@ esp_err_t fnHttpClient::_httpevent_handler(esp_http_client_event_t *evt)
     switch (evt->event_id)
     {
     case HTTP_EVENT_ERROR: // This event occurs when there are any errors during execution
-        //Debug_printf("HTTP_EVENT_ERROR %u\n", uxTaskGetStackHighWaterMark(nullptr));
+#ifdef VERBOSE_HTTP
+        Debug_printf("HTTP_EVENT_ERROR %u\n", uxTaskGetStackHighWaterMark(nullptr));
+#endif
         break;
     case HTTP_EVENT_ON_CONNECTED: // Once the HTTP has been connected to the server, no data exchange has been performed
-        //Debug_printf("HTTP_EVENT_ON_CONNECTED %u\n", uxTaskGetStackHighWaterMark(nullptr));
+#ifdef VERBOSE_HTTP
+        Debug_printf("HTTP_EVENT_ON_CONNECTED %u\n", uxTaskGetStackHighWaterMark(nullptr));
+#endif
         client->connected = true;
         break;
     case HTTP_EVENT_HEADER_SENT: // After sending all the headers to the server
-        //Debug_printf("HTTP_EVENT_HEADER_SENT %u\n", uxTaskGetStackHighWaterMark(nullptr));
+#ifdef VERBOSE_HTTP
+        Debug_printf("HTTP_EVENT_HEADER_SENT %u\n", uxTaskGetStackHighWaterMark(nullptr));
+#endif
         break;
 
     case HTTP_EVENT_ON_HEADER: // Occurs when receiving each header sent from the server
     {
-        //Debug_printf("HTTP_EVENT_ON_HEADER %u\n", uxTaskGetStackHighWaterMark(nullptr));
+#ifdef VERBOSE_HTTP
+        Debug_printf("HTTP_EVENT_ON_HEADER %u\n", uxTaskGetStackHighWaterMark(nullptr));
+#endif
         // Check to see if we should store this response header
         if (client->_stored_headers.size() <= 0)
             break;
@@ -248,8 +263,9 @@ esp_err_t fnHttpClient::_httpevent_handler(esp_http_client_event_t *evt)
     }
     case HTTP_EVENT_ON_DATA: // Occurs multiple times when receiving body data from the server. MAY BE SKIPPED IF BODY IS EMPTY!
     {
-        //Debug_printf("HTTP_EVENT_ON_DATA %u\n", uxTaskGetStackHighWaterMark(nullptr));
-
+#ifdef VERBOSE_HTTP
+        Debug_printf("HTTP_EVENT_ON_DATA %u\n", uxTaskGetStackHighWaterMark(nullptr));
+#endif
         // Don't do any of this if we're told to ignore the response
         if (client->_ignore_response_body == true)
             break;
@@ -258,18 +274,28 @@ esp_err_t fnHttpClient::_httpevent_handler(esp_http_client_event_t *evt)
         int status = esp_http_client_get_status_code(client->_handle);
         if ((status == HttpStatus_Found || status == HttpStatus_MovedPermanently) && client->_redirect_count < (client->_max_redirects - 1))
         {
-            //Debug_println("Ignoring redirect response");
+#ifdef VERBOSE_HTTP
+            Debug_println("HTTP_EVENT_ON_DATA: Ignoring redirect response");
+#endif
             break;
         }
-        /*
-         If auth type is set to NONE, esp_http_client will automatically retry auth failures by attempting to set the auth type to
-         BASIC or DIGEST depending on the server response code. Ignore this attempt.
-        */
-        if (status == HttpStatus_Unauthorized && client->_auth_type == HTTP_AUTH_TYPE_NONE && client->_redirect_count == 0)
+//         /*
+//          If auth type is set to NONE, esp_http_client will automatically retry auth failures by attempting to set the auth type to
+//          BASIC or DIGEST depending on the server response code. Ignore this attempt.
+//         */
+//         if (status == HttpStatus_Unauthorized && client->_auth_type == HTTP_AUTH_TYPE_NONE && client->_redirect_count == 0)
+//         {
+// #ifdef VERBOSE_HTTP
+//             Debug_println("HTTP_EVENT_ON_DATA: Ignoring UNAUTHORIZED response");
+// #endif
+//             break;
+//         }
+#ifdef VERBOSE_HTTP
+        if (status == HttpStatus_Unauthorized)
         {
-            //Debug_println("Ignoring UNAUTHORIZED response");
-            break;
+            Debug_println("HTTP_EVENT_ON_DATA: UNAUTHORIZED");
         }
+#endif
 
         // Check if this is our first time this event has been triggered
         if (client->_transaction_begin == true)
@@ -281,10 +307,14 @@ esp_err_t fnHttpClient::_httpevent_handler(esp_http_client_event_t *evt)
         }
 
         // Wait to be told we can fill the buffer
-        //Debug_println("Waiting to start reading");
+#ifdef VERBOSE_HTTP
+        Debug_println("HTTP_EVENT_ON_DATA: Waiting to start reading");
+#endif
         ulTaskNotifyTake(1, pdMS_TO_TICKS(HTTPCLIENT_WAIT_FOR_CONSUMER_TASK));
 
-        //Debug_printf("HTTP_EVENT_ON_DATA Data: %p, Datalen: %d\n", evt->data, evt->data_len);
+#ifdef VERBOSE_HTTP
+       Debug_printf("HTTP_EVENT_ON_DATA: Data: %p, Datalen: %d\n", evt->data, evt->data_len);
+#endif
 
         client->_buffer_pos = 0;
         client->_buffer_len = (evt->data_len > DEFAULT_HTTP_BUF_SIZE) ? DEFAULT_HTTP_BUF_SIZE : evt->data_len;
@@ -325,9 +355,10 @@ void fnHttpClient::_perform_subtask(void *param)
     //Debug_printf("esp_http_client_perform start\n");
 
     esp_err_t e = esp_http_client_perform(parent->_handle);
-    __IGNORE_UNUSED_VAR(e);
+    // Debug_printf("esp_http_client_perform returned %d, stack HWM %u\n", e, uxTaskGetStackHighWaterMark(nullptr));
 
-    //Debug_printf("esp_http_client_perform returned %d, stack HWM %u\n", e, uxTaskGetStackHighWaterMark(nullptr));
+    // Save error
+    parent->_client_err = e;
 
     // Indicate there's nothing else to read
     parent->_transaction_done = true;
@@ -399,9 +430,26 @@ int fnHttpClient::_perform()
     //Debug_printf("Notification of headers loaded\n");
 
     bool chunked = esp_http_client_is_chunked_response(_handle);
-    int status = esp_http_client_get_status_code(_handle);
     int length = esp_http_client_get_content_length(_handle);
-
+    int status;
+    switch (_client_err)
+    {
+    case ESP_OK:
+        // client completed HTTP transaction without any error
+        // use real HTTP response code
+        status = esp_http_client_get_status_code(_handle);
+        break;
+    case ESP_ERR_HTTP_CONNECT:
+        // Unable to establish connection, use fake HTTP status code 901
+        // it will be translated to NETWORK_ERROR_NOT_CONNECTED (207) in NetworkProtocolHTTP::fserror_to_error()
+        status = 901;
+        break;
+    default:
+        status = esp_http_client_get_status_code(_handle);
+        // Other error, use fake HTTP status code 900
+        // it will be translated to NETWORK_ERROR_GENERAL (144) in NetworkProtocolHTTP::fserror_to_error()
+        if (status < 0) status = 900;
+    }
     Debug_printf("%08lx _perform status = %d, length = %d, chunked = %d\n", fnSystem.millis(), status, length, chunked ? 1 : 0);
     return status;
 }

@@ -3,10 +3,11 @@
 
 #include "bus.h"
 
-class sioApeTime : public sioDevice
+class sioApeTime : public virtualDevice
 {
 private:
-    void _sio_get_time();
+    void _sio_get_time(bool use_timezone);
+    void _sio_set_tz();
 
 public:
     void sio_process(uint32_t commanddata, uint8_t checksum) override;
