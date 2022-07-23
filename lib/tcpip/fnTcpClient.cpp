@@ -5,6 +5,7 @@
 // #include <lwip/netdb.h>
 #include <cstring>
 #include <fcntl.h>
+#include <errno.h>
 
 #if defined(_WIN32)
 #define MSG_DONTWAIT 0 // !! TODO this is to compile the code but it is unlikely to work

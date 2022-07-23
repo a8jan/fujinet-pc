@@ -4,6 +4,7 @@
 
 #include <cstring>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "../../include/debug.h"
 

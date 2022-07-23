@@ -1,6 +1,7 @@
 #include "fnFsTNFS.h"
 
 #include <sys/stat.h>
+#include <errno.h>
 #include "compat_inet.h"
 #include "compat_string.h"
 

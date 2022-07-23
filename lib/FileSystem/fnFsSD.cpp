@@ -10,6 +10,7 @@
 #include <memory>
 #include <vector>
 #include <sys/stat.h>
+#include <errno.h>
 #include "compat_string.h"
 
 #include "../../include/debug.h"

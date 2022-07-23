@@ -3,6 +3,7 @@
 
 #include <sys/stat.h>
 #include <cstring>
+#include <errno.h>
 #include "compat_string.h"
 
 #include "../../include/debug.h"
