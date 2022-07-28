@@ -44,13 +44,16 @@ set(SOURCES src/main.cpp
     lib/hardware/fnDummyWiFi.h lib/hardware/fnDummyWiFi.cpp
     lib/hardware/fnUART.h lib/hardware/fnUART.cpp
     lib/hardware/fnSystem.h lib/hardware/fnSystem.cpp lib/hardware/fnSystemNet.cpp
+    # lib/FileSystem/fnDirCache.h lib/FileSystem/fnDirCache.cpp
     lib/FileSystem/fnFS.h lib/FileSystem/fnFS.cpp
     lib/FileSystem/fnFsSPIFFS.h lib/FileSystem/fnFsSPIFFS.cpp
     lib/FileSystem/fnFsSD.h lib/FileSystem/fnFsSD.cpp
     lib/FileSystem/fnFsTNFS.h lib/FileSystem/fnFsTNFS.cpp
+    # lib/FileSystem/fnFsSMB.h lib/FileSystem/fnFsSMB.cpp
     lib/FileSystem/fnFile.h lib/FileSystem/fnFile.cpp
     lib/FileSystem/fnFileLocal.h lib/FileSystem/fnFileLocal.cpp
     lib/FileSystem/fnFileTNFS.h lib/FileSystem/fnFileTNFS.cpp
+    # lib/FileSystem/fnFileSMB.h lib/FileSystem/fnFileSMB.cpp
     lib/EdUrlParser/EdUrlParser.h lib/EdUrlParser/EdUrlParser.cpp
     lib/tcpip/fnDNS.h lib/tcpip/fnDNS.cpp
     lib/tcpip/fnUDP.h lib/tcpip/fnUDP.cpp
@@ -99,6 +102,7 @@ set(SOURCES src/main.cpp
     lib/network-protocol/FTP.h lib/network-protocol/FTP.cpp
     lib/network-protocol/TNFS.h lib/network-protocol/TNFS.cpp
     lib/network-protocol/HTTP.h lib/network-protocol/HTTP.cpp
+    lib/network-protocol/SMB.h lib/network-protocol/SMB.cpp
     lib/fuji/fujiHost.h lib/fuji/fujiHost.cpp
     lib/fuji/fujiDisk.h lib/fuji/fujiDisk.cpp
     lib/bus/bus.h
@@ -152,6 +156,11 @@ set(CJSON_BUILD_SHARED_LIBS OFF CACHE BOOL "Overrides BUILD_SHARED_LIBS if CJSON
 add_subdirectory(components/cJSON)
 add_link_options("-fstack-protector")
 
+# Libsmb2
+# https://github.com/sahlberg/libsmb2
+add_subdirectory(components/libsmb2)
+
+# run build_version.py to update version.h
 add_custom_command(
   OUTPUT include/version.h
   COMMAND python build_version.py
@@ -165,7 +174,7 @@ set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
 find_package(OpenSSL REQUIRED)
 
 target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
-target_link_libraries(fujinet pthread expat OpenSSL::SSL OpenSSL::Crypto cjson cjson_utils)
+target_link_libraries(fujinet pthread expat OpenSSL::SSL OpenSSL::Crypto cjson cjson_utils smb2)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_link_libraries(fujinet ws2_32)

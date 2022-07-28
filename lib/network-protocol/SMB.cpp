@@ -111,7 +111,14 @@ bool NetworkProtocolSMB::mount(EdUrlParser *url)
         openURL = openURL.substr(0, openURL.find_last_of("/"));
 
     Debug_printf("NetworkProtocolSMB::mount() - openURL: %s\n", openURL.c_str());
+
     smb_url = smb2_parse_url(smb, openURL.c_str());
+    if (smb_url == nullptr) 
+    {
+        Debug_printf("aNetworkProtocolSMB::mount(%s) - failed to parse URL, SMB2 error: %s\n", openURL.c_str(), smb2_get_error(smb));
+        fserror_to_error();
+        return true;
+    }
 
     smb2_set_security_mode(smb, SMB2_NEGOTIATE_SIGNING_ENABLED);
 
