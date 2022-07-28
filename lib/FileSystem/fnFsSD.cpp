@@ -134,7 +134,6 @@ bool FileSystemSDFAT::dir_open(const char * path, const char * pattern, uint16_t
     _dir = opendir(fpath);
     free(fpath);
 
-
     if(_dir == nullptr)
         return false;
 

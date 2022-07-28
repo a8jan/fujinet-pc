@@ -27,6 +27,7 @@ enum fsType
     FSTYPE_SPIFFS = 0,
     FSTYPE_SDFAT,
     FSTYPE_TNFS,
+    FSTYPE_SMB,
     FSTYPE_COUNT
 };
 

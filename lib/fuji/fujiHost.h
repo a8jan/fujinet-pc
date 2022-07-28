@@ -10,7 +10,8 @@ enum fujiHostType
 {
     HOSTTYPE_UNINITIALIZED = 0,
     HOSTTYPE_LOCAL,
-    HOSTTYPE_TNFS
+    HOSTTYPE_TNFS,
+    HOSTTYPE_SMB
 };
 
 class fujiHost
@@ -27,6 +28,7 @@ private:
 
     int mount_local();
     int mount_tnfs();
+    int mount_smb();
 
 public:
     int slotid = -1;

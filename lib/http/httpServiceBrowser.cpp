@@ -5,6 +5,7 @@
 #include "fuji.h"
 #include "fnFsSD.h"
 #include "fnFsTNFS.h"
+#include "fnFsSMB.h"
 #include "fnTaskManager.h"
 #include "fnConfig.h"
 
@@ -487,8 +488,10 @@ int fnHttpServiceBrowser::process_browse_get(mg_connection *c, mg_http_message *
 
     Debug_printf("Browse host %d (%s)\n", host_slot, fnHost.get_hostname());
 
-    const char *hostname = fnHost.get_hostname();
-    if (hostname == nullptr || *hostname == '\0')
+    char hostname[MAX_HOSTNAME_LEN];
+    fnHost.get_hostname(hostname, MAX_HOSTNAME_LEN);
+
+    if (hostname[0] == '\0')
     {
         Debug_println("Empty Host Slot");
         mg_http_reply(c, 400, "", "Empty Host Slot\n");
@@ -498,6 +501,14 @@ int fnHttpServiceBrowser::process_browse_get(mg_connection *c, mg_http_message *
     {
         fs = new FileSystemSDFAT;
         host_type = HOSTTYPE_LOCAL;
+    }
+    else if (strncasecmp("smb://", hostname, 6) == 0)
+    {
+        hostname[0] = 's';
+        hostname[1] = 'm';
+        hostname[2] = 'b';
+        fs = new FileSystemSMB;
+        host_type = HOSTTYPE_SMB;
     }
     else
     {
@@ -513,11 +524,18 @@ int fnHttpServiceBrowser::process_browse_get(mg_connection *c, mg_http_message *
     }
 
     Debug_println("Starting temporary File System");
-    // why is start() not in base class ?
-    if (host_type == HOSTTYPE_LOCAL)
+    switch(host_type)
+    {
+    case HOSTTYPE_LOCAL:
         started = ((FileSystemSDFAT *)fs)->start();
-    else
-        started = ((FileSystemTNFS *)fs)->start(fnHost.get_hostname());
+        break;
+    case HOSTTYPE_SMB:
+        started = ((FileSystemSMB *)fs)->start(hostname);
+        break;
+    case HOSTTYPE_TNFS:
+        started = ((FileSystemTNFS *)fs)->start(hostname);
+        break;
+    }
 
     if (!started)
     {

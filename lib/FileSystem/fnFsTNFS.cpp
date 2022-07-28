@@ -125,21 +125,22 @@ bool FileSystemTNFS::rename(const char* pathFrom, const char* pathTo)
 
 FILE * FileSystemTNFS::file_open(const char* path, const char* mode)
 {
-    if(!_started || path == nullptr)
-        return nullptr;
+    // if(!_started || path == nullptr)
+    //     return nullptr;
 
-    char * fpath = _make_fullpath(path);
-    FILE * result = fopen(fpath, mode);
-    free(fpath);
-    return result;
+    // char * fpath = _make_fullpath(path);
+    // FILE * result = fopen(fpath, mode);
+    // free(fpath);
+    // return result;
+    Debug_printf("FileSystemTNFS::file_open() - ERROR! Use filehandler_open() instead\n");
+    return nullptr;
 }
 
 bool FileSystemTNFS::is_dir(const char *path)
 {
-    char * fpath = _make_fullpath(path);
-    struct stat info;
-    stat( fpath, &info);
-    return (info.st_mode == S_IFDIR) ? true: false;
+    tnfsStat tstat;
+    int result = tnfs_stat(&_mountinfo, &tstat, path);
+    return tstat.isDir ? true : false;
 }
 
 FileHandler * FileSystemTNFS::filehandler_open(const char* path, const char* mode)
@@ -147,7 +148,6 @@ FileHandler * FileSystemTNFS::filehandler_open(const char* path, const char* mod
     if(!_started || path == nullptr)
         return nullptr;
 
-    char * fpath = _make_fullpath(path);
     int16_t handle;
     uint16_t create_perms = TNFS_CREATEPERM_S_IRUSR | TNFS_CREATEPERM_S_IWUSR | TNFS_CREATEPERM_S_IXUSR;
 
@@ -182,8 +182,7 @@ FileHandler * FileSystemTNFS::filehandler_open(const char* path, const char* mod
         return nullptr;
     }
 
-    int result = tnfs_open(&_mountinfo, fpath, open_mode, create_perms, &handle);
-    free(fpath);
+    int result = tnfs_open(&_mountinfo, path, open_mode, create_perms, &handle);
     if(result != TNFS_RESULT_SUCCESS)
     {
         #ifdef DEBUG
