@@ -1,10 +1,12 @@
 #ifndef LED_H
 #define LED_H
 
+#include "../../include/pinmap.h"
+
 enum eLed
 {
     LED_WIFI = 0,
-    LED_SIO,
+    LED_BUS,
     LED_BT,
     LED_COUNT
 };

@@ -1,8 +1,8 @@
-#include <cstring>
+
 #include "led.h"
+
 #include "fnSystem.h"
 
-#include "../../include/pinmap.h"
 
 #define BLINKING_TIME 100 // 200 ms
 
@@ -12,7 +12,7 @@ LedManager fnLedManager;
 
 LedManager::LedManager()
 {
-    mLedPin[eLed::LED_SIO] = PIN_LED_SIO;
+    mLedPin[eLed::LED_BUS] = PIN_LED_BUS;
     mLedPin[eLed::LED_BT] = PIN_LED_BT;
     mLedPin[eLed::LED_WIFI] = PIN_LED_WIFI;
 }
@@ -20,11 +20,16 @@ LedManager::LedManager()
 // Sets required pins to OUTPUT mode and makes sure they're initially off
 void LedManager::setup()
 {
-    fnSystem.set_pin_mode(PIN_LED_SIO, gpio_mode_t::GPIO_MODE_OUTPUT);
-    fnSystem.digital_write(PIN_LED_SIO, DIGI_HIGH);
- 
+#ifdef PINMAP_A2_REV0
+    fnSystem.set_pin_mode(PIN_LED_BUS, gpio_mode_t::GPIO_MODE_OUTPUT);
+    fnSystem.digital_write(PIN_LED_BUS, DIGI_LOW);
+#else
+    fnSystem.set_pin_mode(PIN_LED_BUS, gpio_mode_t::GPIO_MODE_OUTPUT);
+    fnSystem.digital_write(PIN_LED_BUS, DIGI_HIGH);
+
     fnSystem.set_pin_mode(PIN_LED_BT, gpio_mode_t::GPIO_MODE_OUTPUT);
     fnSystem.digital_write(PIN_LED_BT, DIGI_HIGH);    
+#endif
 
     fnSystem.set_pin_mode(PIN_LED_WIFI, gpio_mode_t::GPIO_MODE_OUTPUT);
     fnSystem.digital_write(PIN_LED_WIFI, DIGI_HIGH);
@@ -33,7 +38,15 @@ void LedManager::setup()
 void LedManager::set(eLed led, bool on)
 {
     mLedState[led] = on;
+#ifdef PINMAP_A2_REV0
+    // FujiApple Rev 0 BUS LED has reverse logic
+    if (led == LED_BUS)
+        fnSystem.digital_write(mLedPin[led], (on ? DIGI_HIGH : DIGI_LOW));
+    else
+        fnSystem.digital_write(mLedPin[led], (on ? DIGI_LOW : DIGI_HIGH));
+#else
     fnSystem.digital_write(mLedPin[led], (on ? DIGI_LOW : DIGI_HIGH));
+#endif
 }
 
 void LedManager::toggle(eLed led)

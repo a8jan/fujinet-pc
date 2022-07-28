@@ -2,17 +2,20 @@
  * UDP socket implementation
  */
 
+#include "UDP.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include "compat_inet.h"
 #include "compat_string.h"
-// #include <sys/socket.h>
-// #include <netinet/in.h>
-// #include <arpa/inet.h>
-#include "UDP.h"
+
+#include "../../include/debug.h"
+
 #include "status_error_codes.h"
-#include "../tcpip/fnDNS.h"
+#include "fnDNS.h"
+
+
 
 NetworkProtocolUDP::NetworkProtocolUDP(string *rx_buf, string *tx_buf, string *sp_buf)
     : NetworkProtocol(rx_buf, tx_buf, sp_buf)

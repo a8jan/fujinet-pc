@@ -5,20 +5,17 @@
 #ifndef FNSYSTEM_H
 #define FNSYSTEM_H
 
-#include <cstdint>
 #include <string>
-
-// from sysexits.h
-// #define EX_TEMPFAIL     75      /* temp failure; user is invited to retry */
-//
-// exit code should be monitored by parent process and FN restarted if ended with 75
-#define EXIT_AND_RESTART 75
+#include <cstdint>
 
 // #include <driver/gpio.h>
 
-#include "../FileSystem/fnFS.h"
+#include "fnFS.h"
 
-// #include "../../include/pinmap.h"
+// from sysexits.h
+// #define EX_TEMPFAIL     75      /* temp failure; user is invited to retry */
+// exit code should be monitored by parent process and FN restarted if ended with 75
+#define EXIT_AND_RESTART 75
 
 #define FILE_COPY_BUFFERSIZE 2048
 
@@ -31,12 +28,13 @@ class SystemManager
 private:
     char _uptime_string[18];
     char _currenttime_string[40];
-    int _hardware_version = -1; // 0: unknown, -1: no HW / fujinet-pc, 1: 1.0, 2: 1.1-1.5, 3: 1.6 & up
+    int _hardware_version = 0; // unknown
     char _uname_string[128];
     uint64_t _reboot_at = 0;
     int _reboot_code = EXIT_AND_RESTART;
 
 public:
+    SystemManager();
     class _net
     {
     private:
@@ -95,7 +93,7 @@ public:
     // void set_pin_mode(uint8_t pin, gpio_mode_t mode, pull_updown_t pull_mode = PULL_NONE, gpio_int_type_t intr_type = GPIO_INTR_DISABLE);
 
     int digital_read(uint8_t pin);
-    // void digital_write(uint8_t pin, uint8_t val);
+    void digital_write(uint8_t pin, uint8_t val);
 
     void reboot(uint32_t delay_ms = 0, bool reboot=true);
     bool check_deferred_reboot();

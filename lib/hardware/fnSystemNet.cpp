@@ -1,8 +1,8 @@
-#include <string.h>
-// #include <lwip/netdb.h>
-// #include "esp_sntp.h"
-// #include <esp_system.h>
+
+// #include <esp_sntp.h>
 // #include <esp_netif.h>
+
+#include <string>
 
 // gethostname
 #if defined(_WIN32)
@@ -12,8 +12,10 @@
 #endif
 
 #include "fnSystem.h"
-#include "fnConfig.h"
 
+#include "../../include/debug.h"
+
+#include "fnConfig.h"
 #include "fnDummyWiFi.h"
 
 std::string SystemManager::_net::get_hostname()
@@ -53,12 +55,12 @@ int SystemManager::_net::get_ip4_info(uint8_t ip4address[4], uint8_t ip4mask[4],
 
     // return e;
     // TODO
-    ip4address[0] = 0;
+    ip4address[0] = 127;
     ip4address[1] = 0;
     ip4address[2] = 0;
-    ip4address[3] = 0;
+    ip4address[3] = 1;
 
-    ip4mask[0] = 0;
+    ip4mask[0] = 255;
     ip4mask[1] = 0;
     ip4mask[2] = 0;
     ip4mask[3] = 0;
@@ -84,10 +86,10 @@ int SystemManager::_net::get_ip4_dns_info(uint8_t ip4dnsprimary[4])
     // }
     // return e;
     // TODO
-    ip4dnsprimary[0] = 0;
-    ip4dnsprimary[1] = 0;
-    ip4dnsprimary[2] = 0;
-    ip4dnsprimary[3] = 0;
+    ip4dnsprimary[0] = 1;
+    ip4dnsprimary[1] = 1;
+    ip4dnsprimary[2] = 1;
+    ip4dnsprimary[3] = 1;
 
     return 0;
 }

@@ -3,7 +3,8 @@
 
 #include <string>
 #include <map>
-// #include "../fn_esp_http_client/fn_esp_http_client.h"
+
+#include "fn_esp_http_client.h"
 
 // using namespace fujinet;
 
@@ -27,7 +28,8 @@ private:
     int _redirect_count;
     int _max_redirects;
     bool connected = false;
-    // esp_http_client_auth_type_t _auth_type;
+    esp_http_client_auth_type_t _auth_type;
+    esp_err_t _client_err;
 
     uint16_t _port = 80;
     header_map_t _stored_headers;

@@ -2,13 +2,17 @@
  * Network Protocol Base class
  */
 
-#include <string.h>
+#include "Protocol.h"
+
 #include <algorithm>
 #include <errno.h>
+
+#include "../../include/debug.h"
+
 #include "compat_inet.h"
-#include "Protocol.h"
 #include "status_error_codes.h"
-#include "../utils/utils.h"
+#include "utils.h"
+
 
 using namespace std;
 

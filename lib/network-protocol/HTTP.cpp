@@ -2,11 +2,13 @@
  * HTTP implementation
  */
 
-#include <string.h>
 #include "HTTP.h"
+
+#include "../../include/debug.h"
+
 #include "status_error_codes.h"
-#include "../webdav/WebDAV.h"
-#include "../utils/utils.h"
+#include "utils.h"
+
 
 /**
  Modes and the N: HTTP Adapter:
@@ -20,7 +22,6 @@ Aux1 values
 12 = GET, write sets headers to fetch, read grabs data
 13 = POST, write sends post data to server, read grabs response, XIO used to change write behavior, toggle headers to get or headers to set.
 14 = PUT, write sends post data to server, read grabs response, XIO used to change write behavior, toggle headers to get or headers to set.
-
 DELETE, MKCOL, RMCOL, COPY, MOVE, are all handled via idempotent XIO commands.
 */
 
@@ -313,8 +314,8 @@ void NetworkProtocolHTTP::fserror_to_error()
 
 bool NetworkProtocolHTTP::status_file(NetworkStatus *status)
 {
-    if (fromInterrupt == false)
-        Debug_printf("Channel mode is %u\n", httpChannelMode);
+    // if (fromInterrupt == false)
+    //     Debug_printf("Channel mode is %u\n", httpChannelMode);
 
     switch (httpChannelMode)
     {
@@ -614,7 +615,7 @@ void NetworkProtocolHTTP::http_transaction()
     }
 
     fserror_to_error();
-
+    
     fileSize = bodySize = client->available();
 }
 

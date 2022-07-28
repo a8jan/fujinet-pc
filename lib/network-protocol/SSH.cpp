@@ -3,7 +3,11 @@
  */
 
 #include "SSH.h"
+
+#include "../../include/debug.h"
+
 #include "status_error_codes.h"
+
 
 #define RXBUF_SIZE 65535
 
@@ -82,7 +86,7 @@ bool NetworkProtocolSSH::open(EdUrlParser *urlParser, cmdFrame_t *cmdFrame)
     Debug_printf("\n");
 
     userauthlist = libssh2_userauth_list(session, login->c_str(), login->length());
-    Debug_printf("Authentication methods: %s\n", userauthlist);
+     Debug_printf("Authentication methods: %s\n", userauthlist);
 
     if (libssh2_userauth_password(session, login->c_str(), password->c_str()))
     {

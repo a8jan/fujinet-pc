@@ -1,14 +1,17 @@
+
+#include "utils.h"
+
 #include <algorithm>
-#include <cstdio>
 #include <cstring>
 #include <sstream>
 #include <cstdarg>
 #include "compat_string.h"
 #include "compat_gettimeofday.h"
 
-#include "utils.h"
 #include "../../include/debug.h"
-#include "../sam/samlib.h"
+
+#include "samlib.h"
+
 
 using namespace std;
 
@@ -384,6 +387,15 @@ bool util_wildcard_match(const char *str, const char *pattern)
     return lookup[n][m];
 }
 
+bool util_starts_with(std::string s, const char *pattern)
+{
+    if (s.empty() || pattern == nullptr)
+        return false;
+
+    std::string ss = s.substr(0, strlen(pattern));
+    return ss.compare(pattern) == 0;
+}
+
 /*
  Concatenates two paths by taking the parent and adding the child at the end.
  If parent is not empty, then a '/' is confirmed to separate the parent and child.
@@ -507,6 +519,7 @@ bool util_string_value_is_true(std::string value)
     return util_string_value_is_true(value.c_str());
 }
 
+#ifdef BUILD_ATARI
 /**
  * Ask SAM to say something. see https://github.com/FujiNetWIFI/fujinet-platformio/wiki/Using-SAM-%28Voice-Synthesizer%29 
  * @param p The phrase to say.
@@ -564,6 +577,53 @@ void util_sam_say(const char *p,
     a[n++] = (char *)p;
     // sam(n, a);
 }
+
+/**
+ * Say the numbers 1-8 using phonetic tweaks.
+ * @param n The number to say.
+ */
+void util_sam_say_number(unsigned char n)
+{
+    switch (n)
+    {
+    case 1:
+        util_sam_say("WAH7NQ", true);
+        break;
+    case 2:
+        util_sam_say("TUW7", true);
+        break;
+    case 3:
+        util_sam_say("THRIYY7Q", true);
+        break;
+    case 4:
+        util_sam_say("FOH7R", true);
+        break;
+    case 5:
+        util_sam_say("F7AYVQ", true);
+        break;
+    case 6:
+        util_sam_say("SIH7IHKSQ", true);
+        break;
+    case 7:
+        util_sam_say("SEHV7EHNQ", true);
+        break;
+    case 8:
+        util_sam_say("AEY74Q", true);
+        break;
+    default:
+        Debug_printf("say_number() - Uncaught number %d", n);
+    }
+}
+
+/**
+ * Say swap label
+ */
+void util_sam_say_swap_label()
+{
+    // DISK
+    util_sam_say("DIHSK7Q ", true);
+}
+#endif
 
 void util_replaceAll(std::string &str, const std::string &from, const std::string &to)
 {

@@ -1,18 +1,17 @@
-// #include <freertos/FreeRTOS.h>
-// #include <freertos/task.h>
-// #include <esp_system.h>
-// #include <esp_err.h>
-// #include <esp_timer.h>
-// #include <time.h>
-// #include <driver/gpio.h>
-// #include <driver/dac.h>
-// #include <driver/adc.h>
-// #include "soc/sens_reg.h"
-// #include "soc/rtc.h"
-// #include "esp_adc_cal.h"
 
-#include <stdlib.h>
-#include <string.h>
+#include "fnSystem.h"
+
+// #include <freertos/FreeRTOS.h>
+// #include <freertos/queue.h>
+// #include <esp_system.h>
+// #include <driver/gpio.h>
+// #ifndef CONFIG_IDF_TARGET_ESP32S3
+// # include <driver/dac.h>
+// #endif
+
+// #include <soc/rtc.h>
+// #include <esp_adc_cal.h>
+#include <time.h>
 #include <cstring>
 #include <sys/time.h>
 #include <unistd.h>
@@ -20,21 +19,27 @@
 #include "compat_uname.h"
 #include "compat_gettimeofday.h"
 
-// #include <chrono>
-// #include <thread>
-
 #include "../../include/debug.h"
 #include "../../include/version.h"
+#include "../../include/pinmap.h"
 
-#include "fnSystem.h"
+#include "bus.h"
+
 #include "fnFsSD.h"
-#include "fnFsSPIF.h"
+#include "fnFsSPIFFS.h"
 #include "fnDummyWiFi.h"
-#include "sio.h"
+
+
+#ifdef BUILD_APPLE
+#define BUS_CLASS IWM
+#endif
+
 
 /*
 static xQueueHandle card_detect_evt_queue = NULL;
 static uint32_t card_detect_status = 1; // 1 is no sd card
+
+int _pin_card_detect = 0;
 
 static void IRAM_ATTR card_detect_isr_handler(void *arg)
 {
@@ -49,7 +54,7 @@ static void card_detect_intr_task(void* arg)
     uint32_t io_num, level;
 
     // Set card status before we enter the infinite loop
-    card_detect_status = gpio_get_level((gpio_num_t)PIN_CARD_DETECT);
+    card_detect_status = gpio_get_level((gpio_num_t)_pin_card_detect);
 
     for(;;) {
         if(xQueueReceive(card_detect_evt_queue, &io_num, portMAX_DELAY)) {
@@ -85,6 +90,14 @@ uint64_t _get_start_millis()
 uint64_t _start_millis = _get_start_millis();
 uint64_t _start_micros = _start_millis*1000;
 
+
+SystemManager::SystemManager()
+{
+    memset(_uptime_string,0,sizeof(_uptime_string));
+    memset(_currenttime_string,0,sizeof(_currenttime_string));
+    memset(_uname_string, 0, sizeof(_uname_string));
+    _hardware_version=0;
+}
 
 // Returns current CPU frequency in MHz
 uint32_t SystemManager::get_cpu_frequency()
@@ -168,6 +181,11 @@ int IRAM_ATTR SystemManager::digital_read(uint8_t pin)
     return 0;
 }
 */
+void SystemManager::digital_write(uint8_t pin, uint8_t val)
+{
+    Debug_println("SystemManager::digital_write not implemented");
+}
+
 int SystemManager::digital_read(uint8_t pin)
 {
     Debug_println("SystemManager::digital_read not implemented");
@@ -277,7 +295,7 @@ void SystemManager::yield()
 // TODO: Close open files first
 void SystemManager::reboot()
 {
-    SIO.shutdown();
+    SYSTEM_BUS.shutdown();
     esp_restart();
 }
 */
@@ -287,7 +305,7 @@ void SystemManager::reboot(uint32_t delay_ms, bool reboot)
     {
         // do cleanup and exit
         Debug_println("SystemManager::reboot - exiting ...");
-        SIO.shutdown();
+        SYSTEM_BUS.shutdown();
         // FN will be restarted if ended with EXIT_AND_RESTART (75)
         exit(_reboot_code);
     }
@@ -432,6 +450,7 @@ SystemManager::chipmodels SystemManager::get_cpu_model()
 
 int SystemManager::get_sio_voltage()
 {
+#ifndef CONFIG_IDF_TARGET_ESP32S3
     // // Configure ADC1_CH7
     // adc1_config_width(ADC_WIDTH_12Bit);
     // adc1_config_channel_atten(ADC1_CHANNEL_7, ADC_ATTEN_11db);
@@ -469,6 +488,9 @@ int SystemManager::get_sio_voltage()
     // else
     //     return (avgV * 5900 / 3900); // (R1=2000, R2=3900)
     return 0;
+#else
+    return 0;
+#endif
 }
 
 /*
@@ -696,7 +718,10 @@ const char *SystemManager::get_hardware_ver_str()
         return "1.1-1.5";
         break;
     case 3:
-        return "1.6 & up";
+        return "1.6";
+        break;
+    case 4:
+        return "1.6.1 and up";
         break;
     case -1:
         return "fujinet-pc";
@@ -715,66 +740,92 @@ const char *SystemManager::get_hardware_ver_str()
 */
 void SystemManager::check_hardware_ver()
 {
-    // int upcheck, downcheck;
+    _hardware_version = -1; // fujinet-pc
+/*    
+    int upcheck, downcheck, fixupcheck, fixdowncheck;
 
-    // fnSystem.set_pin_mode(PIN_CARD_DETECT, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_DOWN);
-    // downcheck = fnSystem.digital_read(12);
+    fnSystem.set_pin_mode(PIN_CARD_DETECT_FIX, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_DOWN);
+    fixdowncheck = fnSystem.digital_read(PIN_CARD_DETECT_FIX);
 
-    // fnSystem.set_pin_mode(PIN_CARD_DETECT, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_UP);
-    // upcheck = fnSystem.digital_read(12);
+    fnSystem.set_pin_mode(PIN_CARD_DETECT_FIX, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_UP);
+    fixupcheck = fnSystem.digital_read(PIN_CARD_DETECT_FIX);
 
-    // fnSystem.set_pin_mode(PIN_BUTTON_C, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_DOWN);
+    fnSystem.set_pin_mode(PIN_CARD_DETECT, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_DOWN);
+    downcheck = fnSystem.digital_read(12);
 
-    // if (upcheck == downcheck)
-    // {
-    //     // v1.6 and up
-    //     _hardware_version = 3;
-    //     // Create a queue to handle card detect event from ISR
-    //     card_detect_evt_queue = xQueueCreate(10, sizeof(uint32_t));
-    //     // Start card detect task
-    //     xTaskCreate(card_detect_intr_task, "card_detect_intr_task", 2048, NULL, 10, NULL);
-    //     // Enable interrupt for card detection
-    //     fnSystem.set_pin_mode(PIN_CARD_DETECT, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_NONE, GPIO_INTR_ANYEDGE);
-    //     // Add the card detect handler
-    //     gpio_isr_handler_add((gpio_num_t)PIN_CARD_DETECT, card_detect_isr_handler, (void *)PIN_CARD_DETECT);
-    // }
-    // else if (fnSystem.digital_read(PIN_BUTTON_C) == DIGI_HIGH)
-    // {
-    //     // v1.1 thru v1.5
-    //     _hardware_version = 2;
-    // }
-    // else
-    // {
-    //     // v1.0
-    //     _hardware_version = 1;
-    // }
+    fnSystem.set_pin_mode(PIN_CARD_DETECT, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_UP);
+    upcheck = fnSystem.digital_read(12);
 
-    // fnSystem.set_pin_mode(PIN_BUTTON_C, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_NONE);
+    fnSystem.set_pin_mode(PIN_BUTTON_C, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_DOWN);
+
+    if(fixupcheck == fixdowncheck)
+    {
+        // v1.6.1 fixed/changed card detect pin
+        _hardware_version = 4;
+        _pin_card_detect = PIN_CARD_DETECT_FIX;
+        // Create a queue to handle card detect event from ISR
+        card_detect_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+        // Start card detect task
+        xTaskCreate(card_detect_intr_task, "card_detect_intr_task", 2048, NULL, 10, NULL);
+        // Enable interrupt for card detection
+        fnSystem.set_pin_mode(PIN_CARD_DETECT_FIX, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_NONE, GPIO_INTR_ANYEDGE);
+        // Add the card detect handler
+        gpio_isr_handler_add((gpio_num_t)PIN_CARD_DETECT_FIX, card_detect_isr_handler, (void *)PIN_CARD_DETECT_FIX);
+    }
+    else if (upcheck == downcheck)
+    {
+        // v1.6
+        _hardware_version = 3;
+        _pin_card_detect = PIN_CARD_DETECT;
+        // Create a queue to handle card detect event from ISR
+        card_detect_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+        // Start card detect task
+        xTaskCreate(card_detect_intr_task, "card_detect_intr_task", 2048, NULL, 10, NULL);
+        // Enable interrupt for card detection
+        fnSystem.set_pin_mode(PIN_CARD_DETECT, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_NONE, GPIO_INTR_ANYEDGE);
+        // Add the card detect handler
+        gpio_isr_handler_add((gpio_num_t)PIN_CARD_DETECT, card_detect_isr_handler, (void *)PIN_CARD_DETECT);
+    }
+    else if (fnSystem.digital_read(PIN_BUTTON_C) == DIGI_HIGH)
+    {
+        // v1.1 thru v1.5
+        _hardware_version = 2;
+    }
+    else
+    {
+        // v1.0
+        _hardware_version = 1;
+    }
+
+    fnSystem.set_pin_mode(PIN_BUTTON_C, gpio_mode_t::GPIO_MODE_INPUT, SystemManager::pull_updown_t::PULL_NONE);
+*/
 }
 
 // Dumps list of current tasks
 void SystemManager::debug_print_tasks()
 {
 #ifdef DEBUG
-
+/*
     static const char *status[] = {"Running", "Ready", "Blocked", "Suspened", "Deleted"};
 
-    // uint32_t n = uxTaskGetNumberOfTasks();
-    // TaskStatus_t *pTasks = (TaskStatus_t *)malloc(sizeof(TaskStatus_t) * n);
-    // n = uxTaskGetSystemState(pTasks, n, nullptr);
+    uint32_t n = uxTaskGetNumberOfTasks();
+    TaskStatus_t *pTasks = (TaskStatus_t *)malloc(sizeof(TaskStatus_t) * n);
+    n = uxTaskGetSystemState(pTasks, n, nullptr);
 
-    // for (int i = 0; i < n; i++)
-    // {
-    //     Debug_printf("T%02d %p c%c (%2d,%2d) %4dh %10dr %8s: %s\n",
-    //                  i + 1,
-    //                  pTasks[i].xHandle,
-    //                  pTasks[i].xCoreID == tskNO_AFFINITY ? '_' : ('0' + pTasks[i].xCoreID),
-    //                  pTasks[i].uxBasePriority, pTasks[i].uxCurrentPriority,
-    //                  pTasks[i].usStackHighWaterMark,
-    //                  pTasks[i].ulRunTimeCounter,
-    //                  status[pTasks[i].eCurrentState],
-    //                  pTasks[i].pcTaskName);
-    // }
+    for (int i = 0; i < n; i++)
+    {
+        // Debug_printf("T%02d %p c%c (%2d,%2d) %4dh %10dr %8s: %s\n",
+        Debug_printf("T%02d %p (%2d,%2d) %4dh %10dr %8s: %s\n",
+                     i + 1,
+                     pTasks[i].xHandle,
+                     //pTasks[i].xCoreID == tskNO_AFFINITY ? '_' : ('0' + pTasks[i].xCoreID),
+                     pTasks[i].uxBasePriority, pTasks[i].uxCurrentPriority,
+                     pTasks[i].usStackHighWaterMark,
+                     pTasks[i].ulRunTimeCounter,
+                     status[pTasks[i].eCurrentState],
+                     pTasks[i].pcTaskName);
+    }
+*/
     Debug_printf("\nCPU MHz: %d\n", fnSystem.get_cpu_frequency());
 #endif
 }

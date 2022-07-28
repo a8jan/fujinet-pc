@@ -7,6 +7,7 @@
 #include <errno.h>
 
 #include "modem-sniffer.h"
+
 #include "../../include/debug.h"
 
 ModemSniffer::ModemSniffer(FileSystem *_fs, bool _enable)

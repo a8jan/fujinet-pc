@@ -4,9 +4,13 @@
  * Implementation
  */
 
+#include "FS.h"
+
 #include <stdlib.h>
 #include <string.h>
-#include "FS.h"
+
+#include "../../include/debug.h"
+
 #include "status_error_codes.h"
 #include "utils.h"
 
