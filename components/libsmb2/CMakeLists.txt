@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.2)
 
 project(libsmb2
         LANGUAGES C
-        VERSION 3.0.0)
+        VERSION 4.0.0)
 
 set(SOVERSION 1 CACHE STRING "" FORCE)
 
@@ -37,6 +37,16 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${OPENSSL_INCLUDE_DIR})
 
 set(core_DEPENDS ${GSSAPI_LIBRARIES} CACHE STRING "" FORCE)
+
+if(MSVC AND BUILD_SHARED_LIBS)
+  # If we are building dll with msvc, then generate a def file according to the syms file
+  SET(SYMS_FILE_PATH "${PROJECT_SOURCE_DIR}/lib/libsmb2.syms")
+  SET(DEF_FILE_PATH "${PROJECT_BINARY_DIR}/lib/libsmb2.def")
+  file(READ ${SYMS_FILE_PATH} EXPORT_SYMBOLS)
+  file(WRITE ${DEF_FILE_PATH} "LIBRARY smb2\nEXPORTS\n\n${EXPORT_SYMBOLS}")
+  # Pass def file to the linker 
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DEF:${DEF_FILE_PATH}")
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES Windows)
   list(APPEND CORE_LIBRARIES ws2_32.lib)

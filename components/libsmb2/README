@@ -40,7 +40,7 @@ smb://[<domain>;][<user>@]<server>[:<port>]/<share>[/path][?arg=val[&arg=val]*]
 
 <server> is either a hostname, an IPv4 or an IPv6 address.
 
-Aruments supported by libsmb2 are :
+Arguments supported by libsmb2 are :
  sec=<mech>    : Mechanism to use to authenticate to the server. Default
 	         is any available mech, but can be overridden by :
 		 krb5: Use Kerberos using credentials from kinit.
@@ -229,3 +229,16 @@ Then to build libsmb2, run
 
 The process will copy the resulting libsmb2.a and the include/smb2 headers to your
 PSL1GHT SDK portlibs folder.
+
+PlayStation 4
+-------------
+x86_64 is the main CPU for the PS4.
+To compile libsmb2 for the PS4 PPU, first install the PS4 toolchain and
+OpenOrbis SDK and set it up.
+
+Then to build libsmb2, run
+  $ cd lib
+  $ make -f Makefile.PS4 install
+
+The process will copy the resulting libsmb2.a and the include/smb2 headers to your
+OpenOrbis SDK include folder.

@@ -46,7 +46,8 @@ set(SOURCES aes.c
             unicode.c
 	    usha.c)
 
-add_library(smb2 ${SOURCES})
+#add_library(smb2 ${SOURCES})
+add_library(smb2 STATIC ${SOURCES})
 target_link_libraries(smb2 PUBLIC ${core_DEPENDS} ${CORE_LIBRARIES})
 set_target_properties(smb2 PROPERTIES
                            VERSION ${PROJECT_VERSION}
