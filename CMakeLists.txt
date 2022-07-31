@@ -158,17 +158,26 @@ add_link_options("-fstack-protector")
 
 # Libsmb2
 # https://github.com/sahlberg/libsmb2
-add_subdirectory(components/libsmb2)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_subdirectory(components/libsmb2)
+endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    link_directories(components/libsmb2/build/libsmb2/lib)
+endif()
 
 # run build_version.py to update version.h
 add_custom_command(
-  OUTPUT include/version.h
-  COMMAND python build_version.py
+  OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/include/version.h"
   DEPENDS ${SOURCE_FILES} build_version.py
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMAND python build_version.py
+  COMMENT "Update version file"
+  VERBATIM
 )
+add_custom_target(build_prep DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/version.h")
 
-add_executable(fujinet ${SOURCES} include/version.h)
+add_executable(fujinet ${SOURCES})
+add_dependencies(fujinet build_prep)
 
 set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
 find_package(OpenSSL REQUIRED)
@@ -183,6 +192,19 @@ endif()
 # if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 #     target_link_libraries(fujinet bsd)
 # endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/components/libsmb2/build/libsmb2/lib/libsmb2.a"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/components/libsmb2/buildtools"
+        COMMAND ./build.sh
+        COMMENT "Building libsmb2 for macOS"
+        VERBATIM
+    )
+    add_custom_target(libsmb2 DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/components/libsmb2/build/libsmb2/lib/libsmb2.a")
+    add_dependencies(fujinet libsmb2)
+endif()
+
 
 # "dist" target
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")

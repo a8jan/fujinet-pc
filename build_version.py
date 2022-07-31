@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import datetime
 import re
 import subprocess
@@ -31,7 +33,7 @@ class Version:
         self.release_ver = ver
         self.release_msg = msg
         if self.release:
-            print("Prepeare for Release")
+            print("Prepeare version for: Release")
             # prepare release tag
             if self.release_ver is not None:
                 self.from_release_ver() # from provided release version
@@ -41,7 +43,7 @@ class Version:
                     # else prepare version based on commit date
                     self.from_date()
         else:
-            print("Prepare for Build")
+            print("Prepare version for: Build")
             # make version based on information from repository
             # first, try to get version from release tag
             if not self.from_release_tag():
