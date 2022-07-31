@@ -19,7 +19,7 @@ cd ../buildtools
 
 echo "Updating brew."
 brew update
-for pkg in cmake automake autoconf libtool; do
+for pkg in automake autoconf libtool; do
     if brew list -1 | grep -q "^${pkg}\$"; then
         echo "Updating ${pkg}."
         brew upgrade $pkg &> /dev/null
