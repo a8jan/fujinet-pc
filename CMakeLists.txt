@@ -167,17 +167,18 @@ endif()
 
 # run build_version.py to update version.h
 add_custom_command(
-  OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/include/version.h"
-  DEPENDS ${SOURCE_FILES} build_version.py
+  OUTPUT  "${CMAKE_BINARY_DIR}/version.h"
+  DEPENDS build_version.py
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMAND python build_version.py
+  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/include/version.h" "${CMAKE_BINARY_DIR}/version.h"
   COMMENT "Update version file"
   VERBATIM
 )
-add_custom_target(build_prep DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/version.h")
+add_custom_target(build_version DEPENDS "${CMAKE_BINARY_DIR}/version.h")
 
 add_executable(fujinet ${SOURCES})
-add_dependencies(fujinet build_prep)
+add_dependencies(fujinet build_version)
 
 set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
 find_package(OpenSSL REQUIRED)
@@ -195,13 +196,13 @@ endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     add_custom_command(
-        OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/components/libsmb2/build/libsmb2/lib/libsmb2.a"
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/components/libsmb2/buildtools"
+        OUTPUT "${CMAKE_SOURCE_DIR}/components/libsmb2/build/libsmb2/lib/libsmb2.a"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/components/libsmb2/buildtools"
         COMMAND ./build.sh
         COMMENT "Building libsmb2 for macOS"
         VERBATIM
     )
-    add_custom_target(libsmb2 DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/components/libsmb2/build/libsmb2/lib/libsmb2.a")
+    add_custom_target(libsmb2 DEPENDS "${CMAKE_SOURCE_DIR}/components/libsmb2/build/libsmb2/lib/libsmb2.a")
     add_dependencies(fujinet libsmb2)
 endif()
 
