@@ -142,8 +142,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-# strlcpy and strlcat are part of stdlib on mac
+    # strlcpy and strlcat are part of stdlib on mac
 else()
+    # compile strlcpy and strlcat (from OpenBSD)
     set(SOURCES ${SOURCES} lib/compat/strlcat.c lib/compat/strlcpy.c)
 endif()
 
@@ -159,10 +160,16 @@ add_link_options("-fstack-protector")
 # Libsmb2
 # https://github.com/sahlberg/libsmb2
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # build smb2 library
     add_subdirectory(components/libsmb2)
 endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    # link smb2 library, build is controlled by script on macos, see below
     link_directories(components/libsmb2/build/libsmb2/lib)
+endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    # build smb2 library
+    add_subdirectory(components/libsmb2)
 endif()
 
 # run build_version.py to update version.h
@@ -190,10 +197,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_link_libraries(fujinet ws2_32)
 endif()
 
-# if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-#     target_link_libraries(fujinet bsd)
-# endif()
-
+# script to build libsmb2 on macos
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     add_custom_command(
         OUTPUT "${CMAKE_SOURCE_DIR}/components/libsmb2/build/libsmb2/lib/libsmb2.a"

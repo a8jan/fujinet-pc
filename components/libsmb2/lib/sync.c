@@ -32,7 +32,7 @@
 #endif
 
 #include <errno.h>
-#if defined(HAVE_POLL_H) || defined(_WINDOWS)
+#if defined(HAVE_POLL_H) || defined(_WIN32)
 #ifdef ESP_PLATFORM
 #include <sys/poll.h>
 #else

@@ -53,9 +53,9 @@
 #include <sys/uio.h>
 #endif
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define random rand
-#endif // _MSC_VER
+#endif // _WIN32
 
 #include <stdio.h>
 

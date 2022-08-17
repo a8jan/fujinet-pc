@@ -76,7 +76,7 @@ struct smb2dirent {
         struct smb2_stat_64 st;
 };
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <winsock2.h>
 typedef SOCKET t_socket;
 #else

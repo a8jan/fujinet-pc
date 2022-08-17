@@ -16,9 +16,11 @@ extern "C" {
 
 #include <libsmb2.h>
 
+#ifdef _MSC_VER
 #define EBADF WSAENOTSOCK
 
 typedef SSIZE_T ssize_t;
+#endif // _MSC_VER
 
 struct iovec
 {
@@ -26,7 +28,7 @@ struct iovec
   void *iov_base;        
 };
 
-inline int writev(t_socket sock, struct iovec *iov, int nvecs)
+static inline int writev(t_socket sock, const struct iovec *iov, int nvecs)
 {
   DWORD ret;
 
@@ -38,7 +40,7 @@ inline int writev(t_socket sock, struct iovec *iov, int nvecs)
   return -1;
 }
 
-inline int readv(t_socket sock, struct iovec *iov, int nvecs)
+static inline int readv(t_socket sock, const struct iovec *iov, int nvecs)
 {
   DWORD ret;
   DWORD flags = 0;
@@ -51,10 +53,11 @@ inline int readv(t_socket sock, struct iovec *iov, int nvecs)
   return -1;
 }
 
-inline int close(t_socket sock)
-{
-  return closesocket(sock);
-}
+// inline int close(t_socket sock)
+// {
+//   return closesocket(sock);
+// }
+#define close(x) closesocket(x)
 
 #ifdef __cplusplus
 }

@@ -893,7 +893,7 @@ connect_async_ai(struct smb2_context *smb2, const struct addrinfo *ai, int *fd_o
         set_tcp_sockopt(fd, TCP_NODELAY, 1);
 
         if (connect(fd, (struct sockaddr *)&ss, socksize) != 0
-#ifndef _MSC_VER
+#ifndef _WIN32
                   && errno != EINPROGRESS) {
 #else
                   && WSAGetLastError() != WSAEWOULDBLOCK) {
@@ -1018,7 +1018,7 @@ smb2_connect_async(struct smb2_context *smb2, const char *server,
         err = getaddrinfo(host, port, NULL, &smb2->addrinfos);
         if (err != 0) {
                 free(addr);
-#ifdef _WINDOWS
+#ifdef _WIN32
                 if (err == WSANOTINITIALISED)
                 {
                         smb2_set_error(smb2, "Winsock was not initialized. "

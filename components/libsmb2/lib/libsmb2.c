@@ -65,7 +65,7 @@
 #include <sys/socket.h>
 #endif
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #include "asprintf.h"
 #endif
 

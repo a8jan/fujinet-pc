@@ -62,13 +62,13 @@
 
 #include "compat.h"
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <errno.h>
 #define getlogin_r(a,b) ENXIO
 #define srandom srand
 #define random rand
 #define getpid GetCurrentProcessId
-#endif // _MSC_VER
+#endif // _WIN32
 
 #ifdef ESP_PLATFORM
 #include <errno.h>

@@ -1294,12 +1294,12 @@ dcerpc_decode_response(struct dcerpc_context *ctx,
                        struct dcerpc_response_pdu *rsp,
                        struct smb2_iovec *iov, int offset)
 {
-#ifndef _MSC_VER
+#ifndef _WIN32
         struct dcerpc_pdu *pdu = container_of(rsp, struct dcerpc_pdu, rsp);
 #else
         const char* __mptr = rsp;
         struct dcerpc_pdu *pdu = (struct dcerpc_pdu*)((char *)__mptr - offsetof(struct dcerpc_pdu, rsp));
-#endif // !_MSC_VER
+#endif // !_WIN32
    
         if (offset < 0) {
                 return offset;
