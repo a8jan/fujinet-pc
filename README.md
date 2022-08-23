@@ -22,20 +22,25 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 - TNFS File System to access image files over network
 - Web interface to control program's settings, browse TNFS hosts and mount disk images
 - FujiNet network device (N:) with support for various network protocols:
-  TCP, UDP, TNFS, HTTP, FTP, Telnet
+  TCP, UDP, TNFS, HTTP, SMB, FTP, Telnet
 - Compiles and runs on Linux, macOS and Windows (Windows with Altirra only, no serial port yet)
+- Binary packages for selected platforms
 
 ### Not (yet) working
 
 - CP/M emulation
-- SSH and SMB support for N:
 - SAM voice synthesizer
 - MIDIMaze support
 - Program recorder (tape) emulation
-- UART on Windows (to connect with Atari via SIO port)
-- Distributable binary packages for supported platforms
+- UART on Windows (to connect with real Atari via SIO port)
 
 -------------------------------------------------------------------
+
+## Download
+
+FujiNet-PC pre-compiled binaries for selected operating systems are available on project page in [Releases](https://github.com/FujiNetWIFI/fujinet-pc/releases) section.
+
+Bundle with [FujiNet-PC Launcher](https://github.com/a8jan/fujinet-pc-launcher), which includes Launcher GUI, FujiNet-PC binaries, NetSIO hub and NetSIO custom device for Altirra, can be downloaded from [Releases](https://github.com/a8jan/fujinet-pc-launcher/releases) there. An alternative to **all in one bundle** is a variant which includes **scripts only** (and custom device file). Scripts requires Python 3 to be installed somewhere in the system.
 
 ## Build instructions
 
@@ -114,18 +119,18 @@ cmake --build . --target dist
 
 #### SD Card
 
-Part of `dist` build is to download [FujiNet SD Card](https://github.com/FujiNetWIFI/fujinet-sd-card) files from GitHub into SD "card" folder (FN-PC uses SD folder not real SD card).
+FN-PC uses SD folder, not real SD Card. Visit [FujiNet SD Card](https://github.com/FujiNetWIFI/fujinet-sd-card) to get some useful utilities which can be placed into SD folder.
 
 
 ## Run it
 
-`dist` directory (within build directory) contains files needed to run FujiNet-PC. You can run it directly inside `dist` or copy/move/rename the `dist` directory to the place of your preference and run it from there.
+`dist` directory (build/dist) contains files needed to run FujiNet-PC. You can run fujinet directly inside `dist` or copy/move/rename the `dist` directory to the place of your preference and run fujinet from there.
 
 ```sh
-# enter dist directory (or copied/moved/renamed directory, if you copied/...)
+# enter dist directory (or copied/moved/renamed directory, if you copied/moved/...), must be inside
 cd dist
 
-# optionally put some additional disk image(s) to SD sub-directory
+# optionally, put some additional disk image(s) to SD sub-directory
 cp /your/dir/some/image.atr SD
 
 # start fujinet with wrapper script
@@ -136,13 +141,13 @@ It can be stopped with `Ctrl`+`C`
 
 ### Configure
 
-Visit http://localhost:8000 and configure serial port or enable SIO over Network for communication with Altirra Atari emulator.
+Visit http://localhost:8000 and configure Serial Port to communicate with real Atari or enable SIO over Network for communication with Altirra Atari emulator.
 
-For emulator option check details [here](https://github.com/FujiNetWIFI/fujinet-emulator-bridge).
+For emulator options check instructions [here](https://github.com/FujiNetWIFI/fujinet-emulator-bridge). Alternatively, [FujiNet-PC Launcher](https://github.com/a8jan/fujinet-pc-launcher) can be used.
 
 Connect SIO2PC/USB and boot the Atari from FujiNet.
 
-By default fujinet web interface is available on port 8000 listening on all available IP addresses. This can be changed with `-u <URL>` parameter. For example:
+By default FujiNet Web Interface is available on port 8000 listening on all available IP addresses. This can be changed with `-u <URL>` parameter. For example:
 
 ```sh
 # to limit the web interface only for machine which is running fujinet 
