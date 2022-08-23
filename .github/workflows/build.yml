@@ -116,6 +116,13 @@ jobs:
           ninja:p
           libssp:p
 
+    # Install OpenSSL on macOS
+    - name: '[macOS] Install OpenSSL'
+      if: ${{ startsWith(matrix.target, 'macos') }}
+      run: |
+        brew update
+        brew install openssl
+
     - name: About ${{ matrix.name }}
       run: |
         echo "Building for ${{ matrix.name }} (${{ matrix.target }}) on ${{ matrix.runner }}"
