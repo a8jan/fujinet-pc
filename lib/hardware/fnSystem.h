@@ -26,7 +26,7 @@
 class SystemManager
 {
 private:
-    char _uptime_string[18];
+    char _uptime_string[24];
     char _currenttime_string[40];
     int _hardware_version = 0; // unknown
     char _uname_string[128];
