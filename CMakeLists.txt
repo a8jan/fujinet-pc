@@ -148,6 +148,15 @@ else()
     set(SOURCES ${SOURCES} lib/compat/strlcat.c lib/compat/strlcpy.c)
 endif()
 
+add_executable(fujinet ${SOURCES})
+
+# OpenSSL
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
+    set(OPENSSL_USE_STATIC_LIBS TRUE) # set this before adding libsmb2
+endif()
+find_package(OpenSSL REQUIRED)
+
 # cJSON library
 # https://github.com/DaveGamble/cJSON
 set(ENABLE_CJSON_UTILS ON CACHE BOOL "Enable building the cJSON_Utils library.")
@@ -156,21 +165,14 @@ set(CJSON_OVERRIDE_BUILD_SHARED_LIBS ON CACHE BOOL "Override BUILD_SHARED_LIBS w
 set(CJSON_BUILD_SHARED_LIBS OFF CACHE BOOL "Overrides BUILD_SHARED_LIBS if CJSON_OVERRIDE_BUILD_SHARED_LIBS is enabled")
 add_subdirectory(components/cJSON)
 add_link_options("-fstack-protector")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_link_libraries(fujinet ssp) # need on Windows, above linker option does not help
+endif()
 
 # Libsmb2
 # https://github.com/sahlberg/libsmb2
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    # build smb2 library
-    add_subdirectory(components/libsmb2)
-endif()
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    # link smb2 library, build is controlled by script on macos, see below
-    link_directories(components/libsmb2/build/libsmb2/lib)
-endif()
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    # build smb2 library
-    add_subdirectory(components/libsmb2)
-endif()
+add_subdirectory(components/libsmb2)
+
 
 # run build_version.py to update version.h
 add_custom_command(
@@ -184,11 +186,7 @@ add_custom_command(
 )
 add_custom_target(build_version DEPENDS "${CMAKE_BINARY_DIR}/version.h")
 
-add_executable(fujinet ${SOURCES})
 add_dependencies(fujinet build_version)
-
-set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
-find_package(OpenSSL REQUIRED)
 
 target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
 target_link_libraries(fujinet pthread expat OpenSSL::SSL OpenSSL::Crypto cjson cjson_utils smb2)
@@ -197,29 +195,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_link_libraries(fujinet ws2_32)
 endif()
 
-# script to build libsmb2 on macos
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    add_custom_command(
-        OUTPUT "${CMAKE_SOURCE_DIR}/components/libsmb2/build/libsmb2/lib/libsmb2.a"
-        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/components/libsmb2/buildtools"
-        COMMAND ./build.sh
-        COMMENT "Building libsmb2 for macOS"
-        VERBATIM
-    )
-    add_custom_target(libsmb2 DEPENDS "${CMAKE_SOURCE_DIR}/components/libsmb2/build/libsmb2/lib/libsmb2.a")
-    add_dependencies(fujinet libsmb2)
-endif()
-
 
 # "dist" target
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_custom_target(dist
         COMMENT "Preparing dist directory"
         COMMAND ${CMAKE_COMMAND} -E make_directory dist
-        # COMMAND echo Getting fujinet-sd-card
-        # COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD
-        # COMMAND git clone --depth 1 https://github.com/FujiNetWIFI/fujinet-sd-card.git dist/SD
-        # COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD/.git
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/distfiles dist
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fujinet> dist
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${FUJINET_DATA_DIR} dist/data
@@ -231,10 +212,6 @@ else()
     add_custom_target(dist
         COMMENT "Preparing dist directory"
         COMMAND ${CMAKE_COMMAND} -E make_directory dist
-        # COMMAND echo Getting fujinet-sd-card
-        # COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD
-        # COMMAND git clone --depth 1 https://github.com/FujiNetWIFI/fujinet-sd-card.git dist/SD
-        # COMMAND ${CMAKE_COMMAND} -E remove_directory dist/SD/.git
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/distfiles dist
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fujinet> dist
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${FUJINET_DATA_DIR} dist/data
