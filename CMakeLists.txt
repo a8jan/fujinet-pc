@@ -164,9 +164,9 @@ set(ENABLE_CJSON_TEST OFF CACHE BOOL "Enable building cJSON test")
 set(CJSON_OVERRIDE_BUILD_SHARED_LIBS ON CACHE BOOL "Override BUILD_SHARED_LIBS with CJSON_BUILD_SHARED_LIBS")
 set(CJSON_BUILD_SHARED_LIBS OFF CACHE BOOL "Overrides BUILD_SHARED_LIBS if CJSON_OVERRIDE_BUILD_SHARED_LIBS is enabled")
 add_subdirectory(components/cJSON)
-add_link_options("-fstack-protector")
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    target_link_libraries(fujinet ssp) # need on Windows, above linker option does not help
+    add_link_options("-fstack-protector")
+    target_link_libraries(fujinet ssp) # it seems above linker option is not enough
 endif()
 
 # Libsmb2

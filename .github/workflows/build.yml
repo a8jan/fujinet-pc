@@ -68,7 +68,6 @@ jobs:
       run: python build_version.py release:push ${{ github.event.inputs.releaseVersion }}
 
   build:
-    name: Build
     needs: build-prep
     strategy:
       fail-fast: false
@@ -91,6 +90,7 @@ jobs:
             runner: windows-latest
             default-shell: msys2 {0}
     # continue-on-error: true
+    name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
     defaults:
       run:
