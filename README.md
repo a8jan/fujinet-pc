@@ -38,9 +38,9 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 
 ## Download
 
-FujiNet-PC pre-compiled binaries for selected operating systems are available on project page in [Releases](https://github.com/FujiNetWIFI/fujinet-pc/releases) section.
+FujiNet-PC pre-compiled binaries for selected operating systems are available in [Releases](https://github.com/FujiNetWIFI/fujinet-pc/releases) section.
 
-Bundle with [FujiNet-PC Launcher](https://github.com/a8jan/fujinet-pc-launcher), which includes Launcher GUI, FujiNet-PC binaries, NetSIO hub and NetSIO custom device for Altirra, can be downloaded from project's [Releases](https://github.com/a8jan/fujinet-pc-launcher/releases). An alternative to all in one bundle is a variant which includes scripts only.
+If interested into running FujiNet-PC with Altirra take a look at [FujiNet-PC Launcher](https://github.com/a8jan/fujinet-pc-launcher). The provided bundle includes FujiNet-PC binaries, Launcher GUI, NetSIO hub and NetSIO custom device for Altirra. An alternative to all in one bundle is a variant which includes scripts only (no binaries). Python 3 is needed to run scripts.
 
 ## Build instructions
 
