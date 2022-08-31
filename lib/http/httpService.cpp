@@ -523,7 +523,7 @@ int fnHttpService::get_handler_mount(mg_connection *c, mg_http_message *hm)
     {
         // Mount all the things
         Debug_printf("Mount all from webui\n");
-        theFuji.sio_mount_all(false);
+        theFuji.mount_all(false);
     }
     return redirect_or_result(c, hm, 0);
 }
