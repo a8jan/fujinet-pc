@@ -48,8 +48,5 @@
 #define FUJICMD_RANDOM_NUMBER 0xD3              /*  */
 #define FUJICMD_GET_TIME 0xD2                   /*  */
 #define FUJICMD_DEVICE_ENABLE_STATUS 0xD1       /*  */
-// TODO fix assign new code !
-//#define FUJICMD_GET_IMAGE_INFO 0xD0             /*  */
-#define FUJICMD_GET_IMAGE_INFO 0xD5             /*  */
 
 #endif

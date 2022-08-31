@@ -1721,10 +1721,6 @@ void sioFuji::sio_process(uint32_t commanddata, uint8_t checksum)
         sio_ack();
         sio_enable_udpstream();
         break;
-    case FUJICMD_GET_IMAGE_INFO:
-        sio_ack();
-        sio_get_image_info();
-        break;
     default:
         sio_nak();
     }
@@ -1738,49 +1734,6 @@ int sioFuji::get_disk_id(int drive_slot)
 std::string sioFuji::get_host_prefix(int host_slot)
 {
     return _fnHosts[host_slot].get_prefix();
-}
-
-// Send info about the image mounted in the specified slot.
-// WIP - nothing should call this yet.
-int sioFuji::sio_get_image_info(bool siomode, int slot)
-{
-    uint8_t deviceSlot = siomode ? cmdFrame.aux1 : slot;
-
-    Debug_println("********************************************************");
-    Debug_printf("Fuji cmd: GET IMAGE INFO for Slot #%d\n", deviceSlot);
-
-    // More to be added to this struct.. right now for testing just the full path/filename to the image.
-    struct mounted_image_info
-    {
-        char fullFilename[MAX_FILENAME_LEN];
-    };
-
-    mounted_image_info info;
-
-    memset(&info, 0, sizeof(info));
-
-    // Make sure we weren't given a bad hostSlot
-    if (!_validate_device_slot(deviceSlot))
-    {
-        return _on_error(siomode);
-    }
-    if (!_validate_host_slot(_fnDisks[deviceSlot].host_slot))
-    {
-        return _on_error(siomode);
-    }
-
-    // Populate the return structure with information. Only if we have something mounted
-    // in this slot.
-    if ( _fnDisks[deviceSlot].filename[0] != '\0' ) 
-    {
-        // temp: just playing with different data to see it on the atari side. 
-        sprintf(info.fullFilename, "S%d : ", _fnDisks[deviceSlot].host_slot+1);
-        //strlcpy (info.fullFilename, _fnDisks[deviceSlot].filename, MAX_FILENAME_LEN);
-    }
-
-    bus_to_computer((uint8_t *)&info, sizeof(info), false);
-    Debug_println("********************************************************");
-    return _on_ok(siomode);
 }
 
 #endif /* BUILD_ATARI */
