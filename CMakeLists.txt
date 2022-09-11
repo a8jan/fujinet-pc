@@ -50,10 +50,12 @@ set(SOURCES src/main.cpp
     lib/FileSystem/fnFsSD.h lib/FileSystem/fnFsSD.cpp
     lib/FileSystem/fnFsTNFS.h lib/FileSystem/fnFsTNFS.cpp
     lib/FileSystem/fnFsSMB.h lib/FileSystem/fnFsSMB.cpp
+    lib/FileSystem/fnFsFTP.h lib/FileSystem/fnFsFTP.cpp
     lib/FileSystem/fnFile.h lib/FileSystem/fnFile.cpp
     lib/FileSystem/fnFileLocal.h lib/FileSystem/fnFileLocal.cpp
     lib/FileSystem/fnFileTNFS.h lib/FileSystem/fnFileTNFS.cpp
     lib/FileSystem/fnFileSMB.h lib/FileSystem/fnFileSMB.cpp
+    lib/FileSystem/fnFileMem.h lib/FileSystem/fnFileMem.cpp
     lib/EdUrlParser/EdUrlParser.h lib/EdUrlParser/EdUrlParser.cpp
     lib/tcpip/fnDNS.h lib/tcpip/fnDNS.cpp
     lib/tcpip/fnUDP.h lib/tcpip/fnUDP.cpp

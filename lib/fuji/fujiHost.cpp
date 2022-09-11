@@ -8,6 +8,7 @@
 #include "fnFsSD.h"
 #include "fnFsTNFS.h"
 #include "fnFsSMB.h"
+#include "fnFsFTP.h"
 
 #include "utils.h"
 
@@ -44,6 +45,7 @@ void fujiHost::set_type(fujiHostType type)
     case HOSTTYPE_LOCAL:
     case HOSTTYPE_TNFS:
     case HOSTTYPE_SMB:
+    case HOSTTYPE_FTP:
         cleanup();
         break;
     }
@@ -63,7 +65,7 @@ void fujiHost::set_hostname(const char *hostname)
             Debug_print("fujiHost::set_hostname new name matches old - nothing changes\n");
             return;
         }
-        Debug_printf("fujiHost::set_hostname replacing hold host \"%s\"\n", _hostname);
+        Debug_printf("fujiHost::set_hostname \"%s\" replacing old host \"%s\"\n", hostname, _hostname);
         set_type(HOSTTYPE_UNINITIALIZED);
     }
     strlcpy(_hostname, hostname, sizeof(_hostname));
@@ -105,6 +107,7 @@ uint16_t fujiHost::dir_tell()
     case HOSTTYPE_LOCAL:
     case HOSTTYPE_TNFS:
     case HOSTTYPE_SMB:
+    case HOSTTYPE_FTP:
         result = _fs->dir_tell();
         break;
     case HOSTTYPE_UNINITIALIZED:
@@ -125,6 +128,7 @@ bool fujiHost::dir_seek(uint16_t pos)
     case HOSTTYPE_LOCAL:
     case HOSTTYPE_TNFS:
     case HOSTTYPE_SMB:
+    case HOSTTYPE_FTP:
         result = _fs->dir_seek(pos);
         break;
     case HOSTTYPE_UNINITIALIZED:
@@ -155,6 +159,7 @@ bool fujiHost::dir_open(const char *path, const char *pattern, uint16_t options)
     case HOSTTYPE_LOCAL:
     case HOSTTYPE_TNFS:
     case HOSTTYPE_SMB:
+    case HOSTTYPE_FTP:
         result = _fs->dir_open(realpath, pattern, options);
         break;
     case HOSTTYPE_UNINITIALIZED:
@@ -172,6 +177,7 @@ fsdir_entry_t *fujiHost::dir_nextfile()
     case HOSTTYPE_LOCAL:
     case HOSTTYPE_TNFS:
     case HOSTTYPE_SMB:
+    case HOSTTYPE_FTP:
         return _fs->dir_read();
     case HOSTTYPE_UNINITIALIZED:
         break;
@@ -377,6 +383,41 @@ int fujiHost::mount_smb()
     return -1;
 }
 
+int fujiHost::mount_ftp()
+{
+    Debug_printf("::mount_ftp {%d:%d} \"%s\"\n", slotid, _type, _hostname);
+
+    // Don't do anything if that's already what's set
+    if (_type == HOSTTYPE_FTP)
+    {
+        if (_fs != nullptr && _fs->running())
+        {
+            Debug_printf("::mount_ftp Currently connected to share \"%s\"\n", _hostname);
+            return 0;
+        }
+    }
+    else
+        set_type(HOSTTYPE_FTP); // Only start fresh if not HOSTTYPE_FTP
+
+    _fs = new FileSystemFTP;
+
+    if (_fs == nullptr)
+    {
+        Debug_println("Couldn't create a new FsFTP in fujiHost::mount_ftp!");
+    }
+    else
+    {
+        Debug_println("Calling FTP::begin");
+
+        if (((FileSystemFTP *)_fs)->start(_hostname))
+        {
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
 /* Returns true if successful
 *  We expect a valid devicename, currently:
 *  "SD" = local
@@ -392,6 +433,9 @@ bool fujiHost::mount()
 
     if (0 == strncasecmp("smb://", _hostname, 6))
         return 0 == mount_smb();
+
+    if (0 == strncasecmp("ftp://", _hostname, 6))
+        return 0 == mount_ftp();
 
     // Try mounting TNFS last
     return 0 == mount_tnfs();
