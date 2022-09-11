@@ -772,6 +772,13 @@ bool fnFTP::logout()
     return false;
 }
 
+bool fnFTP::reconnect()
+{
+    Debug_println("Trying to re-login");
+    if (control->connected()) logout();
+    return login(username, password, hostname, control_port);
+}
+
 bool fnFTP::open_file(string path, bool stor)
 {
     if (!control->connected())
@@ -780,9 +787,17 @@ bool fnFTP::open_file(string path, bool stor)
         return true;
     }
 
-    if (get_data_port())
+    int retries = 2;
+    while (get_data_port())
     {
-        Debug_printf("fnFTP::get_data_port() - could not get data port. Aborting.\n");
+        if ((is_negative_permanent_reply() || is_negative_transient_reply()) && retries--)
+        {
+            // recovery attempt
+            fnSystem.delay(2000);
+            if (!reconnect())
+                continue; // successfully reconnected
+        }
+        Debug_printf("fnFTP::open_file(%s, %s) could not get data port. Aborting.\n", path.c_str(), stor ? "STOR" : "RETR");
         return true;
     }
 
@@ -824,8 +839,16 @@ bool fnFTP::open_directory(string path, string pattern)
         return true;
     }
 
-    if (get_data_port())
+    int retries = 2;
+    while (get_data_port())
     {
+        if ((is_negative_permanent_reply() || is_negative_transient_reply()) && retries--)
+        {
+            // recovery attempt
+            fnSystem.delay(2000);
+            if (!reconnect())
+                continue; // successfully reconnected
+        }
         Debug_printf("fnFTP::open_directory(%s%s) could not get data port, aborting.\n", path.c_str(), pattern.c_str());
         return true;
     }
@@ -862,8 +885,12 @@ bool fnFTP::open_directory(string path, string pattern)
 
     int tmout_counter = 1 + FTP_TIMEOUT / 50;
     bool got_response = false;
+
+    // Reset buffer
+    dirBuffer.str("");
+    dirBuffer.clear();
     // Retrieve listing into buffer.
-    do 
+    do
     {
         if (data->available() == 0)
         {
@@ -875,7 +902,7 @@ bool fnFTP::open_directory(string path, string pattern)
             }
             fnSystem.delay(50); // wait for more data or control message
         }
-        if (data->available())
+        if (data->available() > 0)
         {
             Debug_printf("Retrieving directory list\n");
             while (data->available())
@@ -893,8 +920,7 @@ bool fnFTP::open_directory(string path, string pattern)
         }
     } while (data->available() > 0 || data->connected());
 
-    if (data->connected()) // still connected, but data retrieval timed out
-        data->stop();
+    data->stop();
 
     if (tmout_counter == 0 || (got_response == false && parse_response()))
     {
@@ -956,7 +982,7 @@ bool fnFTP::close()
     {
         if (data->connected())
         {
-            data->close();
+            data->stop();
         }
         if (parse_response())
         {
@@ -1096,6 +1122,12 @@ bool fnFTP::get_data_port()
     if (is_negative_permanent_reply())
     {
         Debug_printf("Server unable to reserve port. Response was: %s\n", controlResponse.c_str());
+        return true;
+    }
+
+    if (is_negative_transient_reply())
+    {
+        Debug_printf("Cannot get data port. Response was: %s\n", controlResponse.c_str());
         return true;
     }
 
