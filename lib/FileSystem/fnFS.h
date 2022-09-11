@@ -28,6 +28,7 @@ enum fsType
     FSTYPE_SDFAT,
     FSTYPE_TNFS,
     FSTYPE_SMB,
+    FSTYPE_FTP,
     FSTYPE_COUNT
 };
 

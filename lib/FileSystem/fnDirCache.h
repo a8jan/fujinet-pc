@@ -20,6 +20,8 @@ public:
     fsdir_entry &new_entry();
     void apply_filter(const char *pattern, uint16_t diropts);
 
+    bool empty() {return _entries.empty();}
+
     fsdir_entry *read();
     uint16_t tell();
     bool seek(uint16_t pos);

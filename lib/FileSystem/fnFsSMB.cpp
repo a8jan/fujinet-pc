@@ -191,7 +191,7 @@ bool FileSystemSMB::dir_open(const char  *path, const char *pattern, uint16_t di
     if (smb_path != nullptr && smb_path[0] == '/')
         smb_path += 1;
 
-    if (strcasecmp(_last_dir, smb_path) == 0)
+    if (strcmp(_last_dir, smb_path) == 0)
     {
         Debug_printf("Use directory cache\n");
     }
