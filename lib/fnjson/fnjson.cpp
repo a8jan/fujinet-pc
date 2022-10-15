@@ -20,7 +20,7 @@
  */
 FNJSON::FNJSON()
 {
-    Debug_printf("FNJSON::ctor()\n");
+    // Debug_printf("FNJSON::ctor()\n");
     _protocol = nullptr;
     _json = nullptr;
 }
@@ -30,7 +30,7 @@ FNJSON::FNJSON()
  */
 FNJSON::~FNJSON()
 {
-    Debug_printf("FNJSON::dtor()\n");
+    // Debug_printf("FNJSON::dtor()\n");
     _protocol = nullptr;
     _json = nullptr;
 }
