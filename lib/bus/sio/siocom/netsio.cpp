@@ -1,3 +1,8 @@
+#ifdef BUILD_ATARI
+
+#include "netsio.h"
+#include "netsio_proto.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,11 +12,11 @@
 #include <errno.h> // Error integer and strerror() function
 #include <fcntl.h> // Contains file controls like O_RDWR
 
-#include "fnSystem.h"
 #include "../../include/debug.h"
 
-#include "netsio.h"
-#include "netsio_proto.h"
+#include "fnSystem.h"
+#include "fnDummyWiFi.h"
+
 
 /* alive response timeout in seconds
  *  device sends in regular intervals (2 s) alive messages (NETSIO_ALIVE_REQUEST) to NetSIO HUB
@@ -20,7 +25,7 @@
  *  be made
  */
 #define ALIVE_RATE_MS       2000
-#define ALIVE_TIMEOUT_MS    7500
+#define ALIVE_TIMEOUT_MS   15000
 
 // Constructor
 NetSioPort::NetSioPort() :
@@ -37,7 +42,7 @@ NetSioPort::NetSioPort() :
     _rxtail(0),
     _rxfull(false),
     _sync_request_num(-1),
-    _sync_write_size(0),
+    _sync_write_size(-1),
     _errcount(0)
 {}
 
@@ -59,14 +64,27 @@ void NetSioPort::begin(int baud)
     _motor_asserted = false;
     rxbuffer_flush();
 
-    int suspend_ms = _errcount < 3 ? 1000 : 5000;
+    // Wait for WiFi
+    int suspend_ms = _errcount < 5 ? 400 : 2000;
+    if (!fnWiFi.connected())
+    {
+        Debug_println("NetSIO: No WiFi!");
+        _errcount++;
+        suspend(suspend_ms);
+		return;
+	}
 
+    //
+    // Connect to hub
+    //
+
+    suspend_ms = _errcount < 5 ? 1000 : 5000;
     Debug_printf("Setting up NetSIO (%s:%d)\n", _host, _port);
     _fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
 
     if (_fd < 0)
     {
-        Debug_printf("socket error %d: %s\n", 
+        Debug_printf("Failed to create NetSIO socket: %d, \"%s\"\n", 
             compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
         _errcount++;
         suspend(suspend_ms);
@@ -91,7 +109,7 @@ void NetSioPort::begin(int baud)
     if (connect(_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
         // should not happen (UDP)
-        Debug_printf("connect error %d: %s\n", 
+        Debug_printf("Failed to connect NetSIO socket: %d, \"%s\"\n", 
             compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
         _errcount++;
         suspend(suspend_ms);
@@ -105,7 +123,7 @@ void NetSioPort::begin(int baud)
     fcntl(_fd, F_SETFL, O_NONBLOCK);
 #endif
 
-    // fast ping hub
+    // Fast ping hub
     if (ping(2, 50, 50) < 0)
     {
         _errcount++;
@@ -113,7 +131,7 @@ void NetSioPort::begin(int baud)
         return;
     }
 
-    // connect device
+    // Connect device
     uint8_t connect = NETSIO_DEVICE_CONNECT;
     send(_fd, (char *)&connect, 1, 0);
 
@@ -135,6 +153,7 @@ void NetSioPort::end()
         send(_fd, (char *)&disconnect, 1, 0);
         closesocket(_fd);
         _fd  = -1;
+        fnSystem.delay(50); // wait a while, otherwise wifi may turn off too quickly (during shutdown)
         Debug_printf("### NetSIO stopped ###\n");
     }
     _initialized = false;
@@ -150,7 +169,7 @@ bool NetSioPort::poll(int ms)
 
 void NetSioPort::suspend(int ms)
 {
-    Debug_println("Suspending NetSIO");
+    Debug_printf("Suspending NetSIO for %d ms\n", ms);
     _resume_time = fnSystem.millis() + ms;
     end();
 }
@@ -278,7 +297,8 @@ bool NetSioPort::keep_alive()
         uint8_t alive = NETSIO_ALIVE_REQUEST;
         send(_fd, (char *)&alive, 1, 0);
     }
-    else if (ms - _alive_response >= ALIVE_TIMEOUT_MS)
+    // check for keep alive response
+    if (ms - _alive_response >= ALIVE_TIMEOUT_MS)
     {
         Debug_println("NetSIO connection lost");
         // ping hub
@@ -357,7 +377,7 @@ int NetSioPort::handle_netsio()
             case NETSIO_COMMAND_ON:
                 _command_asserted = true;
                 _sync_request_num = -1; // cancel any sync request
-                _sync_write_size = 0;
+                _sync_write_size = -1;
                 rxbuffer_flush();   // flush any stray input data
                 break;
 
@@ -428,7 +448,7 @@ bool NetSioPort::wait_sock_readable(uint32_t timeout_ms)
                 // TODO adjust timeout_tv
                 continue;
             }
-            Debug_printf("NetSIO wait_sock_readable() select error %d: %s\n", err, strerror(err));
+            Debug_printf("NetSIO wait_sock_readable() select error %d: %s\n", err, compat_sockstrerror(err));
             return false;
         }
 
@@ -473,7 +493,7 @@ bool NetSioPort::wait_sock_writable(uint32_t timeout_ms)
                 // TODO adjust timeout_tv
                 continue;
             }
-            Debug_printf("NetSIO wait_sock_writable() select error %d: %s\n", err, strerror(err));
+            Debug_printf("NetSIO wait_sock_writable() select error %d: %s\n", err, compat_sockstrerror(err));
             return false;
         }
 
@@ -626,6 +646,9 @@ void NetSioPort::set_interrupt(bool level)
 */
 int NetSioPort::read(void)
 {
+    if (!_initialized)
+        return -1;
+
     if (!wait_for_data(500))
     {
         Debug_println("NetSIO read() - TIMEOUT");
@@ -642,12 +665,13 @@ size_t NetSioPort::read(uint8_t *buffer, size_t length, bool command_mode)
     if (!_initialized)
         return 0;
 
-    if (_sync_request_num >= 0 && _sync_write_size > 0)
+    if (_sync_request_num >= 0 && _sync_write_size >= 0)
     {
-        // first send late sync response
-        write(_sync_ack_byte);
+        // handle pending sync request
+        // send late ACK byte
+        send_sync_response(NETSIO_ACK_SYNC, _sync_ack_byte, _sync_write_size);
         // no delay here, emulator is not running
-        // 850 us pre-ACK delay will be added in netsio.atdevice
+        // 850 us pre-ACK delay will be added by netsio.atdevice
     }
 
     int result;
@@ -690,9 +714,22 @@ ssize_t NetSioPort::write(uint8_t c)
         return 0;
 
     if (_sync_request_num >= 0)
-        // SYNC RESPONSE
-        // send byte (should be ACK/NAK) bundled in sync response
-        return send_sync_response(NETSIO_ACK_SYNC, c, _sync_write_size);
+    {
+        // handle pending sync request
+        if (_sync_write_size < 0)
+        {
+            // SYNC RESPONSE
+            // send byte (should be ACK/NAK) bundled in sync response
+            return send_sync_response(NETSIO_ACK_SYNC, c, 0);
+        }
+        else
+        {
+            // sio_late_ack() was not from whatever reason followed by bus_to_peripheral()
+            Debug_println("Warn: NetSIO late ACK without bus_to_peripheral");
+            // send late ACK byte
+            send_sync_response(NETSIO_ACK_SYNC, _sync_ack_byte, _sync_write_size);
+        }
+    }
 
     // DATA BYTE
     // send byte as usually
@@ -700,6 +737,16 @@ ssize_t NetSioPort::write(uint8_t c)
     txbuf[1] = c;                // value
 
     ssize_t result = write_sock(txbuf, sizeof(txbuf));
+
+    if (result > 0)
+    {
+        // // slow down / TODO flow control
+        // uint32_t tt = 9000 / _baud + 10;
+        // fnSystem.delay(tt);
+        // // keep netsio running
+        // handle_netsio();
+    }
+
     return (result > 0) ? 1 : 0; // amount of data bytes written
 }
 
@@ -720,10 +767,21 @@ ssize_t NetSioPort::write(const uint8_t *buffer, size_t size)
         txbuf[0] = NETSIO_DATA_BLOCK;
         memcpy(txbuf+1, buffer+txbytes, to_send);
         result = write_sock(txbuf, to_send+1);
-        if (result > 0) {
+        if (result > 0) 
+        {
             txbytes += result-1;
+            // // slow down / TODO flow control
+            // uint32_t tt = result * 8500 / _baud + 50;
+            // while (tt)
+            // {
+            //     // but keep netsio running (100ms ticks)
+            //     fnSystem.delay(tt > 100 ? 100 : tt);
+            //     tt -= (tt > 100 ? 100 : tt);
+            //     handle_netsio();
+            // }
         }
-        else if (result < 1) {
+        else if (result < 1) 
+        {
             break;
         }
     }
@@ -750,6 +808,7 @@ const char* NetSioPort::get_host(int &port)
 void NetSioPort::set_sync_ack_byte(int ack_byte)
 {
     _sync_ack_byte = ack_byte;
+    _sync_write_size = 0;
 }
 
 void NetSioPort::set_sync_write_size(int write_size)
@@ -771,7 +830,7 @@ ssize_t NetSioPort::send_sync_response(uint8_t response_type, uint8_t ack_byte, 
     txbuf[5] = (uint8_t)((sync_write_size >> 8) & 0xff);
     // clear sync request
     _sync_request_num = -1;
-    _sync_write_size = 0;
+    _sync_write_size = -1;
 
     ssize_t result = write_sock(txbuf, sizeof(txbuf));
     return (result > 0 && response_type != NETSIO_EMPTY_SYNC) ? 1 : 0; // amount of data bytes written
@@ -782,3 +841,5 @@ void NetSioPort::send_empty_sync()
     if (_sync_request_num >= 0)
         send_sync_response(NETSIO_EMPTY_SYNC);
 }
+
+#endif /* BUILD_ATARI */
