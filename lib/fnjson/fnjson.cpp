@@ -112,12 +112,12 @@ string FNJSON::getValue(cJSON *item)
         //   Bit 0=1 - convert the characters when possible
         //   Bit 1=0 - convert to generic ASCII/ATASCII (no font change needed)
         //   Bit 1=1 - convert to ATASCII international charset (need to be switched on ATARI, i.e via POKE 756,204)
-
+        
         // SIO AUX2 Bit 1 set?
         if ((_queryParam & 1) != 0)
         {
             // yes, map special characters
-            string str_utf8mapping = ss.str();
+            string str_utf8mapping = ss.str(); 
             Debug_printf("S: [Mapping->ATARI]\n");
 
             // SIO AUX2 Bit 2 set?
@@ -128,7 +128,7 @@ string FNJSON::getValue(cJSON *item)
                 string mapTo[] =    { "\x00", "\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08", "\x09", "\x0a", "\x0b", "\x0c", "\x0d", "\x0e", "\x0f", "\x10", "\x11", "\x12", "\x13", "\x14", "\x15", "\x16", "\x17", "\x18", "\x19", "\x1a", "\x60", "\x7b", "ss" };
                 int elementCount = sizeof(mapFrom)/sizeof(mapFrom[0]);
                 for (int elementIndex=0; elementIndex < elementCount; elementIndex++)
-                    if(str_utf8mapping.find(mapFrom[elementIndex]) != std::string::npos)
+                    if(str_utf8mapping.find(mapFrom[elementIndex]) != std::string::npos) 
                         str_utf8mapping.replace(str_utf8mapping.find(mapFrom[elementIndex]), string(mapFrom[elementIndex]).size(), mapTo[elementIndex]);
             }
             else
@@ -138,7 +138,7 @@ string FNJSON::getValue(cJSON *item)
                 string mapTo[] =    { "Ae", "Oe", "Ue", "ae", "oe", "ue", "ss", "e", "e", "a", "a", "o", "o", "u", "u" };
                 int elementCount = sizeof(mapFrom)/sizeof(mapFrom[0]);
                 for (int elementIndex=0; elementIndex < elementCount; elementIndex++)
-                    if(str_utf8mapping.find(mapFrom[elementIndex]) != std::string::npos)
+                    if(str_utf8mapping.find(mapFrom[elementIndex]) != std::string::npos) 
                         str_utf8mapping.replace(str_utf8mapping.find(mapFrom[elementIndex]), string(mapFrom[elementIndex]).size(), mapTo[elementIndex]);
             }
 

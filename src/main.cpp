@@ -216,6 +216,12 @@ void main_setup(int argc, char *argv[])
     ComLynx.setup();
 #endif
 
+#ifdef BUILD_RS232
+    theFuji.setup(&RS232);
+    RS232.setup();
+    RS232.addDevice(&theFuji,0x70);
+#endif
+
 #ifdef BUILD_ADAM
     theFuji.setup(&AdamNet);
     AdamNet.setup();

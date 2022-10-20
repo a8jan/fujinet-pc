@@ -311,6 +311,8 @@ int sioFuji::sio_disk_image_mount(bool siomode, int slot)
     Debug_printf("Selecting '%s' from host #%u as %s on D%u:\n",
                  disk.filename, disk.host_slot, flag, deviceSlot + 1);
 
+    disk.disk_dev.host = &_fnHosts[disk.host_slot];
+
     disk.fileh = host.filehandler_open(disk.filename, disk.filename, sizeof(disk.filename), flag);
 
     if (disk.fileh == nullptr)

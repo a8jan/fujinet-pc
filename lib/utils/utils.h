@@ -78,6 +78,9 @@ void util_sam_say_swap_label();
 
 void util_replaceAll(std::string& str, const std::string& from, const std::string& to);
 
+//std::string util_get_canonical_path(char* path);
+std::string util_get_canonical_path(std::string path);
+
 // helper function for Debug_print* macros on fujinet-pc
 void util_debug_printf(const char *fmt, ...);
 

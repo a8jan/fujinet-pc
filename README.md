@@ -1,5 +1,5 @@
 FujiNet-PC   
-=========
+===========
 
 Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platformio) port to Linux, macOS and Windows
 
@@ -29,6 +29,7 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 ### Not (yet) working
 
 - CP/M emulation
+- SSH protocol
 - SAM voice synthesizer
 - MIDIMaze support
 - Program recorder (tape) emulation

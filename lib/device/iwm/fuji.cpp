@@ -38,7 +38,7 @@ void iwmFuji::iwm_ctrl_reset_fujinet() // SP CTRL command
 {
     Debug_printf("\r\nFuji cmd: REBOOT");
     encode_status_reply_packet();
-    IWM.SEND_PACKET((unsigned char *)packet_buffer);
+    IWM.iwm_send_packet((unsigned char *)packet_buffer);
     // save device unit SP address somewhere and restore it after reboot?
     fnSystem.reboot();
 }
@@ -941,11 +941,11 @@ void iwmFuji::iwm_ctrl_set_device_filename()
     s--;
    
 
-    Debug_printf("SET DEVICE SLOT %d filename\n", ds);
+    Debug_printf("\r\nSET DEVICE SLOT %d", ds);
 
     // adamnet_recv_buffer((uint8_t *)&f, s);
     memcpy((uint8_t *)&f, &packet_buffer[idx], s);
-    Debug_printf("filename: %s\n", f);
+    Debug_printf("\r\nfilename: %s", f);
 
     memcpy(_fnDisks[ds].filename, f, MAX_FILENAME_LEN);
     _populate_config_from_slots();  // this one maybe unnecessary?
@@ -1028,6 +1028,9 @@ void iwmFuji::setup(iwmBus *iwmbus)
 
     theNetwork = new iwmNetwork();
     _iwm_bus->addDevice(theNetwork,iwm_fujinet_type_t::Network);
+
+    theCPM = new iwmCPM();
+    _iwm_bus->addDevice(theCPM, iwm_fujinet_type_t::CPM);
 
    for (int i = MAX_DISK_DEVICES - 1; i >= 0; i--)
    {
@@ -1228,7 +1231,7 @@ void iwmFuji::iwm_open(cmdPacket_t cmd)
 {
   Debug_printf("\r\nOpen FujiNet Unit # %02x",cmd.g7byte1);
   encode_status_reply_packet();
-  IWM.SEND_PACKET((unsigned char *)packet_buffer);
+  IWM.iwm_send_packet((unsigned char *)packet_buffer);
 }
 
 void iwmFuji::iwm_close(cmdPacket_t cmd)
@@ -1252,14 +1255,14 @@ void iwmFuji::iwm_read(cmdPacket_t cmd)
 
   // Debug_printf(" - ERROR - No image mounted");
   // encode_error_reply_packet(source, SP_ERR_OFFLINE);
-  // IWM.SEND_PACKET((unsigned char *)packet_buffer);
+  // IWM.iwm_send_packet((unsigned char *)packet_buffer);
   // return;
 
   memcpy(packet_buffer,"HELLO WORLD",11);
   encode_data_packet(11);
   Debug_printf("\r\nsending data packet with %d elements ...", 11);
   //print_packet();
-  IWM.SEND_PACKET((unsigned char *)packet_buffer);
+  IWM.iwm_send_packet((unsigned char *)packet_buffer);
 }
 
 
@@ -1277,14 +1280,14 @@ void iwmFuji::iwm_status(cmdPacket_t cmd)
       break;
     case IWM_STATUS_STATUS:                  // 0x00
       encode_status_reply_packet();
-      IWM.SEND_PACKET((unsigned char *)packet_buffer);
+      IWM.iwm_send_packet((unsigned char *)packet_buffer);
       return;
       break;
     // case IWM_STATUS_DCB:                  // 0x01
     // case IWM_STATUS_NEWLINE:              // 0x02
     case IWM_STATUS_DIB:                     // 0x03
       encode_status_dib_reply_packet();
-      IWM.SEND_PACKET((unsigned char *)packet_buffer);
+      IWM.iwm_send_packet((unsigned char *)packet_buffer);
       return;
       break;
     // case FUJICMD_RESET:               // 0xFF
@@ -1352,14 +1355,14 @@ void iwmFuji::iwm_status(cmdPacket_t cmd)
     default:
       Debug_printf("\r\nBad Status Code, sending error response");
       encode_error_reply_packet(SP_ERR_BADCTL);
-      IWM.SEND_PACKET((unsigned char *)packet_buffer);
+      IWM.iwm_send_packet((unsigned char *)packet_buffer);
       return;
       break;
   }
   Debug_printf("\r\nStatus code complete, sending response");
   encode_data_packet(packet_len);
   
-  IWM.SEND_PACKET((unsigned char *)packet_buffer);
+  IWM.iwm_send_packet((unsigned char *)packet_buffer);
 }
 
 
@@ -1373,8 +1376,8 @@ void iwmFuji::iwm_ctrl(cmdPacket_t cmd)
   Debug_printf("\r\nControl List is at %02x %02x", cmd.g7byte1 & 0x7f, cmd.g7byte2 & 0x7f);
   IWM.iwm_read_packet_timeout(100, (uint8_t *)packet_buffer, BLOCK_PACKET_LEN);
   Debug_printf("\r\nThere are %02x Odd Bytes and %02x 7-byte Groups", packet_buffer[11] & 0x7f, packet_buffer[12] & 0x7f);
-  decode_data_packet();
   print_packet((uint8_t *)packet_buffer);
+  decode_data_packet();
 
   switch (control_code)
   {
@@ -1473,7 +1476,7 @@ void iwmFuji::iwm_ctrl(cmdPacket_t cmd)
       break;
   }
   encode_error_reply_packet(err_result); 
-  IWM.SEND_PACKET((unsigned char *)packet_buffer);
+  IWM.iwm_send_packet((unsigned char *)packet_buffer);
 }
 
 
