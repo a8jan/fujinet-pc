@@ -233,6 +233,25 @@ int fnHttpServiceBrowser::browse_listdir(mg_connection *c, mg_http_message *hm, 
                 Config.clear_mount(drive_slot);
                 Config.save();
                 theFuji.sio_disk_image_umount(false, drive_slot);
+                // Finally, scan all device slots, if all empty, and config enabled, enable the config device.
+                if (Config.get_general_config_enabled())
+                {
+                    if ((theFuji.get_disks(0)->host_slot == 0xFF) &&
+                        (theFuji.get_disks(1)->host_slot == 0xFF) &&
+                        (theFuji.get_disks(2)->host_slot == 0xFF) &&
+                        (theFuji.get_disks(3)->host_slot == 0xFF) &&
+                        (theFuji.get_disks(4)->host_slot == 0xFF) &&
+                        (theFuji.get_disks(5)->host_slot == 0xFF) &&
+                        (theFuji.get_disks(6)->host_slot == 0xFF) &&
+                        (theFuji.get_disks(7)->host_slot == 0xFF))
+                    {
+                        theFuji.boot_config = true;
+            #ifdef BUILD_ATARI
+                        theFuji.status_wait_count = 5;
+            #endif
+                        theFuji.device_active = true;
+                    }
+                }
             }
         }
         else if (strcmp(action, "download") == 0)
