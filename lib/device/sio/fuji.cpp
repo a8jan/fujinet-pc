@@ -1718,7 +1718,7 @@ void sioFuji::sio_process(uint32_t commanddata, uint8_t checksum)
         sio_set_boot_mode();
         break;
     case FUJICMD_ENABLE_UDPSTREAM:
-        sio_ack();
+        sio_late_ack();
         sio_enable_udpstream();
         break;
     default:

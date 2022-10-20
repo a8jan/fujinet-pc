@@ -337,13 +337,13 @@ void sioDisk::sio_process(uint32_t commanddata, uint8_t checksum)
         }
         return;
     case SIO_DISKCMD_WRITE:
-        sio_ack();
+        sio_late_ack();
         sio_write(true);
         return;
     case SIO_DISKCMD_HSIO_WRITE:
         if (_disk->_allow_hsio)
         {
-            sio_ack();
+            sio_late_ack();
             sio_write(true);
             return;
         }
