@@ -541,6 +541,7 @@ void systemBus::shutdown()
         devicep->shutdown();
     }
     Debug_printf("All devices shut down.\n");
+    fnSioCom.end();
 }
 
 void systemBus::toggleBaudrate()
