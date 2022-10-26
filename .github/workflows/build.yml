@@ -161,8 +161,8 @@ jobs:
       working-directory: build/dist
       run: |
         ./fujinet -V
-        echo "::set-output name=fujinet::$(./fujinet -V | awk '{if(tolower($1)=="fujinet-pc") print $2}')"
-        echo "::set-output name=release::$(./fujinet -V | awk '{if(tolower($1)=="fujinet-pc") print $2}' | sed 's/\(\.[1-9]\)\..*/\1/')"
+        echo "fujinet=$(./fujinet -V | awk '{if(tolower($1)=="fujinet-pc") print $2}')" >> $GITHUB_OUTPUT
+        echo "release=$(./fujinet -V | awk '{if(tolower($1)=="fujinet-pc") print $2}' | sed 's/\(\.[1-9]\)\..*/\1/')" >> $GITHUB_OUTPUT
 
     - name: 'Tar dist files'
       working-directory: build
