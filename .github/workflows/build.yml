@@ -77,13 +77,13 @@ jobs:
         runner: [ubuntu-22.04]
         default-shell: [bash]
         include:
-          - name: Ubuntu 18.04
-            target: ubuntu-18.04-amd64
-            runner: ubuntu-18.04
+          - name: Ubuntu 20.04
+            target: ubuntu-20.04-amd64
+            runner: ubuntu-20.04
             default-shell: bash
-          - name: macOS 10.15 Catalina
-            target: macos-10.15
-            runner: macos-10.15
+          - name: macOS 11
+            target: macos-11
+            runner: macos-11
             default-shell: bash
           - name: Windows
             target: windows-x64
