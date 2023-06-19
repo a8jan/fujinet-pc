@@ -6,6 +6,7 @@
 // #include <driver/uart.h>
 
 #include <string>
+#include <cstdint>
 
 
 class UARTManager
