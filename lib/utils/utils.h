@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
 
 #define __BEGIN_IGNORE_UNUSEDVARS _Pragma("GCC diagnostic push")    \
