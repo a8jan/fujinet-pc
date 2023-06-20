@@ -71,7 +71,15 @@ sudo apt install libexpat-dev libssl-dev
 
 ```sh
 brew install openssl
+brew --prefix openssl
 ```
+Get the prefix for openssl in your system and set this in the env:
+
+```
+export OPENSSL_ROOT_DIR=/opt/homebrew/opt/openssl@3
+```
+Note: your path might be different- use the output from brew --prefix openssl!
+
 
 ### Build
 
@@ -93,6 +101,9 @@ cmake --build .
 # after successful build populate dist directory with necessary files
 cmake --build . --target dist
 ```
+
+
+
 #### Windows
 
 To build on Windows use MSYS2/CLANG64 environment. Start **CLANG64** shell (clang64.exe).
