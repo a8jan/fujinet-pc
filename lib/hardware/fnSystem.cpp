@@ -249,27 +249,68 @@ void SystemManager::delay(uint32_t ms)
     usleep(ms*1000);
 }
 
+#if defined(_WIN32)
 void SystemManager::delay_microseconds(uint32_t us)
 {
-#if defined(_WIN32)
     // a)
-    HANDLE timer; 
-    LARGE_INTEGER ft; 
+    // HANDLE timer; 
+    // LARGE_INTEGER ft; 
 
-    ft.QuadPart = -(10*us); // Convert to 100 nanosecond interval, negative value indicates relative time
+    // ft.QuadPart = -(10*us); // Convert to 100 nanosecond interval, negative value indicates relative time
 
-    timer = CreateWaitableTimer(NULL, TRUE, NULL); 
-    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0); 
-    WaitForSingleObject(timer, INFINITE); 
+    // timer = CreateWaitableTimer(NULL, TRUE, NULL); 
+    // SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0); 
+    // WaitForSingleObject(timer, INFINITE); 
 
-    CloseHandle(timer);
+    // CloseHandle(timer);
 
     // b)
     // usleep(us);
 
     // c)
     // std::this_thread::sleep_for(std::chrono::microseconds(us));
+
+    // d) combination of Sleep and busy-looping
+    if (us > 1000000)
+    {
+        // At least one second. Millisecond resolution is sufficient.
+        Sleep(us / 1000);
+    }
+    else
+    {
+        // Use Sleep for the largest part, and busy-loop for the rest
+        static double frequency;
+        if (frequency == 0)
+        {
+            LARGE_INTEGER freq;
+            if (!QueryPerformanceFrequency (&freq))
+            {
+                Debug_println("QueryPerformanceCounter failed");
+                // Cannot use QueryPerformanceCounter.
+                Sleep (us / 1000);
+                return;
+            }
+            frequency = (double) freq.QuadPart / 1000000000.0;
+        }
+        long long expected_counter_difference = 1000 * us * frequency;
+        int sleep_part = (int) us / 1000 - 10;
+        LARGE_INTEGER before;
+        QueryPerformanceCounter (&before);
+        long long expected_counter = before.QuadPart + expected_counter_difference;
+        if (sleep_part > 0)
+            Sleep(sleep_part);
+        for (;;)
+        {
+            LARGE_INTEGER after;
+            QueryPerformanceCounter (&after);
+            if (after.QuadPart >= expected_counter)
+                break;
+        }
+    }
+}
 #else
+void SystemManager::delay_microseconds(uint32_t us)
+{
     // a)
     // struct timespec ts;
     // ts.tv_sec = us / (1000 * 1000);
@@ -281,8 +322,8 @@ void SystemManager::delay_microseconds(uint32_t us)
 
     // c)
     // std::this_thread::sleep_for(std::chrono::microseconds(us));
-#endif
 }
+#endif
 
 // from esp32-hal-misc.
 void SystemManager::yield()
@@ -305,7 +346,6 @@ void SystemManager::reboot(uint32_t delay_ms, bool reboot)
     {
         // do cleanup and exit
         Debug_println("SystemManager::reboot - exiting ...");
-        SYSTEM_BUS.shutdown();
         // FN will be restarted if ended with EXIT_AND_RESTART (75)
         exit(_reboot_code);
     }
