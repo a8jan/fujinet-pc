@@ -36,6 +36,8 @@
 
 // sioFuji theFuji; // moved to fuji.h/.cpp
 
+volatile sig_atomic_t fn_running = 0;
+
 void main_shutdown_handler()
 {
     Debug_println("Shutdown handler called");
@@ -46,9 +48,7 @@ void main_shutdown_handler()
 
 void sighandler(int signum)
 {
-    Debug_print("\n");
-    Debug_printf("Signal received (%d)\n", signum);
-    exit(0);
+    fn_running = 0;
 }
 
 void print_version()
@@ -271,6 +271,8 @@ void main_setup(int argc, char *argv[])
 
 #endif /* BUILD_APPLE */
 
+    fn_running = 1;
+
 #ifdef DEBUG
     unsigned long endms = fnSystem.millis();
     Debug_printf("Available heap: %u\n", fnSystem.get_free_heap_size());
@@ -288,7 +290,7 @@ void main_setup(int argc, char *argv[])
 // Main high-priority service loop
 void fn_service_loop(void *param)
 {
-    while (true)
+    while (fn_running)
     {
         // We don't have any delays in this loop, so IDLE threads will be starved
         // Shouldn't be a problem, but something to keep in mind...
@@ -311,8 +313,8 @@ void fn_service_loop(void *param)
             // web server is tested by script in restart.html to check if the program is running again
             fnHTTPD.stop();
             // exit the program with special exit code (75)
-            // to indicate the program should be started again
-            fnSystem.reboot();
+            // indicate to the controlling script (run-fujinet) that this program (fujinet) should be started again
+            fnSystem.reboot(); // calls exit(75)
         }
     }
 }
@@ -367,4 +369,5 @@ int main(int argc, char *argv[])
     main_setup(argc, argv);
     // Enter service loop
     fn_service_loop(nullptr);
+    return EXIT_SUCCESS;
 }

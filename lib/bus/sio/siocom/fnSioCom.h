@@ -4,8 +4,8 @@
 #include <string.h>
 
 #include "sioport.h"
-#include "serialsio.h"
 #include "netsio.h"
+#include "serialsio.h"
 
 /*
  * SIO Communication class

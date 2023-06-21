@@ -216,8 +216,16 @@ void systemBus::_sio_process_cmd()
     // Wait for CMD line to raise again
     // while (fnSystem.digital_read(PIN_CMD) == DIGI_LOW)
     //     fnSystem.yield();
+    int i = 0;
     while (fnSioCom.command_asserted())
+    {
         fnSystem.delay_microseconds(500);
+        if (++i == 100)
+        {
+            Debug_println("Timeout waiting for CMD pin de-assert");
+            return;
+        }
+    }
 
     int bytes_pending = fnSioCom.available();
     if (bytes_pending > 0)
@@ -333,7 +341,6 @@ void systemBus::_sio_process_queue()
  */
 void systemBus::service()
 {
-    bool idle = true;
     do
     {
 
@@ -401,15 +408,15 @@ void systemBus::service()
         Debug_print("\n");
 
         _sio_process_cmd();
-        idle = false;
 
         unsigned long endms = fnSystem.millis();
-        Debug_printf("SIO CMD processed in %lu ms\n", (long unsigned)endms-startms);
+        if (_command_processed)
+            Debug_printf("SIO CMD processed in %lu ms\n", (long unsigned)endms-startms);
     }
     // Go check if the modem needs to read data if it's active
     else if (_modemDev != nullptr && _modemDev->modemActive)
     {
-        idle = (_modemDev->sio_handle_modem() <= 0);
+        _modemDev->sio_handle_modem();
     }
     else
     // Neither CMD nor active modem, so throw out any stray input data
@@ -430,9 +437,6 @@ void systemBus::service()
     //   true  = SIO port needs handling
     //   false = no SIO "event" ocurred within interval
     } while (fnSioCom.poll(1));
-    // if (idle)
-    //     // fnSystem.yield();
-    //     fnSystem.delay_microseconds(500);
 }
 
 // Setup SIO bus
