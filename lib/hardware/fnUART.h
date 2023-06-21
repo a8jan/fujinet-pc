@@ -3,7 +3,9 @@
 #ifndef FNUART_H
 #define FNUART_H
 
-// #include <driver/uart.h>
+#if defined (_WIN32)
+#include <windows.h>
+#endif
 
 #include <string>
 
@@ -16,9 +18,17 @@ private:
     uint32_t _baud;
     int _command_pin;
     int _proceed_pin;
+
+#if defined (_WIN32)
+    int _command_status;
+    int _proceed_set;
+    int _proceed_clear;
+    HANDLE _fd;
+#else
     int _command_tiocm;
     int _proceed_tiocm;
     int _fd;
+#endif
     // QueueHandle_t _uart_q;
     bool _initialized; // is UART ready?
 
