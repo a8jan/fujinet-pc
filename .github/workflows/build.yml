@@ -88,6 +88,12 @@ jobs:
           - name: Windows
             target: windows-x64
             runner: windows-latest
+            sys: clang64
+            default-shell: msys2 {0}
+          - name: Windows x86
+            target: windows-x86
+            runner: windows-latest
+            sys: mingw32
             default-shell: msys2 {0}
     # continue-on-error: true
     name: Build ${{ matrix.name }}
@@ -105,7 +111,7 @@ jobs:
       if: ${{ startsWith(matrix.target, 'windows') }}
       uses: msys2/setup-msys2@v2
       with:
-        msystem: CLANG64
+        msystem: ${{matrix.sys}}
         update: true
         install: >-
           git
@@ -115,7 +121,7 @@ jobs:
           cmake:p
           ninja:p
 
-    # Install OpenSSL on macOS
+    # Not needed - Install OpenSSL on macOS
     #- name: '[macOS] Install OpenSSL'
     #  if: ${{ startsWith(matrix.target, 'macos') }}
     #  run: |
@@ -145,11 +151,19 @@ jobs:
     # Windows runner is pre-installed with some openssl
     # dist target skippes libssl and libcrypto in /c/Windows/SYSTEM32/
     # add missing libs now
-    - name: '[Windows] Update dist with OpenSSL from CLANG64'
+    - name: "[Windows] Update dist with OpenSSL"
       if: ${{ startsWith(matrix.target, 'windows') }}
       run: |
-        cp -pv /clang64/bin/libssl-*-x64.dll build/dist
-        cp -pv /clang64/bin/libcrypto-*-x64.dll build/dist
+        cp -pv /${{ matrix.sys }}/bin/libssl-*.dll build/dist
+        cp -pv /${{ matrix.sys }}/bin/libcrypto-*.dll build/dist
+
+    - name: "[Windows x86] Update dist with missing DLLs"
+      if: ${{ startsWith(matrix.target, 'windows-x86') }}
+      run: |
+        for L in libstdc++ libgcc_s_dw2 libexpat libwinpthread
+        do
+          cp -pv /${{ matrix.sys }}/bin/${L}-*.dll build/dist
+        done
 
     - name: List dist
       working-directory: build/dist
