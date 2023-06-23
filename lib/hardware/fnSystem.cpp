@@ -403,13 +403,15 @@ const char *SystemManager::get_current_time_str()
     time_t tt = time(nullptr);
     struct tm *tinfo = localtime(&tt);
 
+#if !defined(_WIN32) || defined(_UCRT)
     // compatibility notice:
     // this works on Windows only if linked using newer UCRT lib (Universal C runtime, Windows 10+)
     strftime(_currenttime_string, sizeof(_currenttime_string), "%a %b %e, %H:%M:%S %Y %z", tinfo);
+#else
     // this should work on Windows if linked using old MSCRT lib
     // (%#d instead of %e, no timezone)
-    // strftime(_currenttime_string, sizeof(_currenttime_string), "%a %b %#d, %H:%M:%S %Y", tinfo);
-
+    strftime(_currenttime_string, sizeof(_currenttime_string), "%a %b %#d, %H:%M:%S %Y", tinfo);
+#endif
     return _currenttime_string;
 }
 
