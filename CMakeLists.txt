@@ -1,5 +1,6 @@
 # fujinet-pc
-cmake_minimum_required(VERSION 3.7.2...3.22)
+#cmake_minimum_required(VERSION 3.7.2...3.22)
+cmake_minimum_required(VERSION 3.4...3.22)
 project(fujinet-pc)
 
 # C++ standard
@@ -167,8 +168,9 @@ set(CJSON_OVERRIDE_BUILD_SHARED_LIBS ON CACHE BOOL "Override BUILD_SHARED_LIBS w
 set(CJSON_BUILD_SHARED_LIBS OFF CACHE BOOL "Overrides BUILD_SHARED_LIBS if CJSON_OVERRIDE_BUILD_SHARED_LIBS is enabled")
 add_subdirectory(components/cJSON)
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    add_link_options("-fstack-protector")
-    target_link_libraries(fujinet ssp) # it seems above linker option is not enough
+    #add_link_options("-fstack-protector") # requires newer cmake
+    set(CMAKE_EXE_LINKER_FLAGS "-fstack-protector") # works with old cmake
+    #target_link_libraries(fujinet ssp) # it seems above linker option is not enough
 endif()
 
 # Libsmb2

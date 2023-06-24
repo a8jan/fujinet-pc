@@ -3,6 +3,7 @@
 // precise gettimeofday on Windows
 #if defined(_WIN32)
 
+
 // a) use GetSystemTimePreciseAsFileTime
 #include <windows.h>
 int compat_gettimeofday(struct timeval *tv, struct timezone* tz)
@@ -12,8 +13,11 @@ int compat_gettimeofday(struct timeval *tv, struct timezone* tz)
 
     if (tv != NULL)
     {
-        // GetSystemTimeAsFileTime(&ft); // low precision (16ms)
+#if !defined(_UCRT)
+        GetSystemTimeAsFileTime(&ft); // low precision (16ms)
+#else
         GetSystemTimePreciseAsFileTime(&ft); // high precision (1<ms)
+#endif
         tmpres |= ft.dwHighDateTime;
         tmpres <<= 32;
         tmpres |= ft.dwLowDateTime;
@@ -25,6 +29,7 @@ int compat_gettimeofday(struct timeval *tv, struct timezone* tz)
     (void) tz;
     return 0;
 }
+
 
 // // b) use C++ chrono (portable, slower) (rename file to .cpp)
 // #include <chrono>
@@ -43,10 +48,13 @@ int compat_gettimeofday(struct timeval *tv, struct timezone* tz)
 // }
 
 #else
+// Linux and macOS
+
 int compat_gettimeofday(struct timeval* tp, struct timezone* tzp)
 {
     return gettimeofday(tp, tzp);
 }
+
 #endif
 
 

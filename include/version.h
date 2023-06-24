@@ -10,10 +10,10 @@
 #define FN_VERSION_MAJOR "2306"
 #define FN_VERSION_MINOR "0"
 
-#define FN_VERSION_BUILD "dda1dd98"
+#define FN_VERSION_BUILD "db02b6bb"
 
-#define FN_VERSION_DATE "2023-06-21 22:36:26"
+#define FN_VERSION_DATE "2023-06-23 16:54:19"
 
-#define FN_VERSION_FULL "2306.0.dda1dd98"
+#define FN_VERSION_FULL "2306.0.db02b6bb"
 
 

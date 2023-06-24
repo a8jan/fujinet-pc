@@ -36,7 +36,9 @@
 #ifdef ESP_PLATFORM
 #include <sys/poll.h>
 #else
+#if (_WIN32_WINNT >= 0x0600)
 #include <poll.h>
+#endif
 #endif
 #endif
 
@@ -54,6 +56,62 @@
 #include "libsmb2.h"
 #include "libsmb2-raw.h"
 #include "libsmb2-private.h"
+
+/* Help! How to get compat.c compiled and linked? */
+#ifdef NEED_POLL
+int poll(struct pollfd *fds, unsigned int nfds, int timo)
+{
+        struct timeval timeout, *toptr;
+        fd_set ifds, ofds, efds, *ip, *op;
+        unsigned int i, maxfd = 0;
+        int  rc;
+
+        FD_ZERO(&ifds);
+        FD_ZERO(&ofds);
+        FD_ZERO(&efds);
+        for (i = 0, op = ip = 0; i < nfds; ++i) {
+                fds[i].revents = 0;
+                if(fds[i].events & (POLLIN|POLLPRI)) {
+                        ip = &ifds;
+                        FD_SET(fds[i].fd, ip);
+                }
+                if(fds[i].events & POLLOUT)  {
+                        op = &ofds;
+                        FD_SET(fds[i].fd, op);
+                }
+                FD_SET(fds[i].fd, &efds);
+                if (fds[i].fd > maxfd) {
+                        maxfd = fds[i].fd;
+                }
+        } 
+
+        if(timo < 0) {
+                toptr = 0;
+        } else {
+                toptr = &timeout;
+                timeout.tv_sec = timo / 1000;
+                timeout.tv_usec = (timo - timeout.tv_sec * 1000) * 1000;
+        }
+
+        rc = select(maxfd + 1, ip, op, &efds, toptr);
+
+        if(rc <= 0)
+                return rc;
+
+        if(rc > 0)  {
+                for (i = 0; i < nfds; ++i) {
+                        int fd = fds[i].fd;
+                        if(fds[i].events & (POLLIN|POLLPRI) && FD_ISSET(fd, &ifds))
+                                fds[i].revents |= POLLIN;
+                        if(fds[i].events & POLLOUT && FD_ISSET(fd, &ofds))
+                                fds[i].revents |= POLLOUT;
+                        if(FD_ISSET(fd, &efds))
+                                fds[i].revents |= POLLHUP;
+                }
+        }
+        return rc;
+}
+#endif
 
 struct sync_cb_data {
 	int is_finished;

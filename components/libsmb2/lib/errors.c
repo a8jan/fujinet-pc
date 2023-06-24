@@ -22,6 +22,19 @@
 
 #include <errno.h>
 
+/* old MinGW - some missing error codes */
+#if defined (__MINGW32__)
+#ifndef ENODATA
+#define ENODATA 61
+#endif
+#ifndef ENOLINK
+#define ENOLINK 67
+#endif
+#ifndef ETXTBSY
+#define ETXTBSY 26
+#endif
+#endif // __MINGW32__
+
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif

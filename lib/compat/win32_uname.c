@@ -24,12 +24,12 @@ int uname(struct utsname *name)
 	sprintf(name->version, "%lu.%lu", versionInfo.dwMajorVersion, versionInfo.dwMinorVersion);
 
 	// Set hostname
-	if (gethostname(name->nodename, UTSNAME_MAXLENGTH) != 0) {
+	if (gethostname(name->nodename, UTSNAME_MAXLENGTH) != 0) 
 		return WSAGetLastError();
-	}
 
 	// Set processor architecture
-	switch (sysInfo.wProcessorArchitecture) {
+	switch (sysInfo.wProcessorArchitecture) 
+	{
 	case PROCESSOR_ARCHITECTURE_AMD64:
 		strcpy(name->machine, "x86_64");
 		break;
@@ -42,9 +42,11 @@ int uname(struct utsname *name)
 	case PROCESSOR_ARCHITECTURE_ARM:
 		strcpy(name->machine, "arm");
 		break;
+#ifdef PROCESSOR_ARCHITECTURE_ARM64
 	case PROCESSOR_ARCHITECTURE_ARM64:
 		strcpy(name->machine, "arm64");
 		break;
+#endif
 	case PROCESSOR_ARCHITECTURE_UNKNOWN:
 	default:
 		strcpy(name->machine, "unknown");

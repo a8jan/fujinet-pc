@@ -408,7 +408,7 @@ const char *SystemManager::get_current_time_str()
     // this works on Windows only if linked using newer UCRT lib (Universal C runtime, Windows 10+)
     strftime(_currenttime_string, sizeof(_currenttime_string), "%a %b %e, %H:%M:%S %Y %z", tinfo);
 #else
-    // this should work on Windows if linked using old MSCRT lib
+    // this should work on Windows if linked using old MSVCRT lib
     // (%#d instead of %e, no timezone)
     strftime(_currenttime_string, sizeof(_currenttime_string), "%a %b %#d, %H:%M:%S %Y", tinfo);
 #endif

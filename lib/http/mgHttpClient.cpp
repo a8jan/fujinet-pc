@@ -1,11 +1,12 @@
 // TODO: Figure out why time-outs against bad addresses seem to take about 18s no matter
 // what we set the timeout value to.
 
+// workaround to avoid compile error, TODO fix include order
+#include "mongoose.h"
 #include <cstdlib>
 #include <string.h>
 #include <map>
 
-#include "mongoose.h"
 #include "../../include/debug.h"
 #include "mgHttpClient.h"
 #include "fnSystem.h"

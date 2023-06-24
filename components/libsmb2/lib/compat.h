@@ -19,6 +19,28 @@
 #ifndef _COMPAT_H_
 #define _COMPAT_H_
 
+/* old MinGW - missing poll */
+#if (_WIN32_WINNT < 0x0600)
+
+#define NEED_POLL
+
+#define POLLIN      0x0001    /* There is data to read */
+#define POLLPRI     0x0002    /* There is urgent data to read */
+#define POLLOUT     0x0004    /* Writing now will not block */
+#define POLLERR     0x0008    /* Error condition */
+#define POLLHUP     0x0010    /* Hung up */
+
+struct pollfd {
+        int fd;
+        short events;
+        short revents;
+};
+
+int poll(struct pollfd *fds, unsigned int nfds, int timo);
+
+#endif /* MinGW */
+
+
 #ifdef PS2_EE_PLATFORM
 
 #include <errno.h>

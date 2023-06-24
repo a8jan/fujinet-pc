@@ -18,7 +18,12 @@
 #ifndef ESTALE
 #define ESTALE 116
 #endif
-
+#ifndef ENOSTR
+#define ENOSTR 60
+#endif
+#ifndef ENODATA
+#define ENODATA 61
+#endif
 
 bool _tnfs_transaction(tnfsMountInfo *m_info, tnfsPacket &pkt, uint16_t datalen);
 uint8_t _tnfs_session_recovery(tnfsMountInfo *m_info, uint8_t command);
