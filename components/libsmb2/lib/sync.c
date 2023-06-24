@@ -32,13 +32,12 @@
 #endif
 
 #include <errno.h>
+
 #if defined(HAVE_POLL_H) || defined(_WIN32)
 #ifdef ESP_PLATFORM
 #include <sys/poll.h>
-#else
-#if (_WIN32_WINNT >= 0x0600)
+#elif defined(HAVE_POLL_H) || (_WIN32_WINNT >= 0x0600)
 #include <poll.h>
-#endif
 #endif
 #endif
 

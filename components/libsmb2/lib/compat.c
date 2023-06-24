@@ -19,7 +19,7 @@
 #include "compat.h"
 
 /* old MinGW - missing poll */
-#if (_WIN32_WINNT < 0x0600)
+#if defined (_WIN32_WINNT) && (_WIN32_WINNT < 0x0600)
 #define NEED_POLL
 #endif /* MinGW */
 
