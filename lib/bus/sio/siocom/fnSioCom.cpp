@@ -1,5 +1,6 @@
 #include "fnSioCom.h"
 
+#include "debug.h"
 /*
  * SIO Communication class
  * (replacement for UARTManager fnUartSIO)
@@ -188,6 +189,7 @@ size_t SioCom::print(unsigned long n, int base)
 // specific to SerialSioPort
 void SioCom::set_serial_port(const char *device, int command_pin, int proceed_pin)
 {
+    Debug_printf("SioCom::set_serial_port %s, %d, %d", device ? device : "NULL", command_pin, proceed_pin);
     _serialSio.set_port(device, command_pin, proceed_pin);
 };
 

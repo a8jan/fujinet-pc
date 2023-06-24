@@ -98,8 +98,7 @@ void UARTManager::set_port(const char *device, int command_pin, int proceed_pin)
 {
     if (device != nullptr)
         strlcpy(_device, device, sizeof(_device));
-    else
-        _device[0] = 0;
+
     _command_pin = command_pin;
     _proceed_pin = proceed_pin;
 
@@ -487,8 +486,7 @@ void UARTManager::set_port(const char *device, int command_pin, int proceed_pin)
 {
     if (device != nullptr)
         strlcpy(_device, device, sizeof(_device));
-    else
-        _device[0] = 0;
+
     _command_pin = command_pin;
     _proceed_pin = proceed_pin;
 

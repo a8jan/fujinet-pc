@@ -378,7 +378,6 @@ void fnHttpServiceConfigurator::config_printer(std::string printernumber, std::s
         SIO.changeDeviceId(fnPrinters.get_ptr(0), SIO_DEVICEID_PRINTER + port);
 #endif
     }
-    fnSioCom.reset_sio_port(Config.get_netsio_enabled() ? SioCom::sio_mode::NETSIO : SioCom::sio_mode::SERIAL);
 
     // Save change
     Config.save();
@@ -398,11 +397,17 @@ void fnHttpServiceConfigurator::config_serial(std::string port, std::string comm
     if (!port.empty())
     {
         Config.store_serial_port(port.c_str());
+
         if (fnSioCom.get_sio_mode() == SioCom::sio_mode::SERIAL)
         {
-            // re-set serial port
             fnSioCom.end();
-            fnSioCom.set_serial_port(Config.get_serial_port().c_str(), command_pin, proceed_pin);
+        }
+
+        // re-set serial port
+        fnSioCom.set_serial_port(Config.get_serial_port().c_str(), command_pin, proceed_pin);
+    
+        if (fnSioCom.get_sio_mode() == SioCom::sio_mode::SERIAL)
+        {
             fnSioCom.begin();
         }
     }
