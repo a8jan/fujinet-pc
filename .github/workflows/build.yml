@@ -93,7 +93,7 @@ jobs:
           - name: Windows x86
             target: windows-x86
             runner: windows-latest
-            sys: mingw32
+            sys: clang32
             default-shell: msys2 {0}
     # continue-on-error: true
     name: Build ${{ matrix.name }}
@@ -160,9 +160,9 @@ jobs:
     - name: "[Windows x86] Update dist with missing DLLs"
       if: ${{ startsWith(matrix.target, 'windows-x86') }}
       run: |
-        for L in libstdc++ libgcc_s_dw2 libexpat libwinpthread
+        for L in libc++ libexpat- libwinpthread-
         do
-          cp -pv /${{ matrix.sys }}/bin/${L}-*.dll build/dist
+          cp -pv /${{ matrix.sys }}/bin/${L}*.dll build/dist
         done
 
     - name: List dist

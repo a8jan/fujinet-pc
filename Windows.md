@@ -8,7 +8,7 @@ Alternatively, on Windows it is possible to install WSL to get Ubuntu inside Win
 
 To install and setup MSYS2 follow the instructions on https://www.msys2.org/ ,no need to install `mingw-w64-x86_64-toolchain`.
 
-For FujiNet-PC we need environment which uses UCRT runtime library (not old MSVCRT). Both `UCRT64` and `CLANG64` should work, `CLANG32` was not tested yet. More about MSYS2 environments [here](https://www.msys2.org/docs/environments/).
+For FujiNet-PC we need environment which uses UCRT runtime library (not old MSVCRT). `CLANG64` and `CLANG32` should work. If GNU is preferred, build with `MINGW64` or `MINGW32`. More about MSYS2 environments [here](https://www.msys2.org/docs/environments/) and about packages names [here](https://www.msys2.org/docs/package-naming/).
 
 
 ### Build tools
@@ -19,9 +19,9 @@ Start **MSYS2 MSYS** (window with `MSYS` in shell prompt) and install packages t
 # install base-devel, if not yet installed
 pacman -S --needed base-devel
 
-# install CLANG64 toolchain
+# install CLANG64 toolchain (or other toolchain depending on you build env.)
 pacman -S --needed mingw-w64-clang-x86_64-toolchain
 
-# install git, CLANG64 CMake and Ninja build system
+# install git, CLANG64 CMake and Ninja build system (again, adjust package names to you build env.)
 pacman -S git mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-ninja
 ```
