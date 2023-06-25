@@ -33,7 +33,6 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 - SAM voice synthesizer
 - MIDIMaze support
 - Program recorder (tape) emulation
-- UART on Windows (to connect with real Atari via SIO port)
 
 -------------------------------------------------------------------
 
