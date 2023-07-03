@@ -75,9 +75,17 @@ brew --prefix openssl
 Get the prefix for openssl in your system and set this in the env:
 
 ```
-export OPENSSL_ROOT_DIR=/opt/homebrew/opt/openssl@3
+export OPENSSL_ROOT_DIR=/opt/homebrew/opt/openssl
 ```
 Note: your path might be different- use the output from brew --prefix openssl!
+
+If there are issues make sure to clear the cmake cache so that the new path is picked up. Also you can use the full path on the cmake prep command (below) to specify the paths:
+```
+rm CMakeCache.txt 
+cmake .. -DOPENSSL_ROOT_DIR=/opt/homebrew/opt/openssl -DOPENSSL_LIBRARIES=/opt/homebrew/opt/openssl/lib -DCMAKE_BUILD_TYPE:STRING=Debug
+```
+With the cache cleared and the paths fully specified cmake should have no issues finding the openssl headers and libs on macOS.
+
 
 
 ### Build
