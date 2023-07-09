@@ -10,19 +10,25 @@
  
 #include <cstdio>
 #include <cstring>
-#include <cstdlib>
+#include <stdlib.h>
 #include <ctime>
 #include <ctype.h>
-#include <dirent.h>
 #include <unistd.h>
 #include <cerrno>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <utime.h>
 
+#include "compat_dirent.h"
+
 #include "pclink.h"
 
 #include "../../include/debug.h"
+
+#if defined(_WIN32)
+#include <direct.h>
+#define mkdir(A, B) _mkdir(A)
+#endif
 
 # ifndef uchar
 #  define uchar unsigned char
@@ -1041,7 +1047,7 @@ do_pclink(uchar devno, uchar ccom, uchar caux1, uchar caux2)
 
 		mem = (uchar*)malloc(blk_size + 1);
 
-		if ((device[cunit].status.err == 1))
+		if (device[cunit].status.err == 1)
 		{
 			iodesc[handle].fpread = blk_size;
 

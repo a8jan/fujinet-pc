@@ -392,6 +392,7 @@ struct timeval {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
+#include "compat_dirent.h"
 
 #if defined(_MSC_VER) && _MSC_VER < 1700
 #define __func__ ""

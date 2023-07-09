@@ -558,7 +558,9 @@ static int posix_stat(const char *path, size_t *size, time_t *mtime) {
   return MG_FS_READ | MG_FS_WRITE | (S_ISDIR(st.st_mode) ? MG_FS_DIR : 0);
 }
 
-#ifdef _WIN32
+// fujinet-pc has compat_dirent.h and win32_dirent.h
+// #ifdef _WIN32
+#if 0
 struct dirent {
   char d_name[MAX_PATH];
 };
@@ -665,7 +667,7 @@ struct dirent *readdir(DIR *d) {
   }
   return result;
 }
-#endif
+#endif /* _WIN32 */
 
 static void posix_list(const char *dir, void (*fn)(const char *, void *),
                        void *userdata) {
