@@ -184,7 +184,7 @@ unix_time_2_sdx(time_t *todp, uchar *ob)
 	struct tm *t;
 	uchar yy;
 
-	bzero(ob, 6);
+	memset(ob, 0, 6);
 
 	if (*todp == 0)
 		return;
@@ -515,7 +515,7 @@ fps_close(int i)
 	iodesc[i].fpread = 0;
 	iodesc[i].eof = 0;
 	iodesc[i].pathname[0] = 0;
-	bzero(&iodesc[i].fpstat, sizeof(struct stat));
+	memset(&iodesc[i].fpstat, 0, sizeof(struct stat));
 }
 
 static ulong
@@ -565,7 +565,7 @@ cache_dir(uchar handle)
 	}
 
 	dir = dbuf = (DIRENTRY*)malloc(dirlen + sizeof(DIRENTRY));
-	bzero(dbuf, dirlen + sizeof(DIRENTRY));
+	memset(dbuf, 0, dirlen + sizeof(DIRENTRY));
 
 	dir->status = 0x28;
 	dir->map_l = 0x00;			/* low 11 bits: file number, high 5 bits: dir number */
@@ -687,7 +687,7 @@ do_pclink_init(int server_cold_start)
 		if (server_cold_start)
 			iodesc[handle].fps.file = NULL;
 		fps_close(handle);
-		bzero(&device[6][handle].parbuf, sizeof(PARBUF));
+		memset(&device[6][handle].parbuf, 0, sizeof(PARBUF));
 	}
 
 	if (server_cold_start)
@@ -838,7 +838,7 @@ timestamp2mtime(uchar *stamp)
 {
 	struct tm sdx_tm;
 
-	bzero(&sdx_tm, sizeof(struct tm));
+	memset(&sdx_tm, 0, sizeof(struct tm));
 
 	sdx_tm.tm_sec = stamp[5];
 	sdx_tm.tm_min = stamp[4];
@@ -897,7 +897,7 @@ do_pclink(uchar devno, uchar ccom, uchar caux1, uchar caux2)
 
 		pclink_ack(devno, cunit, 'a');	/* ack the command (late_ack) */ 
 
-		bzero(&pbuf, sizeof(PARBUF));
+		memset(&pbuf, 0, sizeof(PARBUF));
 
 		com_read((uchar *)&pbuf, (int)parsize, COM_DATA);
 		com_read(&sck, 1, COM_DATA);
@@ -1314,7 +1314,7 @@ do_pclink(uchar devno, uchar ccom, uchar caux1, uchar caux2)
 
 		pclink_ack(devno, cunit, 'A');	/* ack the command */
 
-		bzero(pcl_dbf.dirbuf, sizeof(pcl_dbf.dirbuf));
+		memset(pcl_dbf.dirbuf, 0, sizeof(pcl_dbf.dirbuf));
 
 		if ((handle > 15) || (iodesc[handle].fps.file == NULL))
 		{
@@ -1331,8 +1331,8 @@ do_pclink(uchar devno, uchar ccom, uchar caux1, uchar caux2)
 			{
 				struct stat ts;
 
-				bzero(&ts, sizeof(ts));
-				bzero(pcl_dbf.dirbuf, sizeof(pcl_dbf.dirbuf));
+				memset(&ts, 0, sizeof(ts));
+				memset(pcl_dbf.dirbuf, 0, sizeof(pcl_dbf.dirbuf));
 				iodesc[handle].fppos += dir_read(pcl_dbf.dirbuf, sizeof(pcl_dbf.dirbuf), handle, &eof_flg);
 
 				if (!eof_flg)
@@ -1490,7 +1490,7 @@ do_pclink(uchar devno, uchar ccom, uchar caux1, uchar caux2)
 
 			pclink_ack(devno, cunit, 'A');	/* ack the command */
 
-			bzero(raw_name, sizeof(raw_name));
+			memset(raw_name, 0, sizeof(raw_name));
 			memcpy(raw_name, device[devno][cunit].parbuf.name, 8+3);
 
 			if (((device[devno][cunit].parbuf.fmode & 0x0c) == 0) || \
@@ -1604,7 +1604,7 @@ do_pclink(uchar devno, uchar ccom, uchar caux1, uchar caux2)
 						strcat(newpath, name83);
 						ugefina(name83, raw_name);
 
-						bzero(&sb, sizeof(struct stat));
+						memset(&sb, 0, sizeof(struct stat));
 						sb.st_mode = S_IFREG|S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP;
 
 						sb.st_mtime = timestamp2mtime(&device[devno][cunit].parbuf.f1);
@@ -1709,7 +1709,7 @@ do_pclink(uchar devno, uchar ccom, uchar caux1, uchar caux2)
 			if ((iodesc[handle].fpmode & 0x1d) == 0x09)
 				iodesc[handle].fppos = iodesc[handle].fpstat.st_size;
 
-			bzero(pcl_dbf.dirbuf, sizeof(pcl_dbf.dirbuf));
+			memset(pcl_dbf.dirbuf, 0, sizeof(pcl_dbf.dirbuf));
 
 			if ((handle > 15) || (iodesc[handle].fps.file == NULL))
 			{
@@ -1729,7 +1729,7 @@ do_pclink(uchar devno, uchar ccom, uchar caux1, uchar caux2)
 
 				Debug_printf("FOPEN: %s handle %d\n", (iodesc[handle].fpmode & 0x08) ? "write" : "read", handle);
 
-				bzero(pcl_dbf.dirbuf, sizeof(pcl_dbf.dirbuf));
+				memset(pcl_dbf.dirbuf, 0, sizeof(pcl_dbf.dirbuf));
 
 				if (iodesc[handle].fpmode & 0x10)
 				{
