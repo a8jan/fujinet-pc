@@ -1417,18 +1417,15 @@ do_pclink(uchar devno, uchar ccom, uchar caux1, uchar caux2)
 
 		if (mtime && (fpmode & 0x08))
 		{
-			struct timeval tv[2];
-
-			tv[0].tv_usec = 0;
-			tv[0].tv_sec = mtime;
-			tv[1].tv_usec = 0;
-			tv[1].tv_sec = mtime;
+            utimbuf ub;
+            ub.actime = mtime;
+            ub.modtime = mtime;
 
 # if 0
 			Debug_printf("FCLOSE: setting timestamp in '%s'\n", pathname);
 # endif
 
-			(void)utimes(pathname, tv);
+            utime(pathname,&ub);
 		}
 		goto complete;
 	}
@@ -2108,23 +2105,20 @@ complete_fopen:
 		}
 		else
 		{
-			struct timeval tv[2];
 			time_t mtime = timestamp2mtime(dt);
 
 			device[cunit].status.err = 1;
 
 			if (mtime)
 			{
-				tv[0].tv_usec = 0;
-				tv[0].tv_sec = mtime;
-				tv[1].tv_usec = 0;
-				tv[1].tv_sec = mtime;
+                utimbuf ub;
+                ub.actime = mtime;
+                ub.modtime = mtime;
 
 # if 0
 				Debug_printf("MKDIR: setting timestamp in '%s'\n", newpath);
 # endif
 
-				(void)utimes(newpath, tv);
 			}
 		}
 		goto complete;
