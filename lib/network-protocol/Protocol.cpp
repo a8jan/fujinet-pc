@@ -185,16 +185,16 @@ unsigned short NetworkProtocol::translate_transmit_buffer()
     switch (translation_mode)
     {
     case TRANSLATION_MODE_CR:
-        replace(transmitBuffer->begin(), transmitBuffer->end(), ATASCII_EOL, ASCII_CR);
+        util_replaceAll(*transmitBuffer, "\x9B", "\x0D");
         break;
     case TRANSLATION_MODE_LF:
-        replace(transmitBuffer->begin(), transmitBuffer->end(), ATASCII_EOL, ASCII_LF);
+        util_replaceAll(*transmitBuffer, "\x9B", "\x0A");
         break;
     case TRANSLATION_MODE_CRLF:
-        util_replaceAll(*transmitBuffer, "\x9b", "\x0d\x0a");
+        util_replaceAll(*transmitBuffer, "\x9B", "\x0D\x0A");
         break;
     }
-
+    
     return transmitBuffer->length();
 }
 
