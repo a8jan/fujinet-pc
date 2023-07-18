@@ -273,7 +273,11 @@ bool FNJSON::parse()
         return false;
     }
 
-    Debug_printf("Parsed JSON: %s\n", cJSON_Print(_json));
+    char* debugOutput = cJSON_Print(_json);
+    if (debugOutput != nullptr) {
+        Debug_printf("Parsed JSON: %s\n", debugOutput);
+        cJSON_free(debugOutput); 
+    }
 
     return true;
 }
