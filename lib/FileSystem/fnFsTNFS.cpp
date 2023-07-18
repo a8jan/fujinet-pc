@@ -14,6 +14,8 @@
 
 // #include "fnFsTNFSvfs.h"
 
+FileSystemTNFS fnTNFS;
+
 FileSystemTNFS::FileSystemTNFS()
 {
     // TODO: Maybe allocate space for our TNFS packet so it doesn't have to get put on the stack?

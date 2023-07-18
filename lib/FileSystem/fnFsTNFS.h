@@ -37,4 +37,6 @@ public:
     bool dir_seek(uint16_t) override;
 };
 
+extern FileSystemTNFS fnTNFS;
+
 #endif // _FN_FSTNFS_

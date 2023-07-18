@@ -15,6 +15,7 @@
 #include "fnSystem.h"
 #include "fnConfig.h"
 #include "fnFsSPIFFS.h"
+#include "fnFsTNFS.h"
 #include "fnDummyWiFi.h"
 
 #include "led.h"
@@ -1470,33 +1471,45 @@ void sioFuji::insert_boot_device(uint8_t d)
 {
     const char *config_atr = "/autorun.atr";
     const char *mount_all_atr = "/mount-and-boot.atr";
+    const char *lobby_tnfs = "tnfs.fujinet.online";
+    const char *lobby_xex = "/ATARI/_lobby.xex";
+    const char *boot_img;
 
-    const char *boot_atr;
-    FileHandler *fBoot;
+    FileHandler *fBoot = nullptr;
 
     _bootDisk.unmount();
 
     switch (d)
     {
     case 0:
-        boot_atr = config_atr;
+        boot_img = config_atr;
+        fBoot = fnSPIFFS.filehandler_open(boot_img);
         break;
     case 1:
-        boot_atr = mount_all_atr;
+        boot_img = mount_all_atr;
+        fBoot = fnSPIFFS.filehandler_open(boot_img);
+        break;
+    case 2:
+        Debug_printf("Mounting lobby server\n");
+        if (fnTNFS.start(lobby_tnfs))
+        {
+            Debug_printf("opening lobby.\n");
+            boot_img = lobby_xex;
+            fBoot = fnTNFS.filehandler_open(boot_img);
+        }
         break;
     default:
         Debug_printf("Invalid boot mode: %d\n", d);
         return;
     }
 
-    fBoot = fnSPIFFS.filehandler_open(boot_atr);
     if (fBoot == nullptr)
     {
-        Debug_printf("Failed to open boot disk image: %s\n", boot_atr);
+        Debug_printf("Failed to open boot disk image: %s\n", boot_img);
         return;
     }
 
-    _bootDisk.mount(fBoot, boot_atr, 0);
+    _bootDisk.mount(fBoot, boot_img ,0);
 
     _bootDisk.is_config_device = true;
     _bootDisk.device_active = false;
