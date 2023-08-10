@@ -622,7 +622,7 @@ void sioFuji::sio_write_app_key()
     // Make sure we have a "/FujiNet" directory, since that's where we're putting these files
     fnSDFAT.create_path("/FujiNet");
 
-    FILE *fOut = fnSDFAT.file_open(filename, "w");
+    FILE *fOut = fnSDFAT.file_open(filename, FILE_WRITE);
     if (fOut == nullptr)
     {
         Debug_printf("Failed to open/create output file: errno=%d\n", errno);
