@@ -12,6 +12,7 @@
 #include "compat_inet.h"
 #include "status_error_codes.h"
 #include "utils.h"
+#include "string_utils.h"
 
 
 using namespace std;
@@ -26,10 +27,40 @@ using namespace std;
 #define ATASCII_TAB 0x7F
 #define ATASCII_BUZZER 0xFD
 
+#define STR_ASCII_BELL "\x07"
+#define STR_ASCII_BACKSPACE "\x08"
+#define STR_ASCII_TAB "\x09"
+#define STR_ASCII_LF "\x0a"
+#define STR_ASCII_CR "\x0d"
+#define STR_ASCII_CRLF "\x0d\x0a"
+#define STR_ATASCII_EOL "\x9b"
+#define STR_ATASCII_DEL "\x7e"
+#define STR_ATASCII_TAB "\x7f"
+#define STR_ATASCII_BUZZER "\xfd"
+
+/**
+ * NWD
+ * We only have 2 bits for translations (see NetworkProtocol::open)
+ * but we need to translate LF to CR or CRLF to just CR
+ * The only solution is to change the behaviour of the Apple2
+ * version.  It may make more sense to have the Atari be the odd
+ * one in the future rather than the Apple2
+ */
+
+#ifdef BUILD_APPLE
+#define EOL 0x0D
+#define STR_EOL "\x0d"
+#else
+#define EOL 0x9B
+#define STR_EOL "\x9b"
+#endif
+
+
 #define TRANSLATION_MODE_NONE 0
 #define TRANSLATION_MODE_CR 1
 #define TRANSLATION_MODE_LF 2
 #define TRANSLATION_MODE_CRLF 3
+#define TRANSLATION_MODE_PETSCII 4
 
 /**
  * ctor - Initialize network protocol object.
@@ -71,8 +102,10 @@ NetworkProtocol::~NetworkProtocol()
  */
 bool NetworkProtocol::open(EdUrlParser *urlParser, cmdFrame_t *cmdFrame)
 {
-    // Set translation mode, Bits 0-2 of aux2
-    translation_mode = cmdFrame->aux2 & 0x03;
+    // Set translation mode, Bits 0-1 of aux2
+    translation_mode = cmdFrame->aux2 & 0x7F; // we now have more xlation modes.
+
+    Debug_printf("translation mode = %u",translation_mode);
 
     // Persist aux1/aux2 values for later.
     aux1_open = cmdFrame->aux1;
@@ -148,20 +181,29 @@ void NetworkProtocol::translate_receive_buffer()
     if (translation_mode == 0)
         return;
 
+    #ifdef BUILD_ATARI
     replace(receiveBuffer->begin(), receiveBuffer->end(), ASCII_BELL, ATASCII_BUZZER);
     replace(receiveBuffer->begin(), receiveBuffer->end(), ASCII_BACKSPACE, ATASCII_DEL);
     replace(receiveBuffer->begin(), receiveBuffer->end(), ASCII_TAB, ATASCII_TAB);
+    #endif   
 
     switch (translation_mode)
     {
     case TRANSLATION_MODE_CR:
-        replace(receiveBuffer->begin(), receiveBuffer->end(), ASCII_CR, ATASCII_EOL);
+        replace(receiveBuffer->begin(), receiveBuffer->end(), ASCII_CR, EOL);
         break;
     case TRANSLATION_MODE_LF:
-        replace(receiveBuffer->begin(), receiveBuffer->end(), ASCII_LF, ATASCII_EOL);
+        replace(receiveBuffer->begin(), receiveBuffer->end(), ASCII_LF, EOL);
         break;
     case TRANSLATION_MODE_CRLF:
-        replace(receiveBuffer->begin(), receiveBuffer->end(), ASCII_CR, ATASCII_EOL);
+    #ifndef BUILD_APPLE
+        // With Apple2, we would be translating CR to CR; a waste of CPU
+        replace(receiveBuffer->begin(), receiveBuffer->end(), ASCII_CR, EOL);
+    #endif
+        break;
+    case TRANSLATION_MODE_PETSCII:
+        Debug_printf("!!! PETSCII !!!\n");
+        mstr::toPETSCII(*receiveBuffer);
         break;
     }
 
@@ -178,23 +220,28 @@ unsigned short NetworkProtocol::translate_transmit_buffer()
     if (translation_mode == 0)
         return transmitBuffer->length();
 
+    #ifdef BUILD_ATARI
     replace(transmitBuffer->begin(), transmitBuffer->end(), ATASCII_BUZZER, ASCII_BELL);
     replace(transmitBuffer->begin(), transmitBuffer->end(), ATASCII_DEL, ASCII_BACKSPACE);
     replace(transmitBuffer->begin(), transmitBuffer->end(), ATASCII_TAB, ASCII_TAB);
+    #endif
 
     switch (translation_mode)
     {
     case TRANSLATION_MODE_CR:
-        util_replaceAll(*transmitBuffer, "\x9B", "\x0D");
+        util_replaceAll(*transmitBuffer, STR_EOL, STR_ASCII_CR);
         break;
     case TRANSLATION_MODE_LF:
-        util_replaceAll(*transmitBuffer, "\x9B", "\x0A");
+        util_replaceAll(*transmitBuffer, STR_EOL, STR_ASCII_LF);
         break;
     case TRANSLATION_MODE_CRLF:
-        util_replaceAll(*transmitBuffer, "\x9B", "\x0D\x0A");
+        util_replaceAll(*transmitBuffer, STR_EOL, STR_ASCII_CRLF);
+        break;
+    case TRANSLATION_MODE_PETSCII:
+        mstr::toASCII(*transmitBuffer);
         break;
     }
-    
+
     return transmitBuffer->length();
 }
 

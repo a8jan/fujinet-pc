@@ -263,16 +263,21 @@ void main_setup(int argc, char *argv[])
 #endif // BUILD_ADAM
 
 #ifdef BUILD_APPLE
-    // spDevice spsd;
-    appleModem *sioR;
-    FileSystem *ptrfs = fnSDFAT.running() ? (FileSystem *)&fnSDFAT : (FileSystem *)&fnSPIFFS;
-    sioR = new appleModem(ptrfs, Config.get_modem_sniffer_enabled());
 
-    // IWM.addDevice(&theFuji, iwm_fujinet_type_t::FujiNet);
+    iwmModem *sioR;
+    FileSystem *ptrfs = fnSDFAT.running() ? (FileSystem *)&fnSDFAT : (FileSystem *)&fsFlash;
+    sioR = new iwmModem(ptrfs, Config.get_modem_sniffer_enabled());
+    IWM.addDevice(sioR,iwm_fujinet_type_t::Modem);
+    iwmPrinter::printer_type ptype = Config.get_printer_type(0);
+    iwmPrinter *ptr = new iwmPrinter(ptrfs, ptype);
+    fnPrinters.set_entry(0, ptr, ptype, Config.get_printer_port(0));
+    IWM.addDevice(ptr, iwm_fujinet_type_t::Printer);
+
     theFuji.setup(&IWM);
     IWM.setup(); // save device unit SP address somewhere and restore it after reboot?
 
 #endif /* BUILD_APPLE */
+
 
     fn_running = 1;
 

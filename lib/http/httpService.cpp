@@ -310,7 +310,7 @@ int fnHttpService::get_handler_print(struct mg_connection *c)
 
     uint64_t now = fnSystem.millis();
     // Get a pointer to the current (only) printer
-    sioPrinter *printer = (sioPrinter *)fnPrinters.get_ptr(0);
+    PRINTER_CLASS *printer = (PRINTER_CLASS *)fnPrinters.get_ptr(0);
 
     if (now - printer->lastPrintTime() < PRINTER_BUSY_TIME)
     {

@@ -7,12 +7,13 @@
 
 #include "../../bus/bus.h"
 
-#include "EdUrlParser.h"
+#include "../EdUrlParser/EdUrlParser.h"
 
-#include "Protocol.h"
+#include "../network-protocol/Protocol.h"
 
-#include "fnjson.h"
+#include "../fnjson/fnjson.h"
 
+#include "ProtocolParser.h"
 
 /**
  * Number of devices to expose via APPLE2, becomes 0x71 to 0x70 + NUM_DEVICES - 1
@@ -94,20 +95,19 @@ public:
      */
     virtual void status();
 
-    void process(cmdPacket_t cmd) override;
+    void process(iwm_decoded_cmd_t cmd) override;
 
-    void iwm_ctrl(cmdPacket_t cmd) override;
-    void iwm_open(cmdPacket_t cmd) override;
-    void iwm_close(cmdPacket_t cmd) override;
-    void iwm_read(cmdPacket_t cmd) override;
-    void iwm_write(cmdPacket_t cmd) override;
-    void iwm_status(cmdPacket_t cmd) override;
-
+    void iwm_ctrl(iwm_decoded_cmd_t cmd) override;
+    void iwm_open(iwm_decoded_cmd_t cmd) override;
+    void iwm_close(iwm_decoded_cmd_t cmd) override;
+    void iwm_read(iwm_decoded_cmd_t cmd) override;
+    void iwm_write(iwm_decoded_cmd_t cmd) override;
+    void iwm_status(iwm_decoded_cmd_t cmd) override;
     void shutdown() override;
-    void encode_status_reply_packet() override;
-    void encode_extended_status_reply_packet() override{};
-    void encode_status_dib_reply_packet() override;
-    void encode_extended_status_dib_reply_packet() override{};
+    void send_status_reply_packet() override;
+    void send_extended_status_reply_packet() override{};
+    void send_status_dib_reply_packet() override;
+    void send_extended_status_dib_reply_packet() override{};
 
     /**
      * @brief Called to set prefix
@@ -143,7 +143,7 @@ public:
      * @brief JSON Query
      * @param s size of query
      */
-    void json_query(cmdPacket_t cmd);
+    void json_query(iwm_decoded_cmd_t cmd);
 
     virtual void del();
     virtual void rename();
@@ -151,16 +151,6 @@ public:
 
 
 private:
-    /**
-     * iwmNet Response Buffer
-     */
-    uint8_t response[1024];
-
-    /**
-     * iwmNet Response Length
-     */
-    uint16_t response_len=0;
-
     /**
      * JSON Object
      */
@@ -190,6 +180,11 @@ private:
      * Instance of currently open network protocol
      */
     NetworkProtocol *protocol = nullptr;
+
+    /**
+     * @brief Factory that creates protocol from urls
+    */
+    ProtocolParser *protocolParser = nullptr;
 
     /**
      * Network Status object
@@ -299,6 +294,16 @@ private:
     bool instantiate_protocol();
 
     /**
+     * Create the deviceSpec and fix it for parsing
+     */
+    void create_devicespec(string d);
+
+    /**
+     * Create a urlParser from deviceSpec
+    */
+   void create_url_parser();
+
+    /**
      * Start the Interrupt rate limiting timer
      */
     void timer_start();
@@ -307,22 +312,6 @@ private:
      * Stop the Interrupt rate limiting timer
      */
     void timer_stop();
-
-    /**
-     * Is this a valid URL? (used to generate ERROR 165)
-     */
-    bool isValidURL(EdUrlParser *url);
-
-    /**
-     * Preprocess a URL given aux1 open mode. This is used to work around various assumptions that different
-     * disk utility packages do when opening a device, such as adding wildcards for directory opens.
-     *
-     * The resulting URL is then sent into EdURLParser to get our URLParser object which is used in the rest
-     * of iwmNetwork.
-     *
-     * This function is a mess, because it has to be, maybe we can factor it out, later. -Thom
-     */
-    bool parseURL();
 
     /**
      * We were passed a COPY arg from DOS 2. This is complex, because we need to parse the comma,
@@ -341,14 +330,14 @@ private:
      * @param num_bytes Number of bytes to read.
      * @return TRUE on error, FALSE on success. Passed directly to bus_to_computer().
      */
-    bool read_channel(unsigned short num_bytes, cmdPacket_t cmd);
+    bool read_channel(unsigned short num_bytes, iwm_decoded_cmd_t cmd);
 
     /**
      * Perform the correct read based on value of channelMode
      * @param num_bytes Number of bytes to read.
      * @return TRUE on error, FALSE on success. Passed directly to bus_to_computer().
      */
-    bool read_channel_json(unsigned short num_bytes, cmdPacket_t cmd);
+    bool read_channel_json(unsigned short num_bytes, iwm_decoded_cmd_t cmd);
 
     /**
      * Perform the correct write based on value of channelMode

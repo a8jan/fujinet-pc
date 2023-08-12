@@ -17,6 +17,8 @@ enum mediatype_t
 {
     MEDIATYPE_UNKNOWN = 0,
     MEDIATYPE_PO,
+    MEDIATYPE_WOZ,
+    MEDIATYPE_DSK,
     MEDIATYPE_COUNT
 };
 
@@ -48,12 +50,13 @@ public:
     // } _percomBlock;
 
     uint32_t num_blocks;
-    FILE* fileptr() {return _media_fileh;}
+    // FILE* fileptr() {return _media_fileh;}
 
     // uint8_t _media_sectorbuff[DISK_SECTORBUF_SIZE];
 
     mediatype_t _mediatype = MEDIATYPE_UNKNOWN;
     // bool _allow_hsio = true;
+    bool diskiiemulation;
 
     virtual mediatype_t mount(FILE *f, uint32_t disksize) = 0;
     virtual void unmount();
@@ -62,9 +65,9 @@ public:
     virtual bool format(uint16_t *respopnsesize);
 
     // Returns TRUE if an error condition occurred
-    virtual bool read(uint32_t blockNum, uint16_t *readcount) = 0;
+    virtual bool read(uint32_t blockNum, uint16_t *count, uint8_t* buffer) = 0;
     // Returns TRUE if an error condition occurred
-    virtual bool write(uint32_t blockNum, bool verify);
+    virtual bool write(uint32_t blockNum, uint16_t *count, uint8_t* buffer) = 0;
 
     // virtual uint16_t sector_size(uint16_t sectornum);
     
