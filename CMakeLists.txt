@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.4...3.22)
 project(fujinet-pc)
 
 # C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # fujinet.build_platform
