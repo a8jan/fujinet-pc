@@ -70,7 +70,7 @@ void iwmClock::iwm_status(iwm_decoded_cmd_t cmd)
     struct tm *now;
 
     uint8_t status_code = get_status_code(cmd); 
-    Debug_printf("\r\nDevice %02x Status Code %02x\n", id(), status_code);
+    Debug_printf("\nDevice %02x Status Code %02x\n", id(), status_code);
 
     switch (status_code)
     {
@@ -139,19 +139,19 @@ void iwmClock::iwm_status(iwm_decoded_cmd_t cmd)
         break;
     }
 
-    Debug_printf("\r\nStatus code complete, sending response");
+    Debug_printf("\nStatus code complete, sending response");
     IWM.iwm_send_packet(id(), iwm_packet_type_t::data, 0, data_buffer, data_len);
 }
 
 void iwmClock::iwm_open(iwm_decoded_cmd_t cmd)
 {
-    Debug_printf("\r\nClock: Open\n");
+    Debug_printf("\nClock: Open\n");
     send_reply_packet(SP_ERR_NOERROR);
 }
 
 void iwmClock::iwm_close(iwm_decoded_cmd_t cmd)
 {
-    Debug_printf("\r\nClock: Close\n");
+    Debug_printf("\nClock: Close\n");
     send_reply_packet(SP_ERR_NOERROR);
 }
 
@@ -162,15 +162,15 @@ void iwmClock::process(iwm_decoded_cmd_t cmd)
     switch (cmd.command)
     {
     case 0x00: // status
-        Debug_printf("\r\nhandling status command");
+        Debug_printf("\nhandling status command");
         iwm_status(cmd);
         break;
     case 0x06: // open
-        Debug_printf("\r\nhandling open command");
+        Debug_printf("\nhandling open command");
         iwm_open(cmd);
         break;
     case 0x07: // close
-        Debug_printf("\r\nhandling close command");
+        Debug_printf("\nhandling close command");
         iwm_close(cmd);
         break;
     default:

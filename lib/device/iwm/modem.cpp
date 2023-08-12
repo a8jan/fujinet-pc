@@ -1403,7 +1403,7 @@ void iwmModem::iwm_read(iwm_decoded_cmd_t cmd)
     uint32_t addy = get_address(cmd);      // (cmd.g7byte5 & 0x7f) | ((cmd.grp7msb << 5) & 0x80);
     unsigned short mw = uxQueueMessagesWaiting(mrxq);
 
-    Debug_printf("\r\nDevice %02x READ %04x bytes from address %06x\n", id(), numbytes, addy);
+    Debug_printf("\nDevice %02x READ %04x bytes from address %06x\n", id(), numbytes, addy);
 
     memset(data_buffer, 0, sizeof(data_buffer));
 
@@ -1428,7 +1428,7 @@ void iwmModem::iwm_read(iwm_decoded_cmd_t cmd)
         data_len = 0;
     }
 
-    Debug_printf("\r\nsending Modem read data packet ...");
+    Debug_printf("\nsending Modem read data packet ...");
     IWM.iwm_send_packet(id(), iwm_packet_type_t::data, 0, data_buffer, data_len);
     data_len = 0;
     memset(data_buffer, 0, sizeof(data_buffer));
@@ -1447,7 +1447,7 @@ void iwmModem::iwm_write(iwm_decoded_cmd_t cmd)
     IWM.iwm_decode_data_packet(data_buffer, data_len);
     // if (IWM.iwm_decode_data_packet(100, data_buffer, data_len)) // write data packet now read in ISR
     // {
-    //     Debug_printf("\r\nTIMEOUT in read packet!");
+    //     Debug_printf("\nTIMEOUT in read packet!");
     //     return;
     // }
 
@@ -1465,7 +1465,7 @@ void iwmModem::iwm_ctrl(iwm_decoded_cmd_t cmd)
     uint8_t err_result = SP_ERR_NOERROR;
 
     uint8_t control_code = get_status_code(cmd); // (cmd.g7byte3 & 0x7f) | ((cmd.grp7msb << 3) & 0x80); // ctrl codes 00-FF
-    Debug_printf("\r\nModem Device %02x Control Code %02x", id(), control_code);
+    Debug_printf("\nModem Device %02x Control Code %02x", id(), control_code);
     data_len = 512;
     IWM.iwm_decode_data_packet(data_buffer, data_len);
     print_packet(data_buffer,data_len);
@@ -1498,8 +1498,8 @@ void iwmModem::iwm_status(iwm_decoded_cmd_t cmd)
 {
     // uint8_t source = cmd.dest;                                                // we are the destination and will become the source // packet_buffer[6];
     uint8_t status_code = get_status_code(cmd); // (cmd.g7byte3 & 0x7f) | ((cmd.grp7msb << 3) & 0x80); // status codes 00-FF
-    Debug_printf("\r\nDevice %02x Status Code %02x\n", id(), status_code);
-    // Debug_printf("\r\nStatus List is at %02x %02x\n", cmd.g7byte1 & 0x7f, cmd.g7byte2 & 0x7f);
+    Debug_printf("\nDevice %02x Status Code %02x\n", id(), status_code);
+    // Debug_printf("\nStatus List is at %02x %02x\n", cmd.g7byte1 & 0x7f, cmd.g7byte2 & 0x7f);
 
     switch (status_code)
     {
@@ -1516,7 +1516,7 @@ void iwmModem::iwm_status(iwm_decoded_cmd_t cmd)
         break;
     }
 
-    Debug_printf("\r\nStatus code complete, sending response");
+    Debug_printf("\nStatus code complete, sending response");
     IWM.iwm_send_packet(id(), iwm_packet_type_t::data, 0, data_buffer, data_len);
 }
 
@@ -1525,30 +1525,30 @@ void iwmModem::process(iwm_decoded_cmd_t cmd)
     switch (cmd.command)
     {
     case 0x00: // status
-        Debug_printf("\r\nhandling status command");
+        Debug_printf("\nhandling status command");
         iwm_status(cmd);
         break;
     case 0x04: // control
-        Debug_printf("\r\nhandling control command");
+        Debug_printf("\nhandling control command");
         iwm_ctrl(cmd);
-        Debug_printf("\r\ncontrol command done");
+        Debug_printf("\ncontrol command done");
         break;
     case 0x06: // open
-        Debug_printf("\r\nhandling open command");
+        Debug_printf("\nhandling open command");
         iwm_open(cmd);
         break;
     case 0x07: // close
-        Debug_printf("\r\nhandling close command");
+        Debug_printf("\nhandling close command");
         iwm_close(cmd);
         break;
     case 0x08: // read
-        Debug_printf("\r\nhandling read command");
+        Debug_printf("\nhandling read command");
         fnLedManager.set(LED_BUS, true);
         iwm_read(cmd);
         fnLedManager.set(LED_BUS, false);
         break;
     case 0x09: // write
-        Debug_printf("\r\nhandling write command");
+        Debug_printf("\nhandling write command");
         fnLedManager.set(LED_BUS, true);
         iwm_write(cmd);
         fnLedManager.set(LED_BUS, true);

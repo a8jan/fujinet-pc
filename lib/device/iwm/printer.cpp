@@ -140,7 +140,7 @@ void iwmPrinter::iwm_write(iwm_decoded_cmd_t cmd)
     IWM.iwm_decode_data_packet((unsigned char *)data_buffer, data_len);
     // if (IWM.iwm_decode_data_packet(100, (unsigned char *)data_buffer, data_len)) // write data packet now read in ISR
     // {
-    //     Debug_printf("\r\nTIMEOUT in read packet!");
+    //     Debug_printf("\nTIMEOUT in read packet!");
     //     return;
     // }
 

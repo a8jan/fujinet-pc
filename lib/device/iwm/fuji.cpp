@@ -25,21 +25,21 @@ iwmFuji::iwmFuji()
 
 void iwmFuji::iwm_dummy_command() // SP CTRL command
 {
-  Debug_printf("\r\nData Received: ");
+  Debug_printf("\nData Received: ");
   for (int i=0; i<data_len; i++)
     Debug_printf(" %02x", data_buffer[i]);
 }
 
 void iwmFuji::iwm_hello_world()
 {
-  Debug_printf("\r\nFuji cmd: HELLO WORLD");
+  Debug_printf("\nFuji cmd: HELLO WORLD");
   memcpy(data_buffer, "HELLO WORLD", 11);
   data_len = 11;
 }
 
 void iwmFuji::iwm_ctrl_reset_fujinet() // SP CTRL command
 {
-    Debug_printf("\r\nFuji cmd: REBOOT");
+    Debug_printf("\nFuji cmd: REBOOT");
     send_status_reply_packet();
     // save device unit SP address somewhere and restore it after reboot?
     fnSystem.reboot();
@@ -47,7 +47,7 @@ void iwmFuji::iwm_ctrl_reset_fujinet() // SP CTRL command
 
 void iwmFuji::iwm_stat_net_get_ssid() // SP STATUS command
 {
-   Debug_printf("\r\nFuji cmd: GET SSID");
+   Debug_printf("\nFuji cmd: GET SSID");
 
     // Response to FUJICMD_GET_SSID
     struct
@@ -66,7 +66,7 @@ void iwmFuji::iwm_stat_net_get_ssid() // SP STATUS command
     std::string s = Config.get_wifi_ssid();
     memcpy(cfg.ssid, s.c_str(),
            s.length() > sizeof(cfg.ssid) ? sizeof(cfg.ssid) : s.length());
-    Debug_printf("\r\nReturning SSID: %s",cfg.ssid);
+    Debug_printf("\nReturning SSID: %s",cfg.ssid);
 
     s = Config.get_wifi_passphrase();
     memcpy(cfg.password, s.c_str(),
@@ -79,7 +79,7 @@ void iwmFuji::iwm_stat_net_get_ssid() // SP STATUS command
 
 void iwmFuji::iwm_stat_net_scan_networks() // SP STATUS command 
 {
-    Debug_printf("\r\nFuji cmd: SCAN NETWORKS");
+    Debug_printf("\nFuji cmd: SCAN NETWORKS");
 
     isReady = false;
 
@@ -98,7 +98,7 @@ void iwmFuji::iwm_stat_net_scan_networks() // SP STATUS command
 
 void iwmFuji::iwm_ctrl_net_scan_result() //SP STATUS command 
 {
-  Debug_print("\r\nFuji cmd: GET SCAN RESULT");
+  Debug_print("\nFuji cmd: GET SCAN RESULT");
   //scanStarted = false;
 
   uint8_t n = data_buffer[0]; 
@@ -122,7 +122,7 @@ void iwmFuji::iwm_stat_net_scan_result() //SP STATUS command
 
 void iwmFuji::iwm_ctrl_net_set_ssid() // SP CTRL command
 {
-  Debug_printf("\r\nFuji cmd: SET SSID");
+  Debug_printf("\nFuji cmd: SET SSID");
   // if (!fnWiFi.connected() && setSSIDStarted == false)
   //   {
 
@@ -143,7 +143,7 @@ void iwmFuji::iwm_ctrl_net_set_ssid() // SP CTRL command
 
             bool save = false; // for now don't save - to do save if connection was succesful
 
-        Debug_printf("\r\nConnecting to net: %s password: %s\n", cfg.ssid, cfg.password);
+        Debug_printf("\nConnecting to net: %s password: %s\n", cfg.ssid, cfg.password);
 
         if (fnWiFi.connect(cfg.ssid, cfg.password) == ESP_OK)
         {
@@ -163,19 +163,19 @@ void iwmFuji::iwm_ctrl_net_set_ssid() // SP CTRL command
 // Get WiFi Status
 void iwmFuji::iwm_stat_net_get_wifi_status() // SP Status command
 {
-    Debug_printf("\r\nFuji cmd: GET WIFI STATUS");
+    Debug_printf("\nFuji cmd: GET WIFI STATUS");
     // WL_CONNECTED = 3, WL_DISCONNECTED = 6
     uint8_t wifiStatus = fnWiFi.connected() ? 3 : 6;
     data_buffer[0] = wifiStatus;
     data_len = 1;
-    Debug_printf("\r\nReturning Status: %d", wifiStatus);
+    Debug_printf("\nReturning Status: %d", wifiStatus);
 }
 
 // Mount Server
 void iwmFuji::iwm_ctrl_mount_host() // SP CTRL command
 {
     unsigned char hostSlot = data_buffer[0]; // adamnet_recv();
-    Debug_printf("\r\nFuji cmd: MOUNT HOST no. %d", hostSlot);
+    Debug_printf("\nFuji cmd: MOUNT HOST no. %d", hostSlot);
 
     if ((hostSlot < 8) && (hostMounted[hostSlot] == false))
     {
@@ -188,7 +188,7 @@ void iwmFuji::iwm_ctrl_mount_host() // SP CTRL command
 void iwmFuji::iwm_ctrl_unmount_host() // SP CTRL command
 {
     unsigned char hostSlot = data_buffer[0]; // adamnet_recv();
-    Debug_printf("\r\nFuji cmd: UNMOUNT HOST no. %d", hostSlot);
+    Debug_printf("\nFuji cmd: UNMOUNT HOST no. %d", hostSlot);
 
     if ((hostSlot < 8) && (hostMounted[hostSlot] == false))
     {
@@ -200,7 +200,7 @@ void iwmFuji::iwm_ctrl_unmount_host() // SP CTRL command
 // Disk Image Mount
 void iwmFuji::iwm_ctrl_disk_image_mount() // SP CTRL command
 {
-    Debug_printf("\r\nFuji cmd: MOUNT IMAGE");
+    Debug_printf("\nFuji cmd: MOUNT IMAGE");
 
     uint8_t deviceSlot = data_buffer[0]; //adamnet_recv();
     uint8_t options = data_buffer[1]; //adamnet_recv(); // DISK_ACCESS_MODE
@@ -214,7 +214,7 @@ void iwmFuji::iwm_ctrl_disk_image_mount() // SP CTRL command
     fujiDisk &disk = _fnDisks[deviceSlot];
     fujiHost &host = _fnHosts[disk.host_slot];
 
-    Debug_printf("\r\nSelecting '%s' from host #%u as %s on D%u:\n",
+    Debug_printf("\nSelecting '%s' from host #%u as %s on D%u:\n",
                  disk.filename, disk.host_slot, flag, deviceSlot + 1);
 
     disk.fileh = host.file_open(disk.filename, disk.filename, sizeof(disk.filename), flag);
@@ -440,7 +440,7 @@ void iwmFuji::iwm_ctrl_read_app_key()
 
 void iwmFuji::iwm_stat_read_app_key() // return the app key that was just read by the read app key control command
 {
-  Debug_printf("\r\nFuji cmd: READ APP KEY");
+  Debug_printf("\nFuji cmd: READ APP KEY");
   memset(data_buffer, 0, sizeof(data_buffer));
   memcpy(data_buffer, ctrl_stat_buffer, ctrl_stat_len);
   data_len = ctrl_stat_len;
@@ -471,7 +471,7 @@ void iwmFuji::iwm_ctrl_disk_image_umount()
 */
 void iwmFuji::image_rotate()
 {
-    Debug_printf("\r\nFuji cmd: IMAGE ROTATE");
+    Debug_printf("\nFuji cmd: IMAGE ROTATE");
 
     int count = 0;
     // Find the first empty slot
@@ -508,7 +508,7 @@ void iwmFuji::shutdown()
 
 void iwmFuji::iwm_ctrl_open_directory() 
 {
-    Debug_printf("\r\nFuji cmd: OPEN DIRECTORY");
+    Debug_printf("\nFuji cmd: OPEN DIRECTORY");
 
     int idx = 0;
     uint8_t hostSlot = data_buffer[idx++];// adamnet_recv();
@@ -691,14 +691,14 @@ void iwmFuji::iwm_ctrl_read_directory_entry()
 
 void iwmFuji::iwm_stat_read_directory_entry()
 {
-  Debug_printf("\r\nFuji cmd: READ DIRECTORY ENTRY");
+  Debug_printf("\nFuji cmd: READ DIRECTORY ENTRY");
   memcpy(data_buffer, ctrl_stat_buffer, ctrl_stat_len);
   data_len = ctrl_stat_len;
 }
 
 void iwmFuji::iwm_stat_get_directory_position()
 {
-    Debug_printf("\r\nFuji cmd: GET DIRECTORY POSITION");
+    Debug_printf("\nFuji cmd: GET DIRECTORY POSITION");
 
     uint16_t pos = _fnHosts[_current_open_directory_slot].dir_tell();
 
@@ -1175,7 +1175,7 @@ void iwmFuji::send_stat_get_enable()
 
 void iwmFuji::iwm_open(iwm_decoded_cmd_t cmd)
 {
-  // Debug_printf("\r\nOpen FujiNet Unit # %02x",cmd.g7byte1);
+  // Debug_printf("\nOpen FujiNet Unit # %02x",cmd.g7byte1);
   send_status_reply_packet();
 }
 
@@ -1194,7 +1194,7 @@ void iwmFuji::iwm_status(iwm_decoded_cmd_t cmd)
   // uint8_t source = cmd.dest; // we are the destination and will become the source // data_buffer[6];
   uint8_t status_code = get_status_code(cmd); // (cmd.g7byte3 & 0x7f) | ((cmd.grp7msb << 3) & 0x80); // status codes 00-FF
   Debug_printf("\ntheFuji Device %02x Status Code %02x", id(), status_code);
-  // Debug_printf("\r\nStatus List is at %02x %02x", cmd.g7byte1 & 0x7f, cmd.g7byte2 & 0x7f);
+  // Debug_printf("\nStatus List is at %02x %02x", cmd.g7byte1 & 0x7f, cmd.g7byte2 & 0x7f);
 
   switch (status_code)
   {
