@@ -1,13 +1,11 @@
 #ifdef BUILD_APPLE
 
 #include <string.h>
-#include <lwip/netdb.h>
 
 #include "../../include/atascii.h"
 #include "modem.h"
 #include "../hardware/fnUART.h"
-#include "fnWiFi.h"
-#include "fsFlash.h"
+#include "fnDummyWiFi.h"
 #include "fnSystem.h"
 #include "../utils/utils.h"
 #include "fnConfig.h"
@@ -85,7 +83,7 @@ static void _modem_task(void *arg)
     while (true)
     {
         m->handle_modem();
-        vTaskDelay(10);
+        // OS vTaskDelay(10);
     }
 }
 
@@ -95,9 +93,9 @@ iwmModem::iwmModem(FileSystem *_fs, bool snifferEnable)
     modemSniffer = new ModemSniffer(activeFS, snifferEnable);
     set_term_type("dumb");
     telnet = telnet_init(telopts, _telnet_event_handler, 0, this);
-    mrxq = xQueueCreate(16384, sizeof(char));
-    mtxq = xQueueCreate(16384, sizeof(char));
-    xTaskCreatePinnedToCore(_modem_task, "modemTask", 4096, this, MODEM_TASK_PRIORITY, &modemTask, MODEM_TASK_CPU);
+    // OS mrxq = xQueueCreate(16384, sizeof(char));
+    // OS mtxq = xQueueCreate(16384, sizeof(char));
+    // OS xTaskCreatePinnedToCore(_modem_task, "modemTask", 4096, this, MODEM_TASK_PRIORITY, &modemTask, MODEM_TASK_CPU);
 }
 
 iwmModem::~iwmModem()
@@ -112,9 +110,9 @@ iwmModem::~iwmModem()
         telnet_free(telnet);
     }
 
-    vTaskDelete(modemTask);
-    vQueueDelete(mrxq);
-    vQueueDelete(mtxq);
+    // OS vTaskDelete(modemTask);
+    // OS vQueueDelete(mrxq);
+    // OS vQueueDelete(mtxq);
 }
 
 unsigned short iwmModem::modem_write(uint8_t *buf, unsigned short len)
@@ -123,7 +121,7 @@ unsigned short iwmModem::modem_write(uint8_t *buf, unsigned short len)
 
     while (len > 0)
     {
-        xQueueSend(mrxq, &buf[l++], portMAX_DELAY);
+        // OS xQueueSend(mrxq, &buf[l++], portMAX_DELAY);
         len--;
     }
 
@@ -132,7 +130,7 @@ unsigned short iwmModem::modem_write(uint8_t *buf, unsigned short len)
 
 unsigned short iwmModem::modem_write(char c)
 {
-    xQueueSend(mrxq, &c, portMAX_DELAY);
+    // OS xQueueSend(mrxq, &c, portMAX_DELAY);
     return 1;
 }
 
@@ -142,7 +140,7 @@ unsigned short iwmModem::modem_print(const char *s)
 
     while (*s != 0x00)
     {
-        xQueueSend(mrxq, s++, portMAX_DELAY);
+        // OS xQueueSend(mrxq, s++, portMAX_DELAY);
         l++;
     }
 
@@ -167,8 +165,8 @@ unsigned short iwmModem::modem_read(uint8_t *buf, unsigned short len)
 {
     unsigned short i, l = 0;
 
-    for (i = 0; i < len; i++)
-        l += xQueueReceive(mtxq, &buf[i], portMAX_DELAY);
+    // OS for (i = 0; i < len; i++)
+    // OS     l += xQueueReceive(mtxq, &buf[i], portMAX_DELAY);
 
     return l;
 }
@@ -531,7 +529,7 @@ void iwmModem::at_handle_wifilist()
             at_cmd_println("]");
             at_cmd_println("    ", false);
             at_cmd_println(bssid, false);
-            at_cmd_println(encryption == WIFI_AUTH_OPEN ? HELPSCAN4 : HELPSCAN5);
+            // at_cmd_println(encryption == WIFI_AUTH_OPEN ? HELPSCAN4 : HELPSCAN5);
         }
     }
     at_cmd_println();
@@ -1095,11 +1093,11 @@ void iwmModem::handle_modem()
 
         // In command mode - don't exchange with TCP but gather characters to a string
         // if (SIO_UART.available() /*|| blockWritePending == true */ )
-        if (uxQueueMessagesWaiting(mtxq))
+        // OS if (uxQueueMessagesWaiting(mtxq))
         {
             char chr;
 
-            xQueueReceive(mtxq, &chr, portMAX_DELAY);
+            // OS xQueueReceive(mtxq, &chr, portMAX_DELAY);
 
             // Return, enter, new line, carriage return.. anything goes to end the command
             if ((chr == ASCII_LF) || (chr == ASCII_CR) || (chr == ATASCII_EOL))
@@ -1188,7 +1186,7 @@ void iwmModem::handle_modem()
             }
         }
 
-        int sioBytesAvail = uxQueueMessagesWaiting(mtxq);
+        int sioBytesAvail; // OS = uxQueueMessagesWaiting(mtxq);
 
         // send from Atari to Fujinet
         if (sioBytesAvail && tcpClient.connected())
@@ -1401,7 +1399,7 @@ void iwmModem::iwm_read(iwm_decoded_cmd_t cmd)
 {
     uint16_t numbytes = get_numbytes(cmd); // cmd.g7byte3 & 0x7f) | ((cmd.grp7msb << 3) & 0x80);
     uint32_t addy = get_address(cmd);      // (cmd.g7byte5 & 0x7f) | ((cmd.grp7msb << 5) & 0x80);
-    unsigned short mw = uxQueueMessagesWaiting(mrxq);
+    unsigned short mw; // OS = uxQueueMessagesWaiting(mrxq);
 
     Debug_printf("\nDevice %02x READ %04x bytes from address %06x\n", id(), numbytes, addy);
 
@@ -1418,7 +1416,7 @@ void iwmModem::iwm_read(iwm_decoded_cmd_t cmd)
         for (int i = 0; i < numbytes; i++)
         {
             char b;
-            xQueueReceive(mrxq, &b, portMAX_DELAY);
+            // OS xQueueReceive(mrxq, &b, portMAX_DELAY);
             data_buffer[i] = b;
             data_len++;
         }
@@ -1453,8 +1451,8 @@ void iwmModem::iwm_write(iwm_decoded_cmd_t cmd)
 
     {
         // DO write
-        for (int i = 0; i < num_bytes; i++)
-            xQueueSend(mtxq, &data_buffer[i], portMAX_DELAY);
+        // OS for (int i = 0; i < num_bytes; i++)
+        // OS     xQueueSend(mtxq, &data_buffer[i], portMAX_DELAY);
     }
 
     send_reply_packet(SP_ERR_NOERROR);
@@ -1483,7 +1481,7 @@ void iwmModem::iwm_ctrl(iwm_decoded_cmd_t cmd)
 
 void iwmModem::iwm_modem_status()
 {
-    unsigned short mw = uxQueueMessagesWaiting(mrxq);
+    unsigned short mw; // OS = uxQueueMessagesWaiting(mrxq);
 
     //if (mw > 512)
     //    mw = 512;
@@ -1543,21 +1541,21 @@ void iwmModem::process(iwm_decoded_cmd_t cmd)
         break;
     case 0x08: // read
         Debug_printf("\nhandling read command");
-        fnLedManager.set(LED_BUS, true);
+        // fnLedManager.set(LED_BUS, true);
         iwm_read(cmd);
-        fnLedManager.set(LED_BUS, false);
+        // fnLedManager.set(LED_BUS, false);
         break;
     case 0x09: // write
         Debug_printf("\nhandling write command");
-        fnLedManager.set(LED_BUS, true);
+        // fnLedManager.set(LED_BUS, true);
         iwm_write(cmd);
-        fnLedManager.set(LED_BUS, true);
+        // fnLedManager.set(LED_BUS, true);
         break;
     default:
         iwm_return_badcmd(cmd);
         break;
     } // switch (cmd)
-    fnLedManager.set(LED_BUS, false);
+    // fnLedManager.set(LED_BUS, false);
 }
 
 #endif /* BUILD_APPLE */

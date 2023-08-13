@@ -5,10 +5,11 @@
 
 #include "fnSystem.h"
 #include "fnUART.h"
-#include "fnWiFi.h"
+#include "fnDummyWiFi.h"
 #include "fuji.h"
 #include "fnFS.h"
 #include "fnFsSD.h"
+#include "compat_string.h"
 
 #include "../hardware/led.h"
 
@@ -40,7 +41,7 @@ static void cpmTask(void *arg)
         memset(newname, 0, sizeof(newname));
         memset(fcbname, 0, sizeof(fcbname));
         memset(pattern, 0, sizeof(pattern));
-        vTaskDelay(100);
+        // OS vTaskDelay(100);
         _puts(CCPHEAD);
         _PatchCPM();
         _ccp();
@@ -49,8 +50,8 @@ static void cpmTask(void *arg)
 
 iwmCPM::iwmCPM()
 {
-    rxq = xQueueCreate(2048, sizeof(char));
-    txq = xQueueCreate(2048, sizeof(char));
+    // OS rxq = xQueueCreate(2048, sizeof(char));
+    // OS txq = xQueueCreate(2048, sizeof(char));
 }
 
 void iwmCPM::send_status_reply_packet()
@@ -118,19 +119,11 @@ void iwmCPM::iwm_open(iwm_decoded_cmd_t cmd)
     uint8_t err_result = SP_ERR_NOERROR;
     
     Debug_printf("\nCP/M: Open\n");
-    if (!fnSystem.spifix())
-    {
-        err_result = SP_ERR_OFFLINE;
-        Debug_printf("FujiApple SPI Fix Missing, not starting CP/M\n");
-    }
-    else
-    {
-        if (cpmTaskHandle == NULL)
-        {
-            Debug_printf("!!! STARTING CP/M TASK!!!\n");
-            xTaskCreatePinnedToCore(cpmTask, "cpmtask", 32768, NULL, CPM_TASK_PRIORITY, &cpmTaskHandle, 1);
-        }
-    }
+    //OS if (cpmTaskHandle == NULL)
+    //OS {
+    //OS     Debug_printf("!!! STARTING CP/M TASK!!!\n");
+    //OS     xTaskCreatePinnedToCore(cpmTask, "cpmtask", 32768, NULL, CPM_TASK_PRIORITY, &cpmTaskHandle, 1);
+    //OS }
 
     send_reply_packet(err_result);
 }
@@ -162,7 +155,7 @@ void iwmCPM::iwm_status(iwm_decoded_cmd_t cmd)
         return;
         break;
     case 'S': // Status
-        mw = uxQueueMessagesWaiting(rxq);
+        // OS mw = uxQueueMessagesWaiting(rxq);
 
         if (mw > 512)
             mw = 512;
@@ -173,7 +166,7 @@ void iwmCPM::iwm_status(iwm_decoded_cmd_t cmd)
         Debug_printf("%u bytes waiting\n", mw);
         break;
     case 'B':
-        data_buffer[0]=(cpmTaskHandle==NULL ? 0 : 1);
+        // OS data_buffer[0]=(cpmTaskHandle==NULL ? 0 : 1);
         data_len = 0;
         Debug_printf("CPM Task Running? %d",data_buffer[0]);
         break;
@@ -187,7 +180,7 @@ void iwmCPM::iwm_read(iwm_decoded_cmd_t cmd)
 {
     uint16_t numbytes = get_numbytes(cmd); // cmd.g7byte3 & 0x7f) | ((cmd.grp7msb << 3) & 0x80);
     uint32_t addy = get_address(cmd);      // (cmd.g7byte5 & 0x7f) | ((cmd.grp7msb << 5) & 0x80);
-    unsigned short mw = uxQueueMessagesWaiting(rxq);
+    unsigned short mw; // OS = uxQueueMessagesWaiting(rxq);
 
     Debug_printf("\nDevice %02x READ %04x bytes from address %06x\n", id(), numbytes, addy);
 
@@ -204,7 +197,7 @@ void iwmCPM::iwm_read(iwm_decoded_cmd_t cmd)
         for (int i = 0; i < numbytes; i++)
         {
             char b;
-            xQueueReceive(rxq, &b, portMAX_DELAY);
+            // OS xQueueReceive(rxq, &b, portMAX_DELAY);
             data_buffer[i] = b;
             data_len++;
         }
@@ -239,8 +232,8 @@ void iwmCPM::iwm_write(iwm_decoded_cmd_t cmd)
 
     {
         // DO write
-        for (int i = 0; i < num_bytes; i++)
-            xQueueSend(txq, &data_buffer[i], portMAX_DELAY);
+        // OS for (int i = 0; i < num_bytes; i++)
+        // OS     xQueueSend(txq, &data_buffer[i], portMAX_DELAY);
     }
 
     send_reply_packet(SP_ERR_NOERROR);
@@ -263,20 +256,12 @@ void iwmCPM::iwm_ctrl(iwm_decoded_cmd_t cmd)
         switch (control_code)
         {
         case 'B': // Boot
-            if (!fnSystem.spifix())
-            {
-                err_result = SP_ERR_OFFLINE;
-                Debug_printf("FujiApple SPI Fix Missing, not starting CP/M\n");
-            }
-            else
-            {
-                Debug_printf("!!! STARTING CP/M TASK!!!\n");
-                if (cpmTaskHandle != NULL)
-                {
-                    break;
-                }
-                xTaskCreatePinnedToCore(cpmTask, "cpmtask", 32768, NULL, CPM_TASK_PRIORITY, &cpmTaskHandle, 1);
-            }
+            Debug_printf("!!! STARTING CP/M TASK!!!\n");
+            // OS if (cpmTaskHandle != NULL)
+            // OS {
+            // OS     break;
+            // OS }
+            // OS xTaskCreatePinnedToCore(cpmTask, "cpmtask", 32768, NULL, CPM_TASK_PRIORITY, &cpmTaskHandle, 1);
             break;
         }
     else
@@ -306,16 +291,16 @@ void iwmCPM::process(iwm_decoded_cmd_t cmd)
         iwm_close(cmd);
         break;
     case 0x08: // read
-        fnLedManager.set(LED_BUS, true);
+        // fnLedManager.set(LED_BUS, true);
         Debug_printf("\nhandling read command");
         iwm_read(cmd);
-        fnLedManager.set(LED_BUS, false);
+        // fnLedManager.set(LED_BUS, false);
         break;
     case 0x09: // write
-        fnLedManager.set(LED_BUS, true);
+        // fnLedManager.set(LED_BUS, true);
         Debug_printf("\nHandling write command");
         iwm_write(cmd);
-        fnLedManager.set(LED_BUS, false);
+        // fnLedManager.set(LED_BUS, false);
         break;
     default:
         iwm_return_badcmd(cmd);

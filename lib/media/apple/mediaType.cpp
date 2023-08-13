@@ -30,7 +30,7 @@ void MediaType::unmount()
 {
     if (_media_fileh != nullptr)
     {
-        fclose(_media_fileh);
+        _media_fileh->close();
         _media_fileh = nullptr;
     }
 }

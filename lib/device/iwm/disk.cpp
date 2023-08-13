@@ -306,7 +306,7 @@ void iwmDisk::iwm_ctrl(iwm_decoded_cmd_t cmd)
 void iwmDisk::process(iwm_decoded_cmd_t cmd)
 {
   uint8_t status_code;
-  fnLedManager.set(LED_BUS, true);
+  // fnLedManager.set(LED_BUS, true);
   switch (cmd.command)
   {
   case 0x00: // status
@@ -350,7 +350,7 @@ void iwmDisk::process(iwm_decoded_cmd_t cmd)
   default:
     iwm_return_badcmd(cmd);
   } // switch (cmd)
-  fnLedManager.set(LED_BUS, false);
+  // fnLedManager.set(LED_BUS, false);
 }
 
 void iwmDisk::iwm_readblock(iwm_decoded_cmd_t cmd)
@@ -500,7 +500,7 @@ iwmDisk::iwmDisk()
   // init();
 }
 
-mediatype_t iwmDisk::mount(FILE *f, const char *filename, uint32_t disksize, mediatype_t disk_type)
+mediatype_t iwmDisk::mount(FileHandler *f, const char *filename, uint32_t disksize, mediatype_t disk_type)
 {
   uint8_t deviceSlot = data_buffer[0]; // from mount ctrl cmd
   mediatype_t mt = MEDIATYPE_UNKNOWN;
@@ -536,21 +536,6 @@ mediatype_t iwmDisk::mount(FILE *f, const char *filename, uint32_t disksize, med
         break;
     }
   }
-  else // DiskII drive
-  {
-    switch (disk_type)
-    {
-      case MEDIATYPE_DSK:
-      case MEDIATYPE_WOZ:
-          theFuji._fnDisk2s[deviceSlot - 4].init();
-          theFuji._fnDisk2s[deviceSlot - 4].mount(f, disk_type); // modulo to ensure device 0 or 1
-      break;
-    default:
-        Debug_printf("\nMedia Type UNKNOWN for DiskII - no mount in disk.cpp");
-        device_active = false;
-        break;
-    }
-  }
 
   return mt;
 
@@ -569,7 +554,7 @@ void iwmDisk::unmount()
     }
 }
 
-bool iwmDisk::write_blank(FILE *f, uint16_t sectorSize, uint16_t numSectors)
+bool iwmDisk::write_blank(FileHandler *f, uint16_t sectorSize, uint16_t numSectors)
 {
   
   return false;
@@ -579,7 +564,7 @@ bool iwmDisk::write_blank(FILE *f, uint16_t sectorSize, uint16_t numSectors)
  * Used for writing ProDOS images which exist in multiples of 
  * 512 byte blocks.
  */
-bool iwmDisk::write_blank(FILE *f, uint16_t numBlocks)
+bool iwmDisk::write_blank(FileHandler *f, uint16_t numBlocks)
 {
   unsigned char buf[512];
 
@@ -611,14 +596,14 @@ bool iwmDisk::write_blank(FILE *f, uint16_t numBlocks)
 
     header.numBlocks = numBlocks;
 
-    fwrite(&header,sizeof(header),1,f);
+    f->write(&header,sizeof(header),1);
   }
 
   long offset = (numBlocks - 1) * 512;
 
   // Sparse Write
-  fseek(f,offset,SEEK_SET);
-  fwrite(&buf,sizeof(unsigned char),sizeof(buf),f);
+  f->seek(offset,SEEK_SET);
+  f->write(&buf,sizeof(unsigned char),sizeof(buf));
 
   blank_header_type = 0; // Reset to unadorned.
   return false;

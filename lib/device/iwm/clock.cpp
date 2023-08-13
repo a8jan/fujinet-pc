@@ -84,7 +84,7 @@ void iwmClock::iwm_status(iwm_decoded_cmd_t cmd)
         break;
     case 'T': // Date and time, easy to be used by general programs
         tt = time(nullptr);
-        setenv("TZ",Config.get_general_timezone().c_str(),1);
+        // setenv("TZ",Config.get_general_timezone().c_str(),1);
         tzset();
         now = localtime(&tt);
 
@@ -99,7 +99,7 @@ void iwmClock::iwm_status(iwm_decoded_cmd_t cmd)
         break;
     case 'P': // Date and time, to be used by a ProDOS driver
         tt = time(nullptr);
-        setenv("TZ",Config.get_general_timezone().c_str(),1);
+        // setenv("TZ",Config.get_general_timezone().c_str(),1);
         tzset();
         now = localtime(&tt);
 
@@ -112,7 +112,7 @@ void iwmClock::iwm_status(iwm_decoded_cmd_t cmd)
         break;
     case 'S': // Date and time, ASCII string in SOS set_time format YYYYMMDDxHHMMSSxxx
         tt = time(nullptr);
-        setenv("TZ",Config.get_general_timezone().c_str(),1);
+        // setenv("TZ",Config.get_general_timezone().c_str(),1);
         tzset();
         now = localtime(&tt);
 
@@ -158,7 +158,7 @@ void iwmClock::iwm_close(iwm_decoded_cmd_t cmd)
 
 void iwmClock::process(iwm_decoded_cmd_t cmd)
 {
-    fnLedManager.set(LED_BUS, true);
+    // fnLedManager.set(LED_BUS, true);
     switch (cmd.command)
     {
     case 0x00: // status
@@ -177,7 +177,7 @@ void iwmClock::process(iwm_decoded_cmd_t cmd)
         iwm_return_badcmd(cmd);
         break;
     } // switch (cmd)
-    fnLedManager.set(LED_BUS, false);
+    // fnLedManager.set(LED_BUS, false);
 }
 
 void iwmClock::shutdown()

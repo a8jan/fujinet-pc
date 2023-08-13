@@ -142,7 +142,7 @@ private:
         AT_O,
         AT_ENUMCOUNT};
 
-    uint modemBaud = 300; // Holds modem baud rate, Default 300
+    unsigned int modemBaud = 300; // Holds modem baud rate, Default 300
     bool DTR = false;
     bool RTS = false;
     bool XMT = false;
@@ -155,9 +155,9 @@ private:
     int count_ReqHandler = 0;
     bool firmware_sent = false;
   
-    QueueHandle_t mrxq;
-    QueueHandle_t mtxq;
-    TaskHandle_t modemTask;
+    // OS QueueHandle_t mrxq;
+    // OS QueueHandle_t mtxq;
+    // OS TaskHandle_t modemTask;
 
     /* Modem Active Variables */
     std::string cmd = "";          // Gather a new AT command to this string from serial

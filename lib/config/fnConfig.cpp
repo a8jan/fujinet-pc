@@ -89,6 +89,7 @@ void fnConfig::store_general_boot_mode(uint8_t boot_mode)
     _dirty = true;
 }
 
+#ifdef BUILD_ATARI
 void fnConfig::store_general_hsioindex(int hsio_index)
 {
     if (_general.hsio_index == hsio_index)
@@ -97,6 +98,7 @@ void fnConfig::store_general_hsioindex(int hsio_index)
     _general.hsio_index = hsio_index;
     _dirty = true;
 }
+#endif /* BUILD_ATARI */
 
 void fnConfig::store_serial_port(const char *port)
 {
@@ -757,7 +759,9 @@ void fnConfig::save()
     // GENERAL
     ss << "[General]" LINETERM;
     ss << "devicename=" << _general.devicename << LINETERM;
+#ifdef BUILD_ATARI
     ss << "hsioindex=" << _general.hsio_index << LINETERM;
+#endif
     ss << "rotationsounds=" << _general.rotation_sounds << LINETERM;
     ss << "configenabled=" << _general.config_enabled << LINETERM;
     ss << "boot_mode=" << _general.boot_mode << LINETERM;
@@ -1020,6 +1024,7 @@ void fnConfig::_read_section_general(std::stringstream &ss)
             {
                 _general.devicename = value;
             }
+#ifdef BUILD_ATARI            
             else if (strcasecmp(name.c_str(), "hsioindex") == 0)
             {
                 int index = atoi(value.c_str());
@@ -1027,6 +1032,7 @@ void fnConfig::_read_section_general(std::stringstream &ss)
                 if (index >= -1 && index <= 10 || index == 16) // -1(HSIO disabled),0..10,16
                     _general.hsio_index = index;
             }
+#endif /* BUILD_ATARI */
             else if (strcasecmp(name.c_str(), "timezone") == 0)
             {
                 _general.timezone = value;

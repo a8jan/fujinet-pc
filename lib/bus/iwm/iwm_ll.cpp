@@ -1,5 +1,7 @@
 #ifdef BUILD_APPLE
 
+#if SMARTPORT != USB
+
 #include <string.h>
 
 #include "esp_rom_gpio.h"
@@ -1063,5 +1065,7 @@ uint8_t IRAM_ATTR iwm_diskii_ll::iwm_enable_states()
 
 iwm_sp_ll smartport;
 iwm_diskii_ll diskii_xface;
+
+#endif
 
 #endif

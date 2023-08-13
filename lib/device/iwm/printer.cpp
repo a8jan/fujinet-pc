@@ -182,7 +182,7 @@ void iwmPrinter::print_from_cpm(uint8_t c)
 
 void iwmPrinter::process(iwm_decoded_cmd_t cmd)
 {
-    fnLedManager.set(LED_BUS, true);
+    // fnLedManager.set(LED_BUS, true);
     switch (cmd.command)
     {
     case 0x00: // status
@@ -202,7 +202,7 @@ void iwmPrinter::process(iwm_decoded_cmd_t cmd)
         iwm_return_badcmd(cmd);
         break;
     }
-    fnLedManager.set(LED_BUS, false);
+    // fnLedManager.set(LED_BUS, false);
 }
 
 void iwmPrinter::set_printer_type(iwmPrinter::printer_type printer_type)

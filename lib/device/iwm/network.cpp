@@ -22,7 +22,7 @@
 #include "TNFS.h"
 #include "FTP.h"
 #include "HTTP.h"
-#include "SSH.h"
+// #include "SSH.h"
 #include "SMB.h"
 
 #include "ProtocolParser.h"
@@ -617,7 +617,7 @@ bool iwmNetwork::read_channel(unsigned short num_bytes, iwm_decoded_cmd_t cmd)
 {
     NetworkStatus ns;
 
-    if ((protocol == nullptr))
+    if (protocol == nullptr)
         return true; // Punch out.
 
     // Get status
@@ -840,7 +840,7 @@ void iwmNetwork::iwm_ctrl(iwm_decoded_cmd_t cmd)
 
 void iwmNetwork::process(iwm_decoded_cmd_t cmd)
 {
-    fnLedManager.set(LED_BUS, true);
+    // fnLedManager.set(LED_BUS, true);
     switch (cmd.command)
     {
     case 0x00: // status
@@ -879,7 +879,7 @@ void iwmNetwork::process(iwm_decoded_cmd_t cmd)
         iwm_return_badcmd(cmd);
         break;
     } // switch (cmd)
-    fnLedManager.set(LED_BUS, false);
+    // fnLedManager.set(LED_BUS, false);
 }
 
 /** PRIVATE METHODS ************************************************************/

@@ -4,11 +4,11 @@
 #include "fnSystem.h"
 #include "fnConfig.h"
 #include "led.h"
-#include "fnWiFi.h"
-#include "fsFlash.h"
+#include "fnDummyWiFi.h"
+#include "fnFsSPIFFS.h"
 #include "utils.h"
 
-#include <string>
+#include "compat_string.h"
 
 #define ADDITIONAL_DETAILS_BYTES 12
 #define DIR_MAX_LEN 40
@@ -145,7 +145,7 @@ void iwmFuji::iwm_ctrl_net_set_ssid() // SP CTRL command
 
         Debug_printf("\nConnecting to net: %s password: %s\n", cfg.ssid, cfg.password);
 
-        if (fnWiFi.connect(cfg.ssid, cfg.password) == ESP_OK)
+        if (fnWiFi.connect(cfg.ssid, cfg.password) == 0)
         {
           Config.store_wifi_ssid(cfg.ssid, sizeof(cfg.ssid));
           Config.store_wifi_passphrase(cfg.password, sizeof(cfg.password));
@@ -217,7 +217,7 @@ void iwmFuji::iwm_ctrl_disk_image_mount() // SP CTRL command
     Debug_printf("\nSelecting '%s' from host #%u as %s on D%u:\n",
                  disk.filename, disk.host_slot, flag, deviceSlot + 1);
 
-    disk.fileh = host.file_open(disk.filename, disk.filename, sizeof(disk.filename), flag);
+    disk.fileh = host.filehandler_open(disk.filename, disk.filename, sizeof(disk.filename), flag);
 
     // We've gotten this far, so make sure our bootable CONFIG disk is disabled
     boot_config = false;
@@ -259,8 +259,8 @@ void iwmFuji::iwm_ctrl_copy_file()
     std::string copySpec;
     std::string sourcePath;
     std::string destPath;
-    FILE *sourceFile;
-    FILE *destFile;
+    FileHandler *sourceFile;
+    FileHandler *destFile;
     char *dataBuf;
     unsigned char sourceSlot;
     unsigned char destSlot;
@@ -287,20 +287,20 @@ void iwmFuji::iwm_ctrl_copy_file()
     _fnHosts[destSlot].mount();
 
     // Open files...
-    sourceFile = _fnHosts[sourceSlot].file_open(sourcePath.c_str(), (char *)sourcePath.c_str(), sourcePath.size() + 1, "r");
-    destFile = _fnHosts[destSlot].file_open(destPath.c_str(), (char *)destPath.c_str(), destPath.size() + 1, "w");
+    sourceFile = _fnHosts[sourceSlot].filehandler_open(sourcePath.c_str(), (char *)sourcePath.c_str(), sourcePath.size() + 1, "r");
+    destFile = _fnHosts[destSlot].filehandler_open(destPath.c_str(), (char *)destPath.c_str(), destPath.size() + 1, "w");
 
     dataBuf = (char *)malloc(532);
     size_t count = 0;
     do
     {
-        count = fread(dataBuf, 1, 532, sourceFile);
-        fwrite(dataBuf, 1, count, destFile);
+        count = sourceFile->read(dataBuf, 1, 532);
+        destFile->write(dataBuf, 1, count);
     } while (count > 0);
 
     // copyEnd:
-    fclose(sourceFile);
-    fclose(destFile);
+    sourceFile->close();
+    destFile->close();
     free(dataBuf);
 }
  
@@ -330,7 +330,7 @@ bool iwmFuji::mount_all()
             Debug_printf("Selecting '%s' from host #%u as %s on D%u:\n",
                          disk.filename, disk.host_slot, flag, i + 1);
 
-            disk.fileh = host.file_open(disk.filename, disk.filename, sizeof(disk.filename), flag);
+            disk.fileh = host.filehandler_open(disk.filename, disk.filename, sizeof(disk.filename), flag);
 
             if (disk.fileh == nullptr)
             {
@@ -794,14 +794,14 @@ void iwmFuji::iwm_ctrl_new_disk()
     disk.access_mode = DISK_ACCESS_MODE_WRITE;
     strlcpy(disk.filename, (const char *)p, 256);
 
-    disk.fileh = host.file_open(disk.filename, disk.filename, sizeof(disk.filename), "w");
+    disk.fileh = host.filehandler_open(disk.filename, disk.filename, sizeof(disk.filename), "w");
 
     Debug_printf("Creating file %s on host slot %u mounting in disk slot %u numblocks: %lu\n", disk.filename, hs, ds, numBlocks);
 
     disk.disk_dev.blank_header_type = t;
     disk.disk_dev.write_blank(disk.fileh, numBlocks);
 
-    fclose(disk.fileh);
+    disk.fileh->close();
 }
 
 // Send host slot data to computer
@@ -1007,17 +1007,17 @@ void iwmFuji::insert_boot_device(uint8_t d)
 {
     const char *config_atr = "/autorun.po";
     const char *mount_all_atr = "/mount-and-boot.po";
-    FILE *fBoot;
+    FileHandler *fBoot;
 
     switch (d)
     {
     case 0:
-        fBoot = fsFlash.file_open(config_atr);
+        fBoot = fnSPIFFS.filehandler_open(config_atr);
         _fnDisks[0].disk_dev.mount(fBoot, config_atr, 143360, MEDIATYPE_PO);        
         break;
     case 1:
 
-        fBoot = fsFlash.file_open(mount_all_atr);
+        fBoot = fnSPIFFS.filehandler_open(mount_all_atr);
         _fnDisks[0].disk_dev.mount(fBoot, mount_all_atr, 143360, MEDIATYPE_PO);        
         break;
     }
@@ -1070,7 +1070,7 @@ void iwmFuji::setup(iwmBus *iwmbus)
     theCPM = new iwmCPM();
     _iwm_bus->addDevice(theCPM, iwm_fujinet_type_t::CPM);    
 
-   for (int i = MAX_DISK_DEVICES - MAX_DISK2_DEVICES -1; i >= 0; i--)
+   for (int i = MAX_DISK_DEVICES -1; i >= 0; i--)
    {
      _fnDisks[i].disk_dev.set_disk_number('0' + i);
      _iwm_bus->addDevice(&_fnDisks[i].disk_dev, iwm_fujinet_type_t::BlockDisk);
@@ -1079,12 +1079,12 @@ void iwmFuji::setup(iwmBus *iwmbus)
     Debug_printf("\nConfig General Boot Mode: %u\n",Config.get_general_boot_mode());
     if (Config.get_general_boot_mode() == 0)
     {
-        FILE *f = fsFlash.file_open("/autorun.po");
+        FileHandler *f = fnSPIFFS.filehandler_open("/autorun.po");
          _fnDisks[0].disk_dev.mount(f, "/autorun.po", 512*256, MEDIATYPE_PO);
     }
     else
     {
-        FILE *f = fsFlash.file_open("/mount-and-boot.po");
+        FileHandler *f = fnSPIFFS.filehandler_open("/mount-and-boot.po");
          _fnDisks[0].disk_dev.mount(f, "/mount-and-boot.po", 512*256, MEDIATYPE_PO);      
     }
 
@@ -1403,7 +1403,7 @@ void iwmFuji::iwm_ctrl(iwm_decoded_cmd_t cmd)
 
 void iwmFuji::process(iwm_decoded_cmd_t cmd)
 {
-  fnLedManager.set(LED_BUS, true);
+  // fnLedManager.set(LED_BUS, true);
   switch (cmd.command)
   {
   case 0x00: // status
@@ -1442,7 +1442,7 @@ void iwmFuji::process(iwm_decoded_cmd_t cmd)
     iwm_return_badcmd(cmd);
     break;
   } // switch (cmd)
-  fnLedManager.set(LED_BUS, false);
+  // fnLedManager.set(LED_BUS, false);
 }
 
 void iwmFuji::handle_ctl_eject(uint8_t spid) {

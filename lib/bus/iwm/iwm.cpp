@@ -1,7 +1,9 @@
 #ifdef BUILD_APPLE
 #include "iwm.h"
 #include "fnSystem.h"
+#if SMARTPORT != USB
 #include "fnHardwareTimer.h"
+#endif
 // #include "fnFsTNFS.h" // do i need this?
 #include <string.h>
 // #include "driver/timer.h" // contains the hardware timer register data structure
@@ -14,6 +16,10 @@
 #include "../device/iwm/fuji.h"
 #include "../device/iwm/cpm.h"
 #include "../device/iwm/clock.h"
+
+#if SMARTPORT == USB
+#define IRAM_ATTR
+#endif
 
 /******************************************************************************
 Based on:
@@ -275,11 +281,13 @@ void iwmBus::setup(void)
 {
   Debug_printf(("\nIWM FujiNet based on SmartportSD v1.15\n"));
 
+#if SMARTPORT != USB
   fnTimer.config();
   Debug_printf("\nFujiNet Hardware timer started");
 
   diskii_xface.setup_rmt();
   Debug_printf("\nRMT configured for Disk ][ Output");
+#endif
 
   smartport.setup_spi();
   Debug_printf("\nSPI configured for smartport I/O");
@@ -452,6 +460,7 @@ void IRAM_ATTR iwmBus::service()
     for (auto devicep : _daisyChain)
       devicep->_devnum = 0;
 
+#if SMARTPORT != USB
     while (iwm_phases() == iwm_phases_t::reset)
       portYIELD(); // no timeout needed because the IWM must eventually clear reset.
     // even if it doesn't, we would just come back to here, so might as
@@ -463,6 +472,7 @@ void IRAM_ATTR iwmBus::service()
     // lets sample it here in case the host is not on when the FN is powered on/reset
     (GPIO.in1.val & (0x01 << (SP_EN35 - 32))) ? en35Host = true : en35Host = false;
     Debug_printf("\nen35Host = %d",en35Host);
+#endif /* !USB */
 
     break;
   case iwm_phases_t::enable:
@@ -503,8 +513,10 @@ void IRAM_ATTR iwmBus::service()
             iwm_ack_deassert(); // go hi-Z
             return;
           }
+#if SMARTPORT != USB
           // need to take time here to service other ESP processes so they can catch up
           taskYIELD(); // Allow other tasks to run
+#endif
           Debug_printf("\nCommand Packet:");
           print_packet(command_packet.data);
 
@@ -524,6 +536,7 @@ void IRAM_ATTR iwmBus::service()
     iwm_ack_deassert(); // go hi-Z
   }                     // switch (phasestate)
 
+#if SMARTPORT != USB
   // check on the diskii status
   switch (iwm_drive_enabled())
   {
@@ -563,9 +576,10 @@ void IRAM_ATTR iwmBus::service()
     iwm_ack_deassert();
     return;
   }
-
+#endif /* !USB */
 }
 
+#if SMARTPORT != USB
 iwm_enable_state_t IRAM_ATTR iwmBus::iwm_drive_enabled()
 {
   uint8_t phases = smartport.iwm_phase_vector();
@@ -600,13 +614,16 @@ iwm_enable_state_t IRAM_ATTR iwmBus::iwm_drive_enabled()
     return iwm_enable_state_t::off;
   }
 }
+#endif /* !USB */
 
 void iwmBus::handle_init()
 {
   uint8_t status = 0;
   iwmDevice *pDevice = nullptr;
 
+#if SMARTPORT != USB
   fnLedManager.set(LED_BUS, true);
+#endif
 
   // iwm_rddata_clr();
 
@@ -634,12 +651,16 @@ void iwmBus::handle_init()
       // print_packet ((uint8_t*) packet_buffer,get_packet_length());
 
       Debug_printf(("\nDrive: %02x\n"), pDevice->id());
+#if SMARTPORT != USB      
       fnLedManager.set(LED_BUS, false);
+#endif
       return;
     }
   }
 
+#if SMARTPORT != USB
   fnLedManager.set(LED_BUS, false);
+#endif
 }
 
 // Add device to SIO bus

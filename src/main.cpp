@@ -265,7 +265,7 @@ void main_setup(int argc, char *argv[])
 #ifdef BUILD_APPLE
 
     iwmModem *sioR;
-    FileSystem *ptrfs = fnSDFAT.running() ? (FileSystem *)&fnSDFAT : (FileSystem *)&fsFlash;
+    FileSystem *ptrfs = fnSDFAT.running() ? (FileSystem *)&fnSDFAT : (FileSystem *)&fnSPIFFS;
     sioR = new iwmModem(ptrfs, Config.get_modem_sniffer_enabled());
     IWM.addDevice(sioR,iwm_fujinet_type_t::Modem);
     iwmPrinter::printer_type ptype = Config.get_printer_type(0);

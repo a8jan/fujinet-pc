@@ -5,7 +5,12 @@
 #include "../../include/debug.h"
 
 #include "bus.h"
-//#include "iwm_ll.h"
+
+#if SMARTPORT == USB
+#include "iwm_usb.h"
+#else
+#include "iwm_ll.h"
+#endif
 
 #include <cstdint>
 #include <forward_list>

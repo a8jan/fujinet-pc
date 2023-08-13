@@ -2,6 +2,9 @@
 #define _MEDIA_TYPE_
 
 #include <stdio.h>
+#include <stdint.h>
+
+#include "fnFile.h"
 
 #define INVALID_SECTOR_VALUE 65536
 
@@ -25,7 +28,7 @@ enum mediatype_t
 class MediaType
 {
 protected:
-    FILE *_media_fileh = nullptr;
+    FileHandler *_media_fileh = nullptr;
     uint32_t _media_image_size = 0;
     uint32_t _media_num_sectors = 0;
     uint16_t _media_sector_size = DISK_BYTES_PER_SECTOR_SINGLE;
@@ -58,7 +61,7 @@ public:
     // bool _allow_hsio = true;
     bool diskiiemulation;
 
-    virtual mediatype_t mount(FILE *f, uint32_t disksize) = 0;
+    virtual mediatype_t mount(FileHandler *f, uint32_t disksize) = 0;
     virtual void unmount();
 
     // Returns TRUE if an error condition occurred
