@@ -268,11 +268,11 @@ std::string util_long_entry(std::string filename, size_t fileSize, bool is_dir)
     returned_entry.replace(0, filename.length(), filename);
 
     if (fileSize > 1048576)
-        sprintf(tmp, "%2dM", (fileSize >> 20));
+        sprintf(tmp, "%2uM", (unsigned int)(fileSize >> 20));
     else if (fileSize > 1024)
-        sprintf(tmp, "%4dK", (fileSize >> 10));
+        sprintf(tmp, "%4uK", (unsigned int)(fileSize >> 10));
     else
-        sprintf(tmp, "%4d", fileSize);
+        sprintf(tmp, "%4u", (unsigned int)fileSize);
 
     stylized_filesize = tmp;
 
@@ -304,7 +304,8 @@ char apple2_fs[6];
 const char *apple2_filesize(size_t fileSize)
 {
     unsigned short fs = fileSize / 512;
-    itoa(fs, apple2_fs, 10);
+    // itoa(fs, apple2_fs, 10);
+    sprintf(apple2_fs, "%u", fs);
     return apple2_fs;
 }
 
@@ -639,10 +640,14 @@ void util_sam_say(const char *p,
     char pitchs[4], speeds[4], mouths[4], throats[4]; // itoa temp vars
 
     // Convert to strings.
-    itoa(pitch, pitchs, 10);
-    itoa(speed, speeds, 10);
-    itoa(mouth, mouths, 10);
-    itoa(throat, throats, 10);
+    // itoa(pitch, pitchs, 10);
+    // itoa(speed, speeds, 10);
+    // itoa(mouth, mouths, 10);
+    // itoa(throat, throats, 10);
+    sprintf(pitchs, "%u", pitch);
+    sprintf(speeds, "%u", speed);
+    sprintf(mouths, "%u", mouth);
+    sprintf(throats, "%u", throat);
 
     memset(a, 0, sizeof(a));
     a[n++] = (char *)("sam"); // argv[0] for compatibility
