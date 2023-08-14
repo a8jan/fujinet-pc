@@ -1,3 +1,5 @@
+#ifdef BUILD_ATARI
+
 #include "fnSioCom.h"
 
 #include "debug.h"
@@ -245,3 +247,5 @@ void SioCom::reset_sio_port(sio_mode mode)
     set_sio_mode(mode);
     begin(baud);
 }
+
+#endif /* BUILD_ATARI */

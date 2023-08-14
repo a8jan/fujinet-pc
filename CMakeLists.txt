@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.4...3.22)
 project(fujinet-pc)
 
 # C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # fujinet.build_platform
@@ -17,7 +17,7 @@ set(FUJINET_DATA_DIR ${CMAKE_SOURCE_DIR}/data/${FUJINET_BUILD_PLATFORM})
 set(FUJINET_PIN_MAP PINMAP_ATARIV1)
 
 # add -DNO_DEBUG_PRINT to supress Debug_print output in Release build
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D${FUJINET_BUILD_PLATFORM} -D${FUJINET_PIN_MAP} -DSKIP_SERVER_CERT_VERIFY")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D${FUJINET_BUILD_PLATFORM} -D${FUJINET_PIN_MAP} -DSKIP_SERVER_CERT_VERIFY -DSMARTPORT=USB")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVERBOSE_HTTP -D__PC_BUILD_DEBUG__")
 
 # mongoose.c some compile options: -DMG_ENABLE_LINES=1 -DMG_ENABLE_DIRECTORY_LISTING=1 -DMG_ENABLE_SSI=1
@@ -42,6 +42,7 @@ set(SOURCES src/main.cpp
     lib/config/fnConfig.h lib/config/fnConfig.cpp
     lib/utils/utils.h lib/utils/utils.cpp
     lib/utils/cbuf.h lib/utils/cbuf.cpp
+    lib/utils/string_utils.h lib/utils/string_utils.cpp
     lib/hardware/fnDummyWiFi.h lib/hardware/fnDummyWiFi.cpp
     lib/hardware/fnUART.h lib/hardware/fnUART.cpp
     lib/hardware/fnSystem.h lib/hardware/fnSystem.cpp lib/hardware/fnSystemNet.cpp
@@ -97,6 +98,7 @@ set(SOURCES src/main.cpp
     lib/printer-emulator/svg_plotter.h lib/printer-emulator/svg_plotter.cpp
     lib/network-protocol//networkStatus.h
     lib/network-protocol/Protocol.h lib/network-protocol/Protocol.cpp
+    lib/network-protocol/ProtocolParser.h lib/network-protocol/ProtocolParser.cpp
     lib/network-protocol/Test.h lib/network-protocol/Test.cpp
     lib/network-protocol/TCP.h lib/network-protocol/TCP.cpp
     lib/network-protocol/UDP.h lib/network-protocol/UDP.cpp
@@ -109,6 +111,8 @@ set(SOURCES src/main.cpp
     lib/fuji/fujiHost.h lib/fuji/fujiHost.cpp
     lib/fuji/fujiDisk.h lib/fuji/fujiDisk.cpp
     lib/bus/bus.h
+    lib/bus/iwm/iwm.h lib/bus/iwm/iwm.cpp
+    lib/bus/iwm/iwm_usb.h lib/bus/iwm/iwm_usb.cpp
     lib/bus/sio/sio.h lib/bus/sio/sio.cpp
     lib/bus/sio/siocom/sioport.h lib/bus/sio/siocom/sioport.cpp
     lib/bus/sio/siocom/serialsio.h lib/bus/sio/siocom/serialsio.cpp
@@ -123,6 +127,14 @@ set(SOURCES src/main.cpp
     lib/device/network.h
     lib/device/udpstream.h
     lib/device/siocpm.h
+    lib/device/iwm/disk.h lib/device/iwm/disk.cpp
+    lib/device/iwm/printer.h lib/device/iwm/printer.cpp
+    lib/device/iwm/printerlist.h lib/device/iwm/printerlist.cpp
+    lib/device/iwm/modem.h lib/device/iwm/modem.cpp
+    lib/device/iwm/fuji.h lib/device/iwm/fuji.cpp
+    lib/device/iwm/network.h lib/device/iwm/network.cpp
+    lib/device/iwm/clock.h lib/device/iwm/clock.cpp
+    lib/device/iwm/cpm.h lib/device/iwm/cpm.cpp
     lib/device/sio/disk.h lib/device/sio/disk.cpp
     lib/device/sio/printer.h lib/device/sio/printer.cpp
     lib/device/sio/printerlist.h lib/device/sio/printerlist.cpp
@@ -133,6 +145,8 @@ set(SOURCES src/main.cpp
     lib/device/sio/apetime.h lib/device/sio/apetime.cpp
     lib/device/sio/pclink.h lib/device/sio/pclink.cpp
     lib/media/media.h
+    lib/media/apple/mediaType.h lib/media/apple/mediaType.cpp
+    lib/media/apple/mediaTypePO.h lib/media/apple/mediaTypePO.cpp
     lib/media/atari/diskType.h lib/media/atari/diskType.cpp
     lib/media/atari/diskTypeAtr.h lib/media/atari/diskTypeAtr.cpp
     lib/media/atari/diskTypeAtx.h 

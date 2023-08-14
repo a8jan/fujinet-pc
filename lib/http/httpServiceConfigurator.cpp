@@ -15,7 +15,7 @@
 #ifdef BUILD_APPLE
 #include "iwm/printerlist.h"
 #include "iwm/fuji.h"
-#define PRINTER_CLASS applePrinter
+#define PRINTER_CLASS iwmPrinter
 extern iwmFuji theFuji;
 #endif /* BUILD_APPLE */
 
@@ -391,41 +391,52 @@ void fnHttpServiceConfigurator::config_serial(std::string port, std::string comm
     const char *devname;
     int command_pin;
     int proceed_pin;
+#ifdef BUILD_ATARI // OS
     devname = fnSioCom.get_serial_port(command_pin, proceed_pin);
+#endif
 
     // update settings
     if (!port.empty())
     {
         Config.store_serial_port(port.c_str());
 
+#ifdef BUILD_ATARI // OS
         if (fnSioCom.get_sio_mode() == SioCom::sio_mode::SERIAL)
         {
             fnSioCom.end();
         }
+#endif
 
         // re-set serial port
+#ifdef BUILD_ATARI // OS
         fnSioCom.set_serial_port(Config.get_serial_port().c_str(), command_pin, proceed_pin);
     
         if (fnSioCom.get_sio_mode() == SioCom::sio_mode::SERIAL)
         {
             fnSioCom.begin();
         }
+#endif
     }
     if (!command.empty())
     {
         Config.store_serial_command((fnConfig::serial_command_pin)atoi(command.c_str()));
+#ifdef BUILD_ATARI // OS
         fnSioCom.set_serial_port(nullptr, Config.get_serial_command(), proceed_pin);
+#endif
     }
     if (!proceed.empty())
     {
         Config.store_serial_proceed((fnConfig::serial_proceed_pin)atoi(proceed.c_str()));
+#ifdef BUILD_ATARI // OS
         fnSioCom.set_serial_port(nullptr, command_pin, Config.get_serial_proceed());
+#endif
     }
     Config.save();
 }
 
 void fnHttpServiceConfigurator::config_netsio(std::string enable_netsio, std::string netsio_host_port)
 {
+#ifdef BUILD_ATARI // OS
     Debug_printf("Set NetSIO: %s, %s\n", enable_netsio.c_str(), netsio_host_port.c_str());
 
     // Store our change in Config
@@ -456,6 +467,7 @@ void fnHttpServiceConfigurator::config_netsio(std::string enable_netsio, std::st
 
     // Save change
     Config.save();
+#endif /* ATARI */
 }
 
 int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t postlen)

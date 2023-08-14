@@ -442,7 +442,7 @@ void rs232Network::rs232_set_prefix()
     memset(prefixSpec, 0, sizeof(prefixSpec));
 
     bus_to_peripheral(prefixSpec, sizeof(prefixSpec));
-    util_clean_devicespec(prefixSpec, sizeof(prefixSpec));
+    util_devicespec_fix_9b(prefixSpec, sizeof(prefixSpec));
 
     prefixSpec_str = string((const char *)prefixSpec);
     prefixSpec_str = prefixSpec_str.substr(prefixSpec_str.find_first_of(":") + 1);
@@ -520,7 +520,7 @@ void rs232Network::rs232_set_login()
 
     memset(loginSpec, 0, sizeof(loginSpec));
     bus_to_peripheral(loginSpec, sizeof(loginSpec));
-    util_clean_devicespec(loginSpec, sizeof(loginSpec));
+    util_devicespec_fix_9b(loginSpec, sizeof(loginSpec));
 
     login = string((char *)loginSpec);
     rs232_complete();
@@ -535,7 +535,7 @@ void rs232Network::rs232_set_password()
 
     memset(passwordSpec, 0, sizeof(passwordSpec));
     bus_to_peripheral(passwordSpec, sizeof(passwordSpec));
-    util_clean_devicespec(passwordSpec, sizeof(passwordSpec));
+    util_devicespec_fix_9b(passwordSpec, sizeof(passwordSpec));
 
     password = string((char *)passwordSpec);
     rs232_complete();
@@ -893,7 +893,7 @@ void rs232Network::parse_and_instantiate_protocol()
 
     // Get Devicespec from buffer, and put into primary devicespec string
     bus_to_peripheral(devicespecBuf, sizeof(devicespecBuf));
-    util_clean_devicespec(devicespecBuf, sizeof(devicespecBuf));
+    util_devicespec_fix_9b(devicespecBuf, sizeof(devicespecBuf));
     deviceSpec = string((char *)devicespecBuf);
 
     // Invalid URL returns error 165 in status.

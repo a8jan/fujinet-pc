@@ -222,7 +222,7 @@ bool NetworkProtocolUDP::special_80(uint8_t *sp_buf, unsigned short len, cmdFram
 
 bool NetworkProtocolUDP::set_destination(uint8_t *sp_buf, unsigned short len)
 {
-    util_clean_devicespec(sp_buf, len); // TODO check sp_buf, first byte seems corrupted
+    util_devicespec_fix_9b(sp_buf, len); // TODO check sp_buf, first byte seems corrupted
     Debug_printf("set_destination %s\n", sp_buf);
     string path((const char *)sp_buf);
     int device_colon = path.find_first_of(":");

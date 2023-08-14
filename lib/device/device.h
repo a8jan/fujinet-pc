@@ -81,7 +81,7 @@
 # include "iwm/modem.h"
 # include "iwm/printer.h"
 # include "iwm/printerlist.h"
-    appleModem *sioR;
+    iwmModem *sioR;
 #endif
 
 #ifdef BUILD_S100

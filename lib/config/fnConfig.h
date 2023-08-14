@@ -75,14 +75,18 @@ public:
     // GENERAL
     std::string get_general_devicename() { return _general.devicename; };
     std::string get_general_label();
+#ifdef BUILD_ATARI    
     int get_general_hsioindex() { return _general.hsio_index; };
+#endif
     std::string get_general_timezone() { return _general.timezone; };
     bool get_general_rotation_sounds() { return _general.rotation_sounds; };
     std::string get_network_udpstream_host() { return _network.udpstream_host; };
     int get_network_udpstream_port() { return _network.udpstream_port; };
     bool get_general_config_enabled() { return _general.config_enabled; };
     void store_general_devicename(const char *devicename);
+#ifdef BUILD_ATARI    
     void store_general_hsioindex(int hsio_index);
+#endif
     void store_general_timezone(const char *timezone);
     void store_general_rotation_sounds(bool rotation_sounds);
     void store_general_config_enabled(bool config_enabled);
@@ -336,7 +340,9 @@ private:
     struct general_info
     {
         std::string devicename = "FujiNet";
+    #ifdef BUILD_ATARI
         int hsio_index = SIO_HISPEED_INDEX;
+    #endif
         std::string timezone;
         bool rotation_sounds = true;
         bool config_enabled = true;

@@ -12,9 +12,10 @@
 
 #include "utils.h"
 
-void fujiHost::unmount()
+bool fujiHost::umount()
 {
     cleanup();
+    return true;
 }
 
 /* Perform any cleanup before destruction/reassignment

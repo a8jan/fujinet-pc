@@ -8,13 +8,15 @@
 #include "iwm/network.h"
 #include "iwm/printer.h"
 #include "iwm/cpm.h"
+#include "iwm/clock.h"
+#include "iwm/modem.h"
 
-#include "fujiHost.h"
-#include "fujiDisk.h"
-#include "fujiCmd.h"
+#include "../fuji/fujiHost.h"
+#include "../fuji/fujiDisk.h"
+#include "../fuji/fujiCmd.h"
 
 #define MAX_HOSTS 8
-#define MAX_DISK_DEVICES 4 // to do for now
+#define MAX_DISK_DEVICES 4
 #define MAX_NETWORK_DEVICES 4
 
 #define MAX_SSID_LEN 32
@@ -84,6 +86,8 @@ private:
 
     iwmCPM *theCPM;
 
+    iwmClock *theClock;
+
     int _current_open_directory_slot = -1;
 
     iwmDisk *_bootDisk; // special disk drive just for configuration
@@ -123,8 +127,8 @@ protected:
     void iwm_ctrl_disk_image_umount();      // 0xE9
     void iwm_stat_get_adapter_config();     // 0xE8
     void iwm_ctrl_new_disk();               // 0xE7
-  /*  void adamnet_unmount_host();           // 0xE6
- */
+    void iwm_ctrl_unmount_host();           // 0xE6
+ 
    void iwm_stat_get_directory_position(); // 0xE5
    void iwm_ctrl_set_directory_position(); // 0xE4
 /*
@@ -152,21 +156,22 @@ protected:
     void iwm_ctrl_set_boot_mode();              // 0xD6
     void iwm_ctrl_enable_device();          // 0xD5
     void iwm_ctrl_disable_device();         // 0xD4
+    void send_stat_get_enable();        // 0xD1
 
     void shutdown() override;
-    void process(cmdPacket_t cmd) override;
+    void process(iwm_decoded_cmd_t cmd) override;
 
-    void iwm_ctrl(cmdPacket_t cmd) override;
-    void iwm_open(cmdPacket_t cmd) override;
-    void iwm_close(cmdPacket_t cmd) override;
-    void iwm_read(cmdPacket_t cmd) override;
-    void iwm_status(cmdPacket_t cmd) override; 
+    void iwm_ctrl(iwm_decoded_cmd_t cmd) override;
+    void iwm_open(iwm_decoded_cmd_t cmd) override;
+    void iwm_close(iwm_decoded_cmd_t cmd) override;
+    void iwm_read(iwm_decoded_cmd_t cmd) override;
+    void iwm_status(iwm_decoded_cmd_t cmd) override; 
 
-    void encode_status_reply_packet() override;
-    void encode_status_dib_reply_packet() override;
+    void send_status_reply_packet() override;
+    void send_status_dib_reply_packet() override;
 
-    void encode_extended_status_reply_packet() override{};
-    void encode_extended_status_dib_reply_packet() override{};
+    void send_extended_status_reply_packet() override{};
+    void send_extended_status_dib_reply_packet() override{};
 
 public:
     bool boot_config = true;
@@ -183,6 +188,7 @@ public:
 
     void image_rotate();
     int get_disk_id(int drive_slot);
+    void handle_ctl_eject(uint8_t spid);
     std::string get_host_prefix(int host_slot);
 
     fujiHost *get_hosts(int i) { return &_fnHosts[i]; }
@@ -193,12 +199,12 @@ public:
 
     bool mount_all();              // 0xD7
 
-    void FujiStatus(cmdPacket_t cmd) { iwm_status(cmd); }
-    void FujiControl(cmdPacket_t cmd) { iwm_ctrl(cmd); }
+    void FujiStatus(iwm_decoded_cmd_t cmd) { iwm_status(cmd); }
+    void FujiControl(iwm_decoded_cmd_t cmd) { iwm_ctrl(cmd); }
 
     iwmFuji();
 
-    // virtual void startup_hack() override { Debug_printf("\r\n Fuji startup hack"); }
+    // virtual void startup_hack() override { Debug_printf("\n Fuji startup hack"); }
 };
 
 extern iwmFuji theFuji;

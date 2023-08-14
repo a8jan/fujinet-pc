@@ -2,6 +2,9 @@
 #define _MEDIA_TYPE_
 
 #include <stdio.h>
+#include <stdint.h>
+
+#include "fnFile.h"
 
 #define INVALID_SECTOR_VALUE 65536
 
@@ -17,13 +20,15 @@ enum mediatype_t
 {
     MEDIATYPE_UNKNOWN = 0,
     MEDIATYPE_PO,
+    MEDIATYPE_WOZ,
+    MEDIATYPE_DSK,
     MEDIATYPE_COUNT
 };
 
 class MediaType
 {
 protected:
-    FILE *_media_fileh = nullptr;
+    FileHandler *_media_fileh = nullptr;
     uint32_t _media_image_size = 0;
     uint32_t _media_num_sectors = 0;
     uint16_t _media_sector_size = DISK_BYTES_PER_SECTOR_SINGLE;
@@ -48,23 +53,24 @@ public:
     // } _percomBlock;
 
     uint32_t num_blocks;
-    FILE* fileptr() {return _media_fileh;}
+    // FILE* fileptr() {return _media_fileh;}
 
     // uint8_t _media_sectorbuff[DISK_SECTORBUF_SIZE];
 
     mediatype_t _mediatype = MEDIATYPE_UNKNOWN;
     // bool _allow_hsio = true;
+    bool diskiiemulation;
 
-    virtual mediatype_t mount(FILE *f, uint32_t disksize) = 0;
+    virtual mediatype_t mount(FileHandler *f, uint32_t disksize) = 0;
     virtual void unmount();
 
     // Returns TRUE if an error condition occurred
     virtual bool format(uint16_t *respopnsesize);
 
     // Returns TRUE if an error condition occurred
-    virtual bool read(uint32_t blockNum, uint16_t *readcount) = 0;
+    virtual bool read(uint32_t blockNum, uint16_t *count, uint8_t* buffer) = 0;
     // Returns TRUE if an error condition occurred
-    virtual bool write(uint32_t blockNum, bool verify);
+    virtual bool write(uint32_t blockNum, uint16_t *count, uint8_t* buffer) = 0;
 
     // virtual uint16_t sector_size(uint16_t sectornum);
     

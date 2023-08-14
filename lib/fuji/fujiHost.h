@@ -25,7 +25,6 @@ private:
     char _prefix[MAX_HOST_PREFIX_LEN] = { '\0' };
 
     void cleanup();
-    void unmount();
 
     int mount_local();
     int mount_tnfs();
@@ -46,6 +45,7 @@ public:
     const char* get_hostname();
 
     bool mount();
+    bool umount();
 
     // Host prefixes are used for host file operations that take a path (file_exists, file_open, dir_open)
     void set_prefix(const char *prefix);
