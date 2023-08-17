@@ -23,7 +23,7 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 - Web interface to control program's settings, browse TNFS hosts and mount disk images
 - FujiNet network device (N:) with support for various network protocols:
   TCP, UDP, TNFS, HTTP, SMB, FTP, Telnet
-- Compiles and runs on Linux, macOS and Windows (Windows with Altirra only, no serial port yet)
+- Compiles and runs on Linux, macOS and Windows
 - Binary packages for selected platforms
 
 ### Not (yet) working
