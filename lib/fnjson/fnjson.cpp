@@ -102,7 +102,7 @@ string FNJSON::getValue(cJSON *item)
 {
     if (cJSON_IsString(item))
     {
-        stringstream ss;
+        std::stringstream ss;
 
         Debug_printf("S: [cJSON_IsString] %s\n",cJSON_GetStringValue(item));
 
@@ -168,7 +168,7 @@ string FNJSON::getValue(cJSON *item)
     }
     else if (cJSON_IsNumber(item))
     {
-        stringstream ss;
+        std::stringstream ss;
 
         Debug_printf("S: [cJSON_IsNumber] %f\n",cJSON_GetNumberValue(item));
 
@@ -181,7 +181,7 @@ string FNJSON::getValue(cJSON *item)
         else
         {
             // no, return as double with max. 10 digits
-            ss << setprecision(10)<<cJSON_GetNumberValue(item);
+            ss << std::setprecision(10)<<cJSON_GetNumberValue(item);
         }
 
         return ss.str() + lineEnding;
