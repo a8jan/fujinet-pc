@@ -1405,8 +1405,9 @@ void sioFuji::sio_set_device_filename()
     // Handle DISK slots
     if (slot < MAX_DISK_DEVICES)
     {
-        // TODO: Set HOST and MODE
         memcpy(_fnDisks[cmdFrame.aux1].filename, tmp, MAX_FILENAME_LEN);
+        _fnDisks[cmdFrame.aux1].host_slot = host;
+        _fnDisks[cmdFrame.aux1].access_mode = mode;
         _populate_config_from_slots();
     }
     // Handle TAPE slots
