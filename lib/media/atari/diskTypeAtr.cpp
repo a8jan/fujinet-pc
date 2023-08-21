@@ -122,7 +122,7 @@ bool MediaTypeATR::write(uint16_t sectornum, bool verify)
         else
         {
             oldFileh = _disk_fileh;
-            hsFileh = _disk_host->filehandler_open(_disk_filename, _disk_filename, strlen(_disk_filename) + 1, "r+");
+            hsFileh = _disk_host->filehandler_open(_disk_filename, _disk_filename, strlen(_disk_filename) + 1, "rb+");
             _disk_fileh = hsFileh;
         }
     }
