@@ -25,11 +25,15 @@ private:
     char _prefix[MAX_HOST_PREFIX_LEN] = { '\0' };
 
     void cleanup();
+    void unmount();
 
     int mount_local();
     int mount_tnfs();
     int mount_smb();
     int mount_ftp();
+
+    int unmount_local();
+    int unmount_tnfs();
 
 public:
     int slotid = -1;

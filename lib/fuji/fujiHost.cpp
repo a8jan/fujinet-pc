@@ -12,10 +12,9 @@
 
 #include "utils.h"
 
-bool fujiHost::umount()
+void fujiHost::unmount()
 {
     cleanup();
-    return true;
 }
 
 /* Perform any cleanup before destruction/reassignment
@@ -25,7 +24,7 @@ void fujiHost::cleanup()
     if (_fs != nullptr)
         _fs->dir_close();
 
-    // Delete the filesystem if it's not one of the global oens
+    // Delete the filesystem if it's not one of the global ones
     if (_fs->is_global() == false)
         delete _fs;
 
@@ -305,6 +304,12 @@ int fujiHost::mount_local()
     return 0;
 }
 
+int fujiHost::unmount_local()
+{
+    // Silently ignore. We can't unregister the SD card.
+    return 0;
+}
+
 /* Returns:
     0 on success
    -1 on failure
@@ -419,6 +424,18 @@ int fujiHost::mount_ftp()
     return -1;
 }
 
+int fujiHost::unmount_tnfs()
+{
+    Debug_printf("Filesystem unmounted.\n");
+
+    if (_fs != nullptr)
+    {
+        delete _fs;
+    }
+
+    return 0;
+}
+
 /* Returns true if successful
 *  We expect a valid devicename, currently:
 *  "SD" = local
@@ -440,4 +457,23 @@ bool fujiHost::mount()
 
     // Try mounting TNFS last
     return 0 == mount_tnfs();
+}
+
+/* Returns true if successful
+*  We expect a valid devicename, currently:
+*  "SD" = local
+*  anything else = TNFS
+*/
+bool fujiHost::umount()
+{
+    Debug_printf("::unmount {%d} \"%s\"\n", slotid+1, _hostname);
+
+    if (_type == HOSTTYPE_LOCAL)
+    {
+        Debug_println("::skip unmounting SD");
+        return 0;
+    }
+
+    // Try unmounting TNFS/SMB/FTP
+    return 0 == unmount_tnfs();
 }
