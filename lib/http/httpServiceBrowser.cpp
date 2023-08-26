@@ -48,8 +48,8 @@ int fnHttpSendFileTask::start()
 
 int fnHttpSendFileTask::abort()
 {
-    _fh->close();
-    delete _fs;
+    _fh->close(); // close (and delete) FileHandler
+    delete _fs; // delete temporary FileSystem
     Debug_printf("fnHttpSendFileTask aborted #%d\n", _id);
     return 0;
 }
@@ -68,8 +68,8 @@ int fnHttpSendFileTask::step()
         return 0; // continue
 
     // done
-    _fh->close();
-    delete _fs;
+    _fh->close(); // close (and delete) FileHandler
+    delete _fs;  // delete temporary FileSystem
     Debug_printf("Sent %lu of %lu bytes\n", (unsigned long)_total, (unsigned long)_filesize);
 
     return 1; // task has completed
