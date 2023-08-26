@@ -215,13 +215,13 @@ mediatype_t sioDisk::mount(FileHandler *f, const char *filename, uint32_t disksi
     // Now mount based on MediaType
     switch (disk_type)
     {
-    // case MEDIATYPE_CAS:
+    case MEDIATYPE_CAS:
     // case MEDIATYPE_WAV:
-    //     // open the cassette file
-    //     theFuji.cassette()->mount_cassette_file(f, disksize);
-    //     return disk_type;
-    //     // TODO left off here for tape cassette
-    //     break;
+        // open the cassette file
+        theFuji.cassette()->mount_cassette_file(f, disksize);
+        return disk_type;
+        // TODO left off here for tape cassette
+        break;
     case MEDIATYPE_XEX:
         device_active = true;
         _disk = new MediaTypeXEX();

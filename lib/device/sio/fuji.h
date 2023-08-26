@@ -62,7 +62,7 @@ private:
 
     fujiDisk _fnDisks[MAX_DISK_DEVICES];
 
-    // sioCassette _cassetteDev;
+    sioCassette _cassetteDev;
 
     int _current_open_directory_slot = -1;
 
@@ -131,7 +131,7 @@ public:
 
     sioNetwork *network();
 
-    // sioCassette *cassette() { return &_cassetteDev; };
+    sioCassette *cassette() { return &_cassetteDev; };
     void debug_tape();
 
     void insert_boot_device(uint8_t d);

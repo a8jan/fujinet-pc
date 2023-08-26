@@ -139,7 +139,8 @@ void sioCassette::close_cassette_file()
     // for closing files used for writing
     if (_file != nullptr)
     {
-        fclose(_file);
+        _file->close();
+        _file = nullptr;
 #ifdef DEBUG
         Debug_println("CAS file closed.");
 #endif
@@ -160,7 +161,7 @@ void sioCassette::open_cassette_file(FileSystem *_FS)
     strcat(fn, ".cas");
 
     close_cassette_file();
-    _file = _FS->file_open(fn, "w+"); // use "w+" for CSAVE test
+    _file = _FS->filehandler_open(fn, "wb+"); // use "w+" for CSAVE test
     if (!_file)
     {
         _mounted = false;
@@ -186,7 +187,7 @@ void sioCassette::umount_cassette_file()
         _mounted = false;
 }
 
-void sioCassette::mount_cassette_file(FILE *f, size_t fz)
+void sioCassette::mount_cassette_file(FileHandler *f, size_t fz)
 {
     _file = f;
     filesize = fz;
@@ -242,24 +243,25 @@ void sioCassette::sio_enable_cassette()
         Debug_println("stopped hardware UART");
         // int a = fnSystem.digital_read(UART2_RX);
         // Debug_printf("set pin to input. Value is %d\n", a);
-        Debug_println("Writing FUJI File HEADERS");
+        Debug_println("Writing FUJI File HEADERS - NOT IMPLEMENTED!!!");
 #endif
-        fprintf(_file, "FUJI");
-        fputc(16, _file);
-        fputc(0, _file);
-        fputc(0, _file);
-        fputc(0, _file);
-        fprintf(_file, "FujiNet CAS File");
+        // TODO
+        // fprintf(_file, "FUJI");
+        // fputc(16, _file);
+        // fputc(0, _file);
+        // fputc(0, _file);
+        // fputc(0, _file);
+        // fprintf(_file, "FujiNet CAS File");
 
-        fprintf(_file, "baud");
-        fputc(0, _file);
-        fputc(0, _file);
-        fputc(0x58, _file);
-        fputc(0x02, _file);
+        // fprintf(_file, "baud");
+        // fputc(0, _file);
+        // fputc(0, _file);
+        // fputc(0x58, _file);
+        // fputc(0x02, _file);
 
-        fflush(_file);
-        tape_offset = ftell(_file);
-        block++;
+        // fflush(_file);
+        // tape_offset = ftell(_file);
+        // block++;
     }
 
 #ifdef DEBUG
@@ -358,8 +360,8 @@ size_t sioCassette::send_tape_block(size_t offset)
 #endif
         //read block
         //r = faccess_offset(FILE_ACCESS_READ, offset, BLOCK_LEN);
-        fseek(_file, offset, SEEK_SET);
-        r = fread(atari_sector_buffer, 1, BLOCK_LEN, _file);
+        _file->seek(offset, SEEK_SET);
+        r = _file->read(atari_sector_buffer, 1, BLOCK_LEN);
 
         //shift buffer 3 bytes right
         for (i = 0; i < BLOCK_LEN; i++)
@@ -405,8 +407,8 @@ void sioCassette::check_for_FUJI_file()
     uint8_t *p = hdr->chunk_type;
 
     // faccess_offset(FILE_ACCESS_READ, 0, sizeof(struct tape_FUJI_hdr));
-    fseek(_file, 0, SEEK_SET);
-    fread(atari_sector_buffer, 1, sizeof(struct tape_FUJI_hdr), _file);
+    _file->seek(0, SEEK_SET);
+    _file->read(atari_sector_buffer, 1, sizeof(struct tape_FUJI_hdr));
     if (p[0] == 'F' && //search for FUJI header
         p[1] == 'U' &&
         p[2] == 'J' &&
@@ -449,8 +451,8 @@ size_t sioCassette::send_FUJI_tape_block(size_t offset)
 #ifdef DEBUG
         Debug_printf("Offset: %u\r\n", (unsigned)offset);
 #endif
-        fseek(_file, offset, SEEK_SET);
-        fread(atari_sector_buffer, 1, sizeof(struct tape_FUJI_hdr), _file);
+        _file->seek(offset, SEEK_SET);
+        _file->read(atari_sector_buffer, 1, sizeof(struct tape_FUJI_hdr));
         len = hdr->chunk_length;
 
         if (p[0] == 'd' && //is a data header?
@@ -521,8 +523,8 @@ size_t sioCassette::send_FUJI_tape_block(size_t offset)
                 len = 0;
             }
 
-            fseek(_file, offset, SEEK_SET);
-            r = fread(atari_sector_buffer, 1, buflen, _file);
+            _file->seek(offset, SEEK_SET);
+            r = _file->read(atari_sector_buffer, 1, buflen);
             offset += r;
 
 #ifdef DEBUG
@@ -560,7 +562,8 @@ size_t sioCassette::send_FUJI_tape_block(size_t offset)
 
 size_t sioCassette::receive_FUJI_tape_block(size_t offset)
 {
-    Debug_println("Start listening for tape block from Atari");
+    Debug_println("Start listening for tape block from Atari - NOT IMPLEMENTED!!!");
+/*
     Clear_atari_sector_buffer(BLOCK_LEN + 4);
     uint8_t idx = 0;
 
@@ -637,6 +640,7 @@ size_t sioCassette::receive_FUJI_tape_block(size_t offset)
 #ifdef DEBUG
     Debug_printf("file offset: %d\n", (unsigned)offset);
 #endif
+*/
     return offset;
 }
 

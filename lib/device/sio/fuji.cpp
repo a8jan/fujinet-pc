@@ -752,12 +752,12 @@ int sioFuji::sio_disk_image_umount(bool siomode, int slot)
     if (deviceSlot < MAX_DISK_DEVICES)
     {
         _fnDisks[deviceSlot].disk_dev.unmount();
-        // if (_fnDisks[deviceSlot].disk_type == MEDIATYPE_CAS || _fnDisks[deviceSlot].disk_type == MEDIATYPE_WAV)
-        // {
-        //     // tell cassette it unmount
-        //     _cassetteDev.umount_cassette_file();
-        //     _cassetteDev.sio_disable_cassette();
-        // }
+        if (_fnDisks[deviceSlot].disk_type == MEDIATYPE_CAS || _fnDisks[deviceSlot].disk_type == MEDIATYPE_WAV)
+        {
+            // tell cassette it unmount
+            _cassetteDev.umount_cassette_file();
+            _cassetteDev.sio_disable_cassette();
+        }
         _fnDisks[deviceSlot].reset();
     }
     // Handle tape
@@ -1123,6 +1123,44 @@ void sioFuji::sio_new_disk()
 
     Debug_print("sio_new_disk succeeded\n");
     sio_complete();
+}
+
+// Unmount specified host
+void sioFuji::sio_unmount_host()
+{
+    Debug_println("Fuji cmd: UNMOUNT HOST");
+
+    unsigned char hostSlot = cmdFrame.aux1 - 1;
+
+    // Make sure we weren't given a bad hostSlot
+    if (!_validate_host_slot(hostSlot, "sio_tnfs_mount_hosts"))
+    {
+        sio_error();
+        return;
+    }
+
+    // Unmount any disks associated with host slot
+    for (int i = 0; i < MAX_DISK_DEVICES; i++)
+    {
+        if (_fnDisks[i].host_slot == hostSlot)
+        {
+            _fnDisks[i].disk_dev.unmount();
+            if (_fnDisks[i].disk_type == MEDIATYPE_CAS || _fnDisks[i].disk_type == MEDIATYPE_WAV)
+            {
+                // tell cassette it unmount
+                _cassetteDev.umount_cassette_file();
+                _cassetteDev.sio_disable_cassette();
+            }
+            _fnDisks[i].disk_dev.device_active = false;
+            _fnDisks[i].reset();
+        }
+    }
+
+    // Unmount the host
+    if (!_fnHosts[hostSlot].umount())
+        sio_error();
+    else
+        sio_complete();
 }
 
 // Send host slot data to computer
@@ -1685,6 +1723,10 @@ void sioFuji::sio_process(uint32_t commanddata, uint8_t checksum)
     case FUJICMD_NEW_DISK:
         sio_late_ack();
         sio_new_disk();
+        break;
+    case FUJICMD_UNMOUNT_HOST:
+        sio_ack();
+        sio_unmount_host();
         break;
     case FUJICMD_SET_DEVICE_FULLPATH:
         sio_late_ack();

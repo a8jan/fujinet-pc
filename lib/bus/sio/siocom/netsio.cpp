@@ -740,11 +740,11 @@ ssize_t NetSioPort::write(uint8_t c)
 
     if (result > 0)
     {
-        // // slow down / TODO flow control
-        // uint32_t tt = 9000 / _baud + 10;
-        // fnSystem.delay(tt);
-        // // keep netsio running
-        // handle_netsio();
+        // slow down / TODO flow control
+        uint32_t tt = 10000000 / _baud + 1;
+        fnSystem.delay_microseconds(tt);
+        // keep netsio running
+        handle_netsio();
     }
 
     return (result > 0) ? 1 : 0; // amount of data bytes written
@@ -770,15 +770,15 @@ ssize_t NetSioPort::write(const uint8_t *buffer, size_t size)
         if (result > 0) 
         {
             txbytes += result-1;
-            // // slow down / TODO flow control
-            // uint32_t tt = result * 8500 / _baud + 50;
-            // while (tt)
-            // {
-            //     // but keep netsio running (100ms ticks)
-            //     fnSystem.delay(tt > 100 ? 100 : tt);
-            //     tt -= (tt > 100 ? 100 : tt);
-            //     handle_netsio();
-            // }
+            // slow down / TODO flow control
+            uint32_t tt = result * 10000000 / _baud + 1;
+            while (tt)
+            {
+                // but keep netsio running (100ms ticks)
+                fnSystem.delay_microseconds(tt > 100000 ? 100000 : tt);
+                tt -= (tt > 100000 ? 100000 : tt);
+                handle_netsio();
+            }
         }
         else if (result < 1) 
         {
