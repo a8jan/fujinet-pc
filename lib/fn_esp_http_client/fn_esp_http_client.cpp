@@ -77,7 +77,8 @@ typedef struct {
     esp_http_buffer_t   *buffer;        /*!< data buffer as linked list */
     int                 status_code;    /*!< status code (integer) */
     int                 content_length; /*!< data length */
-    int                 chunk_length;   /*!< chunk length */
+    int                 chunk_length;   /*!< last chunk length */
+    int                 total_chunk_length; /*!< total chunk length */
     int                 data_offset;    /*!< offset to http data (Skip header) */
     int                 data_process;   /*!< data processed */
     int                 method;         /*!< http method */
@@ -244,6 +245,7 @@ static int http_on_header_value(http_parser *parser, const char *at, size_t leng
     } else if (strcasecmp(client->current_header_key, "Transfer-Encoding") == 0
                && memcmp(at, "chunked", length) == 0) {
         client->response->is_chunked = true;
+        client->response->total_chunk_length = 0;
     } else if (strcasecmp(client->current_header_key, "WWW-Authenticate") == 0) {
         http_utils_assign_string(&client->auth_header, at, length);
     }
@@ -267,7 +269,7 @@ static int http_on_headers_complete(http_parser *parser)
     client->response->data_offset = parser->nread;
     client->response->content_length = parser->content_length;
     client->response->data_process = 0;
-    ESP_LOGD(TAG, "http_on_headers_complete, status=%d, offset=%d, nread=%d", parser->status_code, client->response->data_offset, parser->nread);
+    ESP_LOGD(TAG, "http_on_headers_complete, status=%d, offset=%d, nread=%d", parser->status_code, client->response->data_offset, (int)parser->nread);
     client->state = HTTP_STATE_RES_COMPLETE_HEADER;
     return 0;
 }
@@ -306,7 +308,9 @@ static int http_on_chunk_header(http_parser *parser)
 {
     esp_http_client_handle_t client = (esp_http_client_handle_t)parser->data;
     client->response->chunk_length = parser->content_length;
-    ESP_LOGD(TAG, "http_on_chunk_header, chunk_length");
+    client->response->total_chunk_length += parser->content_length;
+    ESP_LOGD(TAG, "http_on_chunk_header, chunk_length: %d, total_chunk_length: %d", 
+        client->response->chunk_length, client->response->total_chunk_length);
     return 0;
 }
 
@@ -1300,6 +1304,17 @@ int esp_http_client_get_chunk_length(esp_http_client_handle_t client)
 
     if (esp_http_client_is_chunked_response(client))
         return client->response->chunk_length;
+
+    return -1;
+}
+
+int esp_http_client_get_total_chunk_length(esp_http_client_handle_t client)
+{
+    if (client == NULL)
+        return -1;
+
+    if (esp_http_client_is_chunked_response(client))
+        return client->response->total_chunk_length;
 
     return -1;
 }

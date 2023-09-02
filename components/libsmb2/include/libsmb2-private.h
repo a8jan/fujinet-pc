@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#if defined(PS2_EE_PLATFORM) || defined(PS3_PPU_PLATFORM) || defined(ESP_PLATFORM) || defined(__APPLE__) || defined(PS4_PLATFORM)
+#if defined(PS2_EE_PLATFORM) || defined(PS3_PPU_PLATFORM) || defined(ESP_PLATFORM) || defined(PICO_PLATFORM) || defined(__APPLE__) || defined(PS4_PLATFORM)
 /* We need this for time_t */
 #include <time.h>
 #endif
@@ -213,6 +213,7 @@ struct smb2_context {
         uint16_t dialect;
 
         char error_string[MAX_ERROR_SIZE];
+        int nterror;
 
         /* Open filehandles */
         struct smb2fh *fhs;
@@ -226,7 +227,7 @@ struct smb2_context {
 
         /* dcerpc settings */
         int ndr;
-        int endianess;
+        int endianness;
 };
 
 #define SMB2_MAX_PDU_SIZE 16*1024*1024
@@ -287,11 +288,13 @@ const char *utf16_to_utf8(const uint16_t *str, int len);
 /* Convert a win timestamp to a unix timeval */
 void win_to_timeval(uint64_t smb2_time, struct smb2_timeval *tv);
 
-/* Covnert unit timeval to a win timestamp */
+/* Convert unit timeval to a win timestamp */
 uint64_t timeval_to_win(struct smb2_timeval *tv);
 
 void smb2_set_error(struct smb2_context *smb2, const char *error_string,
                     ...);
+void smb2_set_nterror(struct smb2_context *smb2, int nterror,
+                    const char *error_string, ...);
 
 void smb2_close_connecting_fds(struct smb2_context *smb2);
 
@@ -378,11 +381,6 @@ int smb2_process_ioctl_fixed(struct smb2_context *smb2,
                              struct smb2_pdu *pdu);
 int smb2_process_ioctl_variable(struct smb2_context *smb2,
                                 struct smb2_pdu *pdu);
-
-int smb2_decode_fileidfulldirectoryinformation(
-        struct smb2_context *smb2,
-        struct smb2_fileidfulldirectoryinformation *fs,
-        struct smb2_iovec *vec);
 
 int smb2_decode_file_basic_info(struct smb2_context *smb2,
                                 void *memctx,

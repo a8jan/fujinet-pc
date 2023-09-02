@@ -11,7 +11,7 @@
 #include "fnSystem.h"
 #include "fnConfig.h"
 #include "fnWiFi.h"
-#include "fnFsSPIFFS.h"
+#include "fsFlash.h"
 
 #include "utils.h"
 
@@ -249,6 +249,24 @@ void lynxFuji::comlynx_mount_host()
     comlynx_response_ack();
 }
 
+// Mount Server
+void lynxFuji::comlynx_unmount_host()
+{
+    Debug_println("Fuji cmd: UNMOUNT HOST");
+
+    unsigned char hostSlot = comlynx_recv();
+
+    comlynx_recv(); // Get CK
+
+    if (hostMounted[hostSlot] == false)
+    {
+        _fnHosts[hostSlot].umount();
+        hostMounted[hostSlot] = true;
+    }
+
+    comlynx_response_ack();
+}
+
 // Disk Image Mount
 void lynxFuji::comlynx_disk_image_mount()
 {
@@ -383,7 +401,7 @@ void lynxFuji::mount_all()
 {
     bool nodisks = true; // Check at the end if no disks are in a slot and disable config
 
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < MAX_DISK_DEVICES; i++)
     {
         fujiDisk &disk = _fnDisks[i];
         fujiHost &host = _fnHosts[disk.host_slot];
@@ -392,7 +410,7 @@ void lynxFuji::mount_all()
         if (disk.access_mode == DISK_ACCESS_MODE_WRITE)
             flag[1] = '+';
 
-        if (disk.host_slot != 0xFF)
+        if (disk.host_slot != INVALID_HOST_SLOT)
         {
             nodisks = false; // We have a disk in a slot
 
@@ -1094,12 +1112,12 @@ void lynxFuji::insert_boot_device(uint8_t d)
     switch (d)
     {
     case 0:
-        fBoot = fnSPIFFS.file_open(config_atr);
+        fBoot = fsFlash.file_open(config_atr);
         _fnDisks[0].disk_dev.mount(fBoot, config_atr, 262144, MEDIATYPE_DDP);
         break;
     case 1:
 
-        fBoot = fnSPIFFS.file_open(mount_all_atr);
+        fBoot = fsFlash.file_open(mount_all_atr);
         _fnDisks[0].disk_dev.mount(fBoot, mount_all_atr, 262144, MEDIATYPE_DDP);
         break;
     }
@@ -1331,6 +1349,9 @@ void lynxFuji::comlynx_control_send()
         break;
     case FUJICMD_MOUNT_HOST:
         comlynx_mount_host();
+        break;
+    case FUJICMD_UNMOUNT_HOST:
+        comlynx_unmount_host();
         break;
     case FUJICMD_MOUNT_IMAGE:
         comlynx_disk_image_mount();

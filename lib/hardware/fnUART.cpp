@@ -48,7 +48,7 @@
 #define MAX_WRITE_BUFFER_TICKS 1000
 
 // UARTManager fnUartDebug(UART_DEBUG);
-// UARTManager fnUartSIO;
+// UARTManager fnUartBUS(UART_SIO);
 
 // Constructor
 // UARTManager::UARTManager(uart_port_t uart_num) : _uart_num(uart_num), _uart_q(NULL) {}
@@ -1090,7 +1090,7 @@ size_t UARTManager::print(const char *str)
     return write(str);
 }
 
-size_t UARTManager::print(std::string str)
+size_t UARTManager::print(const std::string &str)
 {
     if (!_initialized)
         return 0;

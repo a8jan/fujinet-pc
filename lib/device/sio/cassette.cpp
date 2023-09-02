@@ -223,7 +223,7 @@ void sioCassette::sio_enable_cassette()
     cassetteActive = true;
 
     if (cassetteMode == cassette_mode_t::playback)
-        fnSioCom.set_baudrate(CASSETTE_BAUD);
+        fnSioCom.set_baudrate(CASSETTE_BAUDRATE);
 
     if (cassetteMode == cassette_mode_t::record && tape_offset == 0)
     {

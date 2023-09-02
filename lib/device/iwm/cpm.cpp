@@ -130,7 +130,7 @@ void iwmCPM::iwm_open(iwm_decoded_cmd_t cmd)
 
 void iwmCPM::iwm_close(iwm_decoded_cmd_t cmd)
 {
-    Debug_printf("\nCP/M: Close\n");
+    Debug_printf("\r\nCP/M: Close\n");
     send_reply_packet(SP_ERR_NOERROR);
 }
 
@@ -139,8 +139,8 @@ void iwmCPM::iwm_status(iwm_decoded_cmd_t cmd)
     unsigned short mw;
     // uint8_t source = cmd.dest;                                                // we are the destination and will become the source // packet_buffer[6];
     uint8_t status_code = get_status_code(cmd); // (cmd.g7byte3 & 0x7f) | ((cmd.grp7msb << 3) & 0x80); // status codes 00-FF
-    Debug_printf("\nDevice %02x Status Code %02x\n", id(), status_code);
-    // Debug_printf("\nStatus List is at %02x %02x\n", cmd.g7byte1 & 0x7f, cmd.g7byte2 & 0x7f);
+    Debug_printf("\r\nDevice %02x Status Code %02x\n", id(), status_code);
+    // Debug_printf("\r\nStatus List is at %02x %02x\n", cmd.g7byte1 & 0x7f, cmd.g7byte2 & 0x7f);
 
     switch (status_code)
     {
@@ -172,7 +172,7 @@ void iwmCPM::iwm_status(iwm_decoded_cmd_t cmd)
         break;
     }
 
-    Debug_printf("\nStatus code complete, sending response");
+    Debug_printf("\r\nStatus code complete, sending response");
     IWM.iwm_send_packet(id(), iwm_packet_type_t::data, 0, data_buffer, data_len);
 }
 
@@ -182,7 +182,7 @@ void iwmCPM::iwm_read(iwm_decoded_cmd_t cmd)
     uint32_t addy = get_address(cmd);      // (cmd.g7byte5 & 0x7f) | ((cmd.grp7msb << 5) & 0x80);
     unsigned short mw; // OS = uxQueueMessagesWaiting(rxq);
 
-    Debug_printf("\nDevice %02x READ %04x bytes from address %06x\n", id(), numbytes, addy);
+    Debug_printf("\r\nDevice %02x READ %04x bytes from address %06x\n", id(), numbytes, addy);
 
     memset(data_buffer, 0, sizeof(data_buffer));
 
@@ -207,7 +207,7 @@ void iwmCPM::iwm_read(iwm_decoded_cmd_t cmd)
         data_len = 0;
     }
 
-    Debug_printf("\nsending CPM read data packet ...");
+    Debug_printf("\r\nsending CPM read data packet ...");
     IWM.iwm_send_packet(id(), iwm_packet_type_t::data, 0, data_buffer, data_len);
     data_len = 0;
     memset(data_buffer, 0, sizeof(data_buffer));
@@ -226,7 +226,7 @@ void iwmCPM::iwm_write(iwm_decoded_cmd_t cmd)
     IWM.iwm_decode_data_packet(data_buffer, data_len); // write data packet now read in ISR
     // if (IWM.iwm_decode_data_packet(data_buffer, data_len))
     // {
-    //     Debug_printf("\nTIMEOUT in read packet!");
+    //     Debug_printf("\r\nTIMEOUT in read packet!");
     //     return;
     // }
 
@@ -245,11 +245,11 @@ void iwmCPM::iwm_ctrl(iwm_decoded_cmd_t cmd)
 
     // uint8_t source = cmd.dest;                                                 // we are the destination and will become the source // data_buffer[6];
     uint8_t control_code = get_status_code(cmd); // (cmd.g7byte3 & 0x7f) | ((cmd.grp7msb << 3) & 0x80); // ctrl codes 00-FF
-    Debug_printf("\nCPM Device %02x Control Code %02x", id(), control_code);
-    // Debug_printf("\nControl List is at %02x %02x", cmd.g7byte1 & 0x7f, cmd.g7byte2 & 0x7f);
+    Debug_printf("\r\nCPM Device %02x Control Code %02x", id(), control_code);
+    // Debug_printf("\r\nControl List is at %02x %02x", cmd.g7byte1 & 0x7f, cmd.g7byte2 & 0x7f);
     data_len = 512;
     IWM.iwm_decode_data_packet(data_buffer, data_len);
-    // Debug_printf("\nThere are %02x Odd Bytes and %02x 7-byte Groups", packet_buffer[11] & 0x7f, data_buffer[12] & 0x7f);
+    // Debug_printf("\r\nThere are %02x Odd Bytes and %02x 7-byte Groups", packet_buffer[11] & 0x7f, data_buffer[12] & 0x7f);
     print_packet(data_buffer);
 
     if (data_len > 0)
@@ -275,30 +275,30 @@ void iwmCPM::process(iwm_decoded_cmd_t cmd)
     switch (cmd.command)
     {
     case 0x00: // status
-        Debug_printf("\nhandling status command");
+        Debug_printf("\r\nhandling status command");
         iwm_status(cmd);
         break;
     case 0x04: // control
-        Debug_printf("\nhandling control command");
+        Debug_printf("\r\nhandling control command");
         iwm_ctrl(cmd);
         break;
     case 0x06: // open
-        Debug_printf("\nhandling open command");
+        Debug_printf("\r\nhandling open command");
         iwm_open(cmd);
         break;
     case 0x07: // close
-        Debug_printf("\nhandling close command");
+        Debug_printf("\r\nhandling close command");
         iwm_close(cmd);
         break;
     case 0x08: // read
         // fnLedManager.set(LED_BUS, true);
-        Debug_printf("\nhandling read command");
+        Debug_printf("\r\nhandling read command");
         iwm_read(cmd);
         // fnLedManager.set(LED_BUS, false);
         break;
     case 0x09: // write
         // fnLedManager.set(LED_BUS, true);
-        Debug_printf("\nHandling write command");
+        Debug_printf("\r\nHandling write command");
         iwm_write(cmd);
         // fnLedManager.set(LED_BUS, false);
         break;

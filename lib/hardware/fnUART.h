@@ -15,6 +15,7 @@ class UARTManager
 {
 private:
     // uart_port_t _uart_num;
+    // QueueHandle_t _uart_q;
     char _device[64]; // device name or path
     uint32_t _baud;
     int _command_pin;
@@ -31,7 +32,7 @@ private:
     int _fd;
 #endif
     // QueueHandle_t _uart_q;
-    bool _initialized; // is UART ready?
+    bool _initialized = false; // is UART ready?
 
     // serial port error counter
     int _errcount;
@@ -90,7 +91,7 @@ public:
 
     // //size_t print(const char *format, ...);
     size_t print(const char *str);
-    size_t print(std::string str);
+    size_t print(const std::string &str);
     size_t print(int n, int base = 10);
     size_t print(unsigned int n, int base = 10);
     size_t print(long n, int base = 10);
@@ -98,6 +99,6 @@ public:
 };
 
 // extern UARTManager fnUartDebug;
-// extern UARTManager fnUartSIO;
+// extern UARTManager fnUartBUS;
 
 #endif //FNUART_H

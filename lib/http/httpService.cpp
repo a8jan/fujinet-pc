@@ -9,7 +9,7 @@
 #include "fnSystem.h"
 #include "fnConfig.h"
 #include "fnDummyWiFi.h"
-#include "fnFsSPIFFS.h"
+#include "fsFlash.h"
 #include "modem.h"
 #include "printer.h"
 #include "fuji.h"
@@ -639,7 +639,7 @@ struct mg_mgr * fnHttpService::start_server(serverstate &srvstate)
     }
 
     // Set filesystem where we expect to find our static files
-    srvstate._FS = &fnSPIFFS;
+    srvstate._FS = &fsFlash;
 
     Debug_printf("Starting web server %s\n", s_listening_address.c_str());
 

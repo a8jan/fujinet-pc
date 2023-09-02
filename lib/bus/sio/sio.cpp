@@ -171,6 +171,8 @@ void virtualDevice::sio_high_speed()
     bus_to_computer((uint8_t *)&hsd, 1, false);
 }
 
+systemBus virtualDevice::sio_get_bus() { return SIO; }
+
 // Read and process a command frame from SIO
 void systemBus::_sio_process_cmd()
 {
@@ -472,7 +474,7 @@ void systemBus::addDevice(virtualDevice *pDevice, int device_id)
     }
     else if (device_id == SIO_DEVICEID_RS232)
     {
-        _modemDev = (sioModem *)pDevice;
+        _modemDev = (modem *)pDevice;
     }
     else if (device_id >= SIO_DEVICEID_FN_NETWORK && device_id <= SIO_DEVICEID_FN_NETWORK_LAST)
     {
@@ -540,6 +542,8 @@ virtualDevice *systemBus::deviceById(int device_id)
 // Give devices an opportunity to clean up before a reboot
 void systemBus::shutdown()
 {
+    shuttingDown = true;
+
     for (auto devicep : _daisyChain)
     {
         Debug_printf("Shutting down device %02x\n",devicep->id());

@@ -205,8 +205,8 @@ private:
     rs232Printer *_printerdev = nullptr;
 
     int _rs232Baud = RS232_BAUDRATE;
-    int _rs232BaudHigh;
-    int _rs232BaudUltraHigh;
+    int _rs232BaudHigh = RS232_BAUDRATE;
+    int _rs232BaudUltraHigh = RS232_BAUDRATE;
 
     bool useUltraHigh = false; // Use fujinet derived clock.
 
@@ -241,6 +241,9 @@ public:
     rs232CPM *getCPM() { return _cpmDev; }
 
     QueueHandle_t qRs232Messages = nullptr;
+
+    bool shuttingDown = false;                                  // TRUE if we are in shutdown process
+    bool getShuttingDown() { return shuttingDown; };
 };
 
 extern systemBus RS232;

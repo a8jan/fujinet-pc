@@ -5,6 +5,7 @@
 
 #include "../../include/debug.h"
 #include "bus.h"
+#include "iwm/disk2.h"
 #include "iwm/network.h"
 #include "iwm/printer.h"
 #include "iwm/cpm.h"
@@ -16,7 +17,8 @@
 #include "../fuji/fujiCmd.h"
 
 #define MAX_HOSTS 8
-#define MAX_DISK_DEVICES 4
+#define MAX_DISK_DEVICES 6 // 4 SP devices + 2 DiskII devices
+#define MAX_DISK2_DEVICES 2 // for now until we add 3.5" disks
 #define MAX_NETWORK_DEVICES 4
 
 #define MAX_SSID_LEN 32
@@ -193,6 +195,7 @@ public:
 
     fujiHost *get_hosts(int i) { return &_fnHosts[i]; }
     fujiDisk *get_disks(int i) { return &_fnDisks[i]; }
+    iwmDisk2 _fnDisk2s[MAX_DISK2_DEVICES];
 
     void _populate_slots_from_config();
     void _populate_config_from_slots();

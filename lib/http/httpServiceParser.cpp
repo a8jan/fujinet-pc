@@ -13,7 +13,7 @@
 #include "fnSystem.h"
 #include "fnConfig.h"
 #include "fnDummyWiFi.h"
-#include "fnFsSPIFFS.h"
+#include "fsFlash.h"
 #include "fnFsSD.h"
 #include "httpService.h"
 #include "fuji.h"
@@ -52,7 +52,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_HEAPSIZE,
         FN_SYSSDK,
         FN_SYSCPUREV,
-        FN_SIOVOLTS,
+        FN_BUSVOLTS,
         FN_SIO_HSINDEX,
         FN_SIO_HSBAUD,
         FN_PRINTER1_MODEL,
@@ -123,6 +123,8 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_ERRMSG,
         FN_HARDWARE_VER,
         FN_PRINTER_LIST,
+        FN_ENCRYPT_PASSPHRASE_ENABLED,
+        FN_APETIME_ENABLED,
         FN_LASTTAG
     };
 
@@ -154,7 +156,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_HEAPSIZE",
         "FN_SYSSDK",
         "FN_SYSCPUREV",
-        "FN_SIOVOLTS",
+        "FN_BUSVOLTS",
         "FN_SIO_HSINDEX",
         "FN_SIO_HSBAUD",
         "FN_PRINTER1_MODEL",
@@ -224,7 +226,9 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_HOST8PREFIX",
         "FN_ERRMSG",
         "FN_HARDWARE_VER",
-        "FN_PRINTER_LIST"
+        "FN_PRINTER_LIST",
+        "FN_ENCRYPT_PASSPHRASE_ENABLED",
+        "FN_APETIME_ENABLED"
     };
 
     stringstream resultstream;
@@ -290,10 +294,10 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         resultstream << fnSystem.get_uname();
         break;
     case FN_SPIFFS_SIZE:
-        resultstream << fnSPIFFS.total_bytes();
+        resultstream << fsFlash.total_bytes();
         break;
     case FN_SPIFFS_USED:
-        resultstream << fnSPIFFS.used_bytes();
+        resultstream << fsFlash.used_bytes();
         break;
     case FN_SD_SIZE:
         resultstream << fnSDFAT.total_bytes();
@@ -313,6 +317,12 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     case FN_TIMEZONE:
         resultstream << Config.get_general_timezone();
         break;
+#ifdef BUILD_ATARI
+    case FN_APETIME_ENABLED:
+        resultstream << Config.get_apetime_enabled();
+        break;
+#endif /* BUILD_ATARI */
+
     case FN_ROTATION_SOUNDS:
         resultstream << Config.get_general_rotation_sounds();
         break;
@@ -331,7 +341,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
     case FN_SYSCPUREV:
         resultstream << fnSystem.get_cpu_rev();
         break;
-    case FN_SIOVOLTS:
+    case FN_BUSVOLTS:
         resultstream << ((float)fnSystem.get_sio_voltage()) / 1000.00 << "V";
         break;
 #ifdef BUILD_ATARI
@@ -517,7 +527,7 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         /* What Dx: drive (if any rotation has occurred) does each Drive Slot currently map to? */
         drive_slot = tagid - FN_DRIVE1DEVICE;
         disk_id = (char) theFuji.get_disk_id(drive_slot);
-        if (disk_id != (char) (0x31 + drive_slot)) {
+        if (disk_id > 0 && disk_id != (char) (0x31 + drive_slot)) {
             resultstream << " (D" << disk_id << ":)";
         }
         break;
@@ -553,19 +563,20 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
 
                 for(int i=0; i<(int) PRINTER_CLASS::PRINTER_INVALID; i++)
                 {
-#ifndef BUILD_APPLE
                     strncat(result, "<option value=\"", MAX_PRINTER_LIST_BUFFER-1);
                     strncat(result, PRINTER_CLASS::printer_model_str[i], MAX_PRINTER_LIST_BUFFER-1);
                     strncat(result, "\">", MAX_PRINTER_LIST_BUFFER);
                     strncat(result, PRINTER_CLASS::printer_model_str[i], MAX_PRINTER_LIST_BUFFER-1);
                     strncat(result, "</option>\n", MAX_PRINTER_LIST_BUFFER-1);
-#endif /* BUILD_APPLE */
                 }
                 resultstream << result;
                 free(result);
             } else
                 resultstream << "Insufficent memory";
         }
+        break;
+    case FN_ENCRYPT_PASSPHRASE_ENABLED:
+        resultstream << Config.get_general_encrypt_passphrase();
         break;
     default:
         resultstream << tag;

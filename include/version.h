@@ -8,12 +8,12 @@
 */
 
 #define FN_VERSION_MAJOR "2308"
-#define FN_VERSION_MINOR "2"
+#define FN_VERSION_MINOR "0"
 
-#define FN_VERSION_BUILD "f8a2dd7b"
+#define FN_VERSION_BUILD "7ec34b7d"
 
-#define FN_VERSION_DATE "2023-08-21 13:23:23"
+#define FN_VERSION_DATE "2023-08-26 15:00:44"
 
-#define FN_VERSION_FULL "2308.2.f8a2dd7b"
+#define FN_VERSION_FULL "2308.0.7ec34b7d"
 
 

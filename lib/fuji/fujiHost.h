@@ -60,6 +60,7 @@ public:
     bool file_exists(const char *path);
     FileHandler * filehandler_open(const char *path, char *fullpath, int fullpathlen, const char *mode);
     long file_size(FileHandler *filehandle);
+    bool file_remove(char *fullpath);
 
     // Directory functions
     bool dir_open(const char *path, const char *pattern, uint16_t options = 0);

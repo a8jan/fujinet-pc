@@ -25,21 +25,21 @@ iwmFuji::iwmFuji()
 
 void iwmFuji::iwm_dummy_command() // SP CTRL command
 {
-  Debug_printf("\nData Received: ");
+  Debug_printf("\r\nData Received: ");
   for (int i=0; i<data_len; i++)
     Debug_printf(" %02x", data_buffer[i]);
 }
 
 void iwmFuji::iwm_hello_world()
 {
-  Debug_printf("\nFuji cmd: HELLO WORLD");
+  Debug_printf("\r\nFuji cmd: HELLO WORLD");
   memcpy(data_buffer, "HELLO WORLD", 11);
   data_len = 11;
 }
 
 void iwmFuji::iwm_ctrl_reset_fujinet() // SP CTRL command
 {
-    Debug_printf("\nFuji cmd: REBOOT");
+    Debug_printf("\r\nFuji cmd: REBOOT");
     send_status_reply_packet();
     // save device unit SP address somewhere and restore it after reboot?
     fnSystem.reboot();
@@ -168,14 +168,14 @@ void iwmFuji::iwm_stat_net_get_wifi_status() // SP Status command
     uint8_t wifiStatus = fnWiFi.connected() ? 3 : 6;
     data_buffer[0] = wifiStatus;
     data_len = 1;
-    Debug_printf("\nReturning Status: %d", wifiStatus);
+    Debug_printf("\r\nReturning Status: %d", wifiStatus);
 }
 
 // Mount Server
 void iwmFuji::iwm_ctrl_mount_host() // SP CTRL command
 {
     unsigned char hostSlot = data_buffer[0]; // adamnet_recv();
-    Debug_printf("\nFuji cmd: MOUNT HOST no. %d", hostSlot);
+    Debug_printf("\r\nFuji cmd: MOUNT HOST no. %d", hostSlot);
 
     if ((hostSlot < 8) && (hostMounted[hostSlot] == false))
     {
@@ -188,7 +188,7 @@ void iwmFuji::iwm_ctrl_mount_host() // SP CTRL command
 void iwmFuji::iwm_ctrl_unmount_host() // SP CTRL command
 {
     unsigned char hostSlot = data_buffer[0]; // adamnet_recv();
-    Debug_printf("\nFuji cmd: UNMOUNT HOST no. %d", hostSlot);
+    Debug_printf("\r\nFuji cmd: UNMOUNT HOST no. %d", hostSlot);
 
     if ((hostSlot < 8) && (hostMounted[hostSlot] == false))
     {
@@ -440,7 +440,7 @@ void iwmFuji::iwm_ctrl_read_app_key()
 
 void iwmFuji::iwm_stat_read_app_key() // return the app key that was just read by the read app key control command
 {
-  Debug_printf("\nFuji cmd: READ APP KEY");
+  Debug_printf("\r\nFuji cmd: READ APP KEY");
   memset(data_buffer, 0, sizeof(data_buffer));
   memcpy(data_buffer, ctrl_stat_buffer, ctrl_stat_len);
   data_len = ctrl_stat_len;
@@ -691,7 +691,7 @@ void iwmFuji::iwm_ctrl_read_directory_entry()
 
 void iwmFuji::iwm_stat_read_directory_entry()
 {
-  Debug_printf("\nFuji cmd: READ DIRECTORY ENTRY");
+  Debug_printf("\r\nFuji cmd: READ DIRECTORY ENTRY");
   memcpy(data_buffer, ctrl_stat_buffer, ctrl_stat_len);
   data_len = ctrl_stat_len;
 }
@@ -1070,7 +1070,7 @@ void iwmFuji::setup(iwmBus *iwmbus)
     theCPM = new iwmCPM();
     _iwm_bus->addDevice(theCPM, iwm_fujinet_type_t::CPM);    
 
-   for (int i = MAX_DISK_DEVICES -1; i >= 0; i--)
+   for (int i = MAX_DISK_DEVICES - MAX_DISK2_DEVICES -1; i >= 0; i--)
    {
      _fnDisks[i].disk_dev.set_disk_number('0' + i);
      _iwm_bus->addDevice(&_fnDisks[i].disk_dev, iwm_fujinet_type_t::BlockDisk);
@@ -1175,7 +1175,7 @@ void iwmFuji::send_stat_get_enable()
 
 void iwmFuji::iwm_open(iwm_decoded_cmd_t cmd)
 {
-  // Debug_printf("\nOpen FujiNet Unit # %02x",cmd.g7byte1);
+  // Debug_printf("\r\nOpen FujiNet Unit # %02x",cmd.g7byte1);
   send_status_reply_packet();
 }
 
@@ -1194,7 +1194,7 @@ void iwmFuji::iwm_status(iwm_decoded_cmd_t cmd)
   // uint8_t source = cmd.dest; // we are the destination and will become the source // data_buffer[6];
   uint8_t status_code = get_status_code(cmd); // (cmd.g7byte3 & 0x7f) | ((cmd.grp7msb << 3) & 0x80); // status codes 00-FF
   Debug_printf("\ntheFuji Device %02x Status Code %02x", id(), status_code);
-  // Debug_printf("\nStatus List is at %02x %02x", cmd.g7byte1 & 0x7f, cmd.g7byte2 & 0x7f);
+  // Debug_printf("\r\nStatus List is at %02x %02x", cmd.g7byte1 & 0x7f, cmd.g7byte2 & 0x7f);
 
   switch (status_code)
   {

@@ -397,7 +397,6 @@ namespace mstr {
         return text;
     }
 
-/*
     std::string formatBytes(uint64_t value)
     {
         uint8_t i = 0;
@@ -417,7 +416,6 @@ namespace mstr {
         asprintf(&f, "%.2f %s", n, byteSuffixes[i].c_str());
         return f;
     }
-*/
 
     void cd( std::string &path, std::string newDir) 
     {

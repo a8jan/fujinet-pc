@@ -17,10 +17,6 @@
 #include "../device/iwm/cpm.h"
 #include "../device/iwm/clock.h"
 
-#if SMARTPORT == USB
-#define IRAM_ATTR
-#endif
-
 /******************************************************************************
 Based on:
 Apple //c Smartport Compact Flash adapter
@@ -191,7 +187,7 @@ iwmBus::iwm_phases_t iwmBus::iwm_phases()
 #ifdef VERBOSE_IWM
   if (phasestate != oldphase)
   {
-    // Debug_printf("\n%d%d%d%d",iwm_phase_val(0),iwm_phase_val(1),iwm_phase_val(2),iwm_phase_val(3));
+    // Debug_printf("\r\n%d%d%d%d",iwm_phase_val(0),iwm_phase_val(1),iwm_phase_val(2),iwm_phase_val(3));
     switch (phasestate)
     {
     case iwm_phases_t::idle:
@@ -239,7 +235,7 @@ bool iwmBus::iwm_decode_data_packet(uint8_t *data, int &n)
  {
   memset(data, 0, n);
   int nn = 17 + n % 7 + (n % 7 != 0) + n * 8 / 7;
-  Debug_printf("\nAttempting to receive %d length packet", nn);
+  Debug_printf("\r\nAttempting to receive %d length packet", nn);
   portDISABLE_INTERRUPTS();
   iwm_ack_deassert();
   for (int i = 0; i < attempts; i++)
@@ -260,7 +256,7 @@ bool iwmBus::iwm_decode_data_packet(uint8_t *data, int &n)
     {
       smartport.spi_end(); // when this ends, we might be in the middle of receiving the next resent packet
       portENABLE_INTERRUPTS();
-      Debug_printf("\nChksum error, calc %02x, pkt %02x", smartport.calc_checksum, smartport.pkt_checksum);
+      Debug_printf("\r\nChksum error, calc %02x, pkt %02x", smartport.calc_checksum, smartport.pkt_checksum);
 #ifdef DEBUG
       //print_packet(smartport.packet_buffer,BLOCK_PACKET_LEN);  // print raw received packet contents
 #endif
@@ -269,7 +265,7 @@ bool iwmBus::iwm_decode_data_packet(uint8_t *data, int &n)
     } // if
   }
 #ifdef DEBUG
-  Debug_printf("\nERROR: Read Packet tries exceeds %d attempts", attempts);
+  Debug_printf("\r\nERROR: Read Packet tries exceeds %d attempts", attempts);
   // print_packet(data);
 #endif
   portENABLE_INTERRUPTS();
@@ -283,17 +279,17 @@ void iwmBus::setup(void)
 
 #if SMARTPORT != USB
   fnTimer.config();
-  Debug_printf("\nFujiNet Hardware timer started");
+  Debug_printf("\r\nFujiNet Hardware timer started");
 
   diskii_xface.setup_rmt();
-  Debug_printf("\nRMT configured for Disk ][ Output");
+  Debug_printf("\r\nRMT configured for Disk ][ Output");
 #endif
 
   smartport.setup_spi();
-  Debug_printf("\nSPI configured for smartport I/O");
+  Debug_printf("\r\nSPI configured for smartport I/O");
 
   smartport.setup_gpio();
-  Debug_printf("\nIWM GPIO configured");
+  Debug_printf("\r\nIWM GPIO configured");
   }
 
 //*****************************************************************************
@@ -343,12 +339,12 @@ void iwmDevice::iwm_return_badcmd(iwm_decoded_cmd_t cmd)
     case 0x0b:
     data_len = 512;
     IWM.iwm_decode_data_packet((uint8_t *)data_buffer, data_len);
-    Debug_printf("\nUnit %02x Bad Command with data packet %02x\n", id(), cmd.command);
+    Debug_printf("\r\nUnit %02x Bad Command with data packet %02x\r\n", id(), cmd.command);
     print_packet((uint8_t *)data_buffer, data_len);
     break;
     default://just send the response and return like before
       send_reply_packet(SP_ERR_BADCMD);
-      Debug_printf("\nUnit %02x Bad Command %02x", id(), cmd.command);
+      Debug_printf("\r\nUnit %02x Bad Command %02x", id(), cmd.command);
       return;
   }
   if(cmd.command == 0x04) //Decode command control code
@@ -357,7 +353,7 @@ void iwmDevice::iwm_return_badcmd(iwm_decoded_cmd_t cmd)
                                       // but for now just report bad control if it's a control
                                       // command
     uint8_t control_code = get_status_code(cmd);
-    Debug_printf("\nbad command was a control command with control code %02x",control_code);
+    Debug_printf("\r\nbad command was a control command with control code %02x",control_code);
   }
   else{
     send_reply_packet(SP_ERR_BADCMD); //response for Any other command with a data packet
@@ -366,7 +362,7 @@ void iwmDevice::iwm_return_badcmd(iwm_decoded_cmd_t cmd)
 
 void iwmDevice::iwm_return_ioerror()
 {
-  // Debug_printf("\nUnit %02x Bad Command %02x", id(), cmd.command);
+  // Debug_printf("\r\nUnit %02x Bad Command %02x", id(), cmd.command);
   send_reply_packet(SP_ERR_IOERROR);
 }
 
@@ -378,18 +374,18 @@ void iwmDevice::iwm_return_noerror()
 void iwmDevice::iwm_status(iwm_decoded_cmd_t cmd) // override;
 {
   uint8_t status_code = cmd.params[2]; // cmd.g7byte3 & 0x7f; // (packet_buffer[19] & 0x7f); // | (((unsigned short)packet_buffer[16] << 3) & 0x80);
-  Debug_printf("\nTarget Device: %02x", id());
+  Debug_printf("\r\nTarget Device: %02x", id());
   // add a switch case statement for ALL THE STATUSESESESESS
   if (status_code == 0x03)
   { // if statcode=3, then status with device info block
-    Debug_printf("\n******** Sending DIB! ********");
+    Debug_printf("\r\n******** Sending DIB! ********");
     send_status_dib_reply_packet();
     // print_packet ((unsigned char*) packet_buffer,get_packet_length());
     // fnSystem.delay(50);
   }
   else
   { // else just return device status
-    Debug_printf("\nSending Status");
+    Debug_printf("\r\nSending Status");
     send_status_reply_packet();
   }
 }
@@ -454,7 +450,7 @@ void IRAM_ATTR iwmBus::service()
   case iwm_phases_t::idle:
     break;
   case iwm_phases_t::reset:
-    Debug_printf(("\nReset"));
+    Debug_printf(("\r\nReset"));
 
     // clear all the device addresses
     for (auto devicep : _daisyChain)
@@ -466,12 +462,12 @@ void IRAM_ATTR iwmBus::service()
     // even if it doesn't, we would just come back to here, so might as
     // well wait until reset clears.
 
-    Debug_printf(("\nReset Cleared"));
+    Debug_printf(("\r\nReset Cleared"));
 
     // if /EN35 is high, we must be on a host that supports 3.5 dumb drives
     // lets sample it here in case the host is not on when the FN is powered on/reset
     (GPIO.in1.val & (0x01 << (SP_EN35 - 32))) ? en35Host = true : en35Host = false;
-    Debug_printf("\nen35Host = %d",en35Host);
+    Debug_printf("\r\nen35Host = %d",en35Host);
 #endif /* !USB */
 
     break;
@@ -517,7 +513,7 @@ void IRAM_ATTR iwmBus::service()
           // need to take time here to service other ESP processes so they can catch up
           taskYIELD(); // Allow other tasks to run
 #endif
-          Debug_printf("\nCommand Packet:");
+          Debug_printf("\r\nCommand Packet:");
           print_packet(command_packet.data);
 
           _activeDev = devicep;
@@ -643,7 +639,7 @@ void iwmBus::handle_init()
       pDevice->_devnum = command_packet.dest; // assign address
       if (++it == _daisyChain.end())
         status = 0xff; // end of the line, so status=non zero - to do: check GPIO for another device in the physical daisy chain
-      Debug_printf("\nSending INIT Response Packet...");
+      Debug_printf("\r\nSending INIT Response Packet...");
       pDevice->send_init_reply_packet(command_packet.dest, status);
 
       // smartport.iwm_send_packet_spi((uint8_t *)pDevice->packet_buffer); // timeout error return is not handled here (yet?)
