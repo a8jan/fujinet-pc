@@ -33,8 +33,10 @@ set(INCLUDE_DIRS include
     lib/FileSystem lib/EdUrlParser
     lib/tcpip lib/ftp lib/TNFSlib lib/telnet lib/fnjson
     lib/mongoose lib/webdav lib/http lib/sam lib/task
-    lib/modem-sniffer lib/printer-emulator lib/network-protocol 
+    lib/modem-sniffer lib/printer-emulator
+    lib/network-protocol 
     lib/fuji lib/bus lib/device lib/media
+    lib/encrypt
     components/cJSON components/libsmb2/include
 )
 
@@ -159,7 +161,6 @@ set(SOURCES src/main.cpp
     lib/device/sio/network.h lib/device/sio/network.cpp
     lib/device/sio/apetime.h lib/device/sio/apetime.cpp
     lib/device/sio/pclink.h lib/device/sio/pclink.cpp
-    lib/encrypt/crypt.h lib/encrypt/crypt.cpp
     lib/modem/modem.h lib/modem/modem.cpp
     lib/media/media.h
     lib/media/apple/mediaType.h lib/media/apple/mediaType.cpp
@@ -168,6 +169,7 @@ set(SOURCES src/main.cpp
     lib/media/atari/diskTypeAtr.h lib/media/atari/diskTypeAtr.cpp
     lib/media/atari/diskTypeAtx.h 
     lib/media/atari/diskTypeXex.h lib/media/atari/diskTypeXex.cpp
+    lib/encrypt/crypt.h lib/encrypt/crypt.cpp
     lib/compat/compat_inet.c
     lib/compat/compat_gettimeofday.c
 )
