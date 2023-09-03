@@ -10,6 +10,10 @@
 #include <sstream>
 #include <iomanip>
 
+#if defined(_WIN32)
+#include "asprintf.h" // from libsmb2
+#endif
+
 // Copy string to char buffer
 void copyString(const std::string& input, char *dst, size_t dst_size)
 {
