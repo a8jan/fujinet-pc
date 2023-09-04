@@ -6,7 +6,7 @@ Alternatively, on Windows it is possible to install WSL to get Ubuntu inside Win
 
 ## MSYS2
 
-To install and setup MSYS2 follow the instructions on https://www.msys2.org/ ,no need to install `mingw-w64-x86_64-toolchain`.
+To install and setup MSYS2 follow the instructions on https://www.msys2.org/ , no need to install `mingw-w64-x86_64-toolchain`.
 
 For FujiNet-PC we need environment which uses UCRT runtime library (not old MSVCRT). `CLANG64` and `CLANG32` should work. If GNU is preferred, build with `MINGW64` or `MINGW32`. More about MSYS2 environments [here](https://www.msys2.org/docs/environments/) and about packages names [here](https://www.msys2.org/docs/package-naming/).
 

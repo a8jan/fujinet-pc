@@ -26,21 +26,34 @@ def copy_file(fname, build_platform, prefix):
     destination = prep_dst(fname, build_platform, prefix)
     shutil.copy(fname, destination)
 
-Import("env")
+try:
+    Import("env")
+    # print(env.Dump())
+except NameError:
+    print("Running outside the PlatformIO environment!")
+    env = None
 
-# print(env.Dump())
+if env is None:
+    print("Using environment variables:")
+    target = os.environ.get("FUJINET_TARGET")
+    build_platform = os.environ.get("FUJINET_BUILD_PLATFORM")
+    print(f"FUJINET_TARGET={target}")
+    print(f"FUJINET_BUILD_PLATFORM={build_platform}")
+    if not target or not build_platform:
+        raise Exception("Missing environment variables")
+else:
+    target = env["PIOENV"]
+    # PROGRAM_ARGS is a list of args provided by pio with "-a" switch
+    if 'dev' in env["PROGRAM_ARGS"]:
+        target = "dev"
 
-target = env["PIOENV"]
-# PROGRAM_ARGS is a list of args provided by pio with "-a" switch
-if 'dev' in env["PROGRAM_ARGS"]:
-    target = "dev"
+    pio_config = configparser.ConfigParser()
+    pio_config.read('platformio.ini')
+    build_platform = pio_config['fujinet']['build_platform']
 
 template_env = Environment(loader=FileSystemLoader("data/webui/template"))
 config = load(open(os.path.join('data', 'webui', 'config', f'{target}.yaml')), Loader=Loader)
 
-pio_config = configparser.ConfigParser()
-pio_config.read('platformio.ini')
-build_platform = pio_config['fujinet']['build_platform']
 print(f"Building webUI into data/{build_platform}")
 
 if not build_platform.startswith('BUILD_'):

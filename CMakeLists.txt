@@ -7,6 +7,8 @@ project(fujinet-pc)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# fujinet.build_board
+set(FUJINET_TARGET fujinet-pc-atari)
 # fujinet.build_platform
 set(FUJINET_BUILD_PLATFORM BUILD_ATARI)
 # fujinet.build_bus
@@ -233,6 +235,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_link_libraries(fujinet ws2_32)
 endif()
 
+# "build_webui" target
+add_custom_command(
+    OUTPUT "${FUJINET_DATA_DIR}"
+    DEPENDS build_webui.py
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E env FUJINET_TARGET=${FUJINET_TARGET} FUJINET_BUILD_PLATFORM=${FUJINET_BUILD_PLATFORM} python build_webui.py
+)
+add_custom_target(build_webui DEPENDS "${FUJINET_DATA_DIR}")
 
 # "dist" target
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -257,6 +267,7 @@ else()
     )
 endif()
 add_dependencies(dist fujinet)
+add_dependencies(dist build_webui)
 
 # include dist cleanup in "clean" target
 set_property(
