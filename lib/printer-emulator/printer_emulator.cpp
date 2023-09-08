@@ -75,6 +75,7 @@ size_t printer_emu::getOutputSize()
 // All the work is done here in the derived classes. Open and close the output file before proceeding
 bool printer_emu::process(uint8_t linelen, uint8_t aux1, uint8_t aux2)
 {
+    is_printing=true;
     // Make sure the file has been initialized
     if(_output_started == false)
     {
@@ -94,6 +95,7 @@ bool printer_emu::process(uint8_t linelen, uint8_t aux1, uint8_t aux2)
     fclose(_file);
     _file = nullptr;
 
+    is_printing=false;
     return result;
 }
 

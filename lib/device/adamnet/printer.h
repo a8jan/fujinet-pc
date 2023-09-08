@@ -22,8 +22,6 @@ typedef struct _printItem
     uint8_t buf[16];
 } PrintItem;
 
-static QueueHandle_t pxq;
-
 class adamPrinter : public virtualDevice
 {
 protected:
@@ -106,11 +104,10 @@ public:
     void set_printer_type(printer_type printer_type);
     void reset_printer() { set_printer_type(_ptype); };
     time_t lastPrintTime() { return _last_ms; };
-    void start_printer_task();
-    void perform_print();
 
     printer_emu *getPrinterPtr() { return _pptr; };
 
+    void do_print(int i);
 
 private:
     printer_type _ptype;
