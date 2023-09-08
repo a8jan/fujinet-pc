@@ -66,9 +66,9 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         FN_PRINTER_ENABLED,
         FN_MODEM_ENABLED,
         FN_MODEM_SNIFFER_ENABLED,
-        FN_SERIALPORT,
-        FN_SERIALCOMMAND,
-        FN_SERIALPROCEED,
+        FN_SERIAL_PORT,
+        FN_SERIAL_COMMAND,
+        FN_SERIAL_PROCEED,
         FN_SIO_HSTEXT,
         FN_NETSIO_ENABLED,
         FN_NETSIO_HOST,
@@ -170,9 +170,9 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         "FN_PRINTER_ENABLED",
         "FN_MODEM_ENABLED",
         "FN_MODEM_SNIFFER_ENABLED",
-        "FN_SERIALPORT",
-        "FN_SERIALCOMMAND",
-        "FN_SERIALPROCEED",
+        "FN_SERIAL_PORT",
+        "FN_SERIAL_COMMAND",
+        "FN_SERIAL_PROCEED",
         "FN_SIO_HSTEXT",
         "FN_NETSIO_ENABLED",
         "FN_NETSIO_HOST",
@@ -359,13 +359,13 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         resultstream << SIO.getHighSpeedBaud();
         break;
 #endif /* BUILD_ATARI */
-    case FN_SERIALPORT:
+    case FN_SERIAL_PORT:
         resultstream << Config.get_serial_port();
         break;
-    case FN_SERIALCOMMAND:
+    case FN_SERIAL_COMMAND:
         resultstream << Config.get_serial_command();
         break;
-    case FN_SERIALPROCEED:
+    case FN_SERIAL_PROCEED:
         resultstream << Config.get_serial_proceed();
         break;
     case FN_PRINTER1_MODEL:

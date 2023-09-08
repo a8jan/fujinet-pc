@@ -59,6 +59,39 @@ function setPrinterPort(printer_port) {
 	}
 }
 
+function setSerialCommand(serial_command) {
+	// Serial Command is triple/quadruplevalue (hide 0 for webui).
+	const cmd1E = document.getElementById("command-on-dsr");
+	const cmd2E = document.getElementById("command-on-cts");
+	const cmd3E = document.getElementById("command-on-ri");
+	if (cmd1E == null || cmd2E == null || cmd3E == null) return;
+
+	if (serial_command == "1") {
+		cmd1E.checked = true;
+	} else if (serial_command == "2") {
+		cmd2E.checked = true;
+	} else if (serial_command == "3") {
+		cmd3E.checked = true;
+	} else {
+		console.log("ERROR: unknown serial_command value:", serial_command);
+	}
+}
+
+function setSerialProceed(serial_proceed) {
+	// Serial Proceed is double/triple value (hide 0 from webui).
+	const prc1E = document.getElementById("proceed-on-dtr");
+	const prc2E = document.getElementById("proceed-on-rts");
+	if (prc1E == null || prc2E == null ) return;
+
+	if (serial_proceed == "1") {
+		prc1E.checked = true;
+	} else if (serial_proceed == "2") {
+		prc2E.checked = true;
+	} else {
+		console.log("ERROR: unknown serial_proceed value:", serial_proceed);
+	}
+}
+
 {% if components.printer_settings %}
 setInputValue(current_printer_enabled == 1, "printer-virt-yes", "printer-virt-no");
 setPrinterPort(current_printerport);
@@ -95,6 +128,11 @@ setInputValue(current_encrypt_passphrase_enabled == 1, "encrypt-passphrase-yes",
 setInputValue(current_apetime == 1, "tz-apetime-yes", "tz-apetime-no");
 {% endif %}
 
-selectListValue("select_serialcommand", current_serialcommand);
-selectListValue("select_serialproceed", current_serialproceed);
+{% if components.serial_port %}
+setSerialCommand(current_serial_command);
+setSerialProceed(current_serial_proceed);
+{% endif %}
+
+{% if components.emulator_settings %}
 setInputValue(current_netsio_enabled == 1, "netsio-yes", "netsio-no");
+{% endif %}

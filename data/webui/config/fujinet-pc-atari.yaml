@@ -14,6 +14,10 @@ components:
   timezone: true
   udp_stream: true
   program_recorder: true
-  disk_swap: true
+  disk_swap: false
   boot_settings: true
   apetime: true
+  serial_port: true
+  emulator_settings: true
+tweaks:
+  fujinet_pc: true

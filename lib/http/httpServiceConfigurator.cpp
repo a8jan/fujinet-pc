@@ -605,15 +605,15 @@ int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t 
         {
             config_apetime_enabled(i->second);
         }
-        else if (i->first.compare("serialport") == 0)
+        else if (i->first.compare("serial_port") == 0)
         {
             config_serial(i->second, std::string(), std::string());
         }
-        else if (i->first.compare("serialcommand") == 0)
+        else if (i->first.compare("serial_command") == 0)
         {
             config_serial(std::string(), i->second, std::string());
         }
-        else if (i->first.compare("serialproceed") == 0)
+        else if (i->first.compare("serial_proceed") == 0)
         {
             config_serial(std::string(), std::string(), i->second);
         }
