@@ -96,29 +96,32 @@ int SystemManager::_net::get_ip4_dns_info(uint8_t ip4dnsprimary[4])
 
 std::string SystemManager::_net::_get_ip4_address_str(_ip4_address_type iptype)
 {
-    std::string result = "0.0.0.0"; // TODO
+    std::string result;
     // esp_netif_ip_info_t ip_info;
     // esp_err_t e = esp_netif_get_ip_info(fnWiFi.get_adapter_handle(), &ip_info);
 
     // ip4_addr_t ip4;
     // if(e == ESP_OK)
-    // {
-    //     switch(iptype)
-    //     {
-    //     case IP4_PRIMARY:
-    //         ip4.addr = ip_info.ip.addr;
-    //         result += ip4addr_ntoa(&ip4);
-    //         break;
-    //     case IP4_PRIMARYMASK:
-    //         ip4.addr = ip_info.netmask.addr;
-    //         result += ip4addr_ntoa(&ip4);
-    //         break;
-    //     case IP4_GATEWAY:
-    //         ip4.addr = ip_info.gw.addr;
-    //         result += ip4addr_ntoa(&ip4);
-    //         break;
-    //     }
-    // }
+    {
+        switch(iptype)
+        {
+        case IP4_PRIMARY:
+            // ip4.addr = ip_info.ip.addr;
+            // result += ip4addr_ntoa(&ip4);
+            result += "127.0.0.1";
+            break;
+        case IP4_PRIMARYMASK:
+            // ip4.addr = ip_info.netmask.addr;
+            // result += ip4addr_ntoa(&ip4);
+            result += "255.0.0.0";
+            break;
+        case IP4_GATEWAY:
+            // ip4.addr = ip_info.gw.addr;
+            // result += ip4addr_ntoa(&ip4);
+            result += "0.0.0.0";
+            break;
+        }
+    }
     return result;
 }
 std::string SystemManager::_net::get_ip4_address_str()
@@ -138,7 +141,7 @@ std::string SystemManager::_net::get_ip4_gateway_str()
 
 std::string SystemManager::_net::_get_ip4_dns_str(_ip4_dns_type dnstype)
 {
-    std::string result = "0.0.0.0"; // TODO
+    std::string result = "1.1.1.1";
     // esp_netif_dns_info_t dnsinfo;
     // esp_netif_dns_type_t t;
 
