@@ -133,6 +133,14 @@ jobs:
         echo "Building for ${{ matrix.name }} (${{ matrix.target }}) on ${{ matrix.runner }}"
         uname -a
 
+    - name: Install Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install Python packages
+      run: pip install -U Jinja2 pyyaml
+  
     - name: '🧰 Checkout'
       uses: actions/checkout@v3
 
