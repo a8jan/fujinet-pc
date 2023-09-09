@@ -134,12 +134,15 @@ jobs:
         uname -a
 
     - name: Install Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v3
       with:
         python-version: '3.10'
 
     - name: Install Python packages
-      run: pip install -U Jinja2 pyyaml
+      run: |
+        python --version
+        pip --version
+        pip install -U Jinja2 pyyaml
   
     - name: '🧰 Checkout'
       uses: actions/checkout@v3
