@@ -30,7 +30,7 @@ try:
     Import("env")
     # print(env.Dump())
 except NameError:
-    print("Running outside the PlatformIO environment!")
+    print("Running build_webui.py outside the PlatformIO environment!")
     env = None
 
 if env is None:
