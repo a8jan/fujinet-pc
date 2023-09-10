@@ -80,7 +80,7 @@ private:
             _buffer = (uint8_t *)malloc(_size);
             if (!_buffer)
             {
-                Debug_printf("Not enough memory to allocate buffer\n");
+                Debug_printf("Not enough memory to allocate buffer\r\n");
                 _failed = true;
                 return 0;
             }
@@ -229,7 +229,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
     {
-        Debug_printf("socket: %d\n", compat_getsockerr());
+        Debug_printf("socket: %d\r\n", compat_getsockerr());
         return 0;
     }
 
@@ -267,7 +267,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     if (res < 0 && err != EINPROGRESS)
 #endif
     {
-        Debug_printf("connect on fd %d, errno: %d, \"%s\"\n", sockfd, err, compat_sockstrerror(err));
+        Debug_printf("connect on fd %d, errno: %d, \"%s\"\r\n", sockfd, err, compat_sockstrerror(err));
         closesocket(sockfd);
         // re-set errno for errno_to_error()
         compat_setsockerr(err);
@@ -293,7 +293,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     if (res < 0)
     {
         err = compat_getsockerr();
-        Debug_printf("select on fd %d, errno: %d, \"%s\"\n", sockfd, err, compat_sockstrerror(err));
+        Debug_printf("select on fd %d, errno: %d, \"%s\"\r\n", sockfd, err, compat_sockstrerror(err));
         closesocket(sockfd);
         // re-set errno
         compat_setsockerr(err);
@@ -302,7 +302,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
     // Timeout reached
     else if (res == 0)
     {
-        Debug_printf("select returned due to timeout %d ms for fd %d\n", timeout, sockfd);
+        Debug_printf("select returned due to timeout %d ms for fd %d\r\n", timeout, sockfd);
         closesocket(sockfd);
 #if defined(_WIN32)
         err = WSAETIMEDOUT;
@@ -324,7 +324,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         {
             // Failed to retrieve SO_ERROR
             err = compat_getsockerr();
-            Debug_printf("getsockopt on fd %d, errno: %d, \"%s\"\n", sockfd, err ,compat_sockstrerror(err));
+            Debug_printf("getsockopt on fd %d, errno: %d, \"%s\"\r\n", sockfd, err ,compat_sockstrerror(err));
             closesocket(sockfd);
             // set errno
             compat_setsockerr(err);
@@ -333,7 +333,7 @@ int fnTcpClient::connect(in_addr_t ip, uint16_t port, int32_t timeout)
         // Retrieved SO_ERROR and found that we have an error condition
         if (sockerr != 0)
         {
-            Debug_printf("socket error on fd %d, errno: %d, \"%s\"\n", sockfd, sockerr, compat_sockstrerror(sockerr));
+            Debug_printf("socket error on fd %d, errno: %d, \"%s\"\r\n", sockfd, sockerr, compat_sockstrerror(sockerr));
             closesocket(sockfd);
             // set errno
             compat_setsockerr(sockerr);
@@ -385,7 +385,7 @@ int fnTcpClient::setSocketOption(int option, char *value, size_t len)
     int res = setsockopt(fd(), SOL_SOCKET, option, value, len);
     if (res < 0)
     {
-        Debug_printf("%X : %d\n", option, compat_getsockerr());
+        Debug_printf("%X : %d\r\n", option, compat_getsockerr());
     }
 
     return res;
@@ -397,7 +397,7 @@ int fnTcpClient::setOption(int option, int *value)
     int res = setsockopt(fd(), IPPROTO_TCP, option, (char *)value, sizeof(int));
     if (res < 0)
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\r\n", fd(), compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
     }
 
     return res;
@@ -410,7 +410,7 @@ int fnTcpClient::getOption(int option, int *value)
     int res = getsockopt(fd(), IPPROTO_TCP, option, (char *)value, &size);
     if (res < 0)
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\r\n", fd(), compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
     }
 
     return res;
@@ -484,7 +484,7 @@ size_t fnTcpClient::write(const uint8_t *buf, size_t size)
             else if (res < 0)
             {
                 int err = compat_getsockerr();
-                Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), err, strerror(err));
+                Debug_printf("fail on fd %d, errno: %d, \"%s\"\r\n", fd(), err, strerror(err));
                 // Give up if this wasn't just a try again error
                 if (err != EAGAIN)
                 {
@@ -527,7 +527,7 @@ int fnTcpClient::read(uint8_t *buf, size_t size)
     res = _rxBuffer->read(buf, size);
     if (_rxBuffer->failed())
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\r\n", fd(), errno, strerror(errno));
         stop();
     }
     return res;
@@ -568,7 +568,7 @@ int fnTcpClient::peek()
     int res = _rxBuffer->peek();
     if (_rxBuffer->failed())
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\r\n", fd(), errno, strerror(errno));
         stop();
     }
     return res;
@@ -583,7 +583,7 @@ int fnTcpClient::available()
     int res = _rxBuffer->available();
     if (_rxBuffer->failed())
     {
-        Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", fd(), errno, strerror(errno));
+        Debug_printf("fail on fd %d, errno: %d, \"%s\"\r\n", fd(), errno, strerror(errno));
         stop();
     }
     return res;
@@ -607,7 +607,7 @@ void fnTcpClient::flush()
         res = recv(fd(), (char *)buf, toRead, MSG_DONTWAIT);
         if (res < 0)
         {
-            Debug_printf("fail on fd %d, errno: %d, \"%s\"\n", 
+            Debug_printf("fail on fd %d, errno: %d, \"%s\"\r\n", 
                 fd(), compat_getsockerr(), compat_sockstrerror(compat_getsockerr()));
             stop();
             break;
@@ -631,7 +631,7 @@ uint8_t fnTcpClient::connected()
         }
         else if (res == 0)
         {
-            Debug_printf("fnTcpClient disconnected\n");
+            Debug_printf("fnTcpClient disconnected\r\n");
             _connected = false;
         }
         else
@@ -661,11 +661,11 @@ uint8_t fnTcpClient::connected()
             case ECONNREFUSED:
             case ECONNABORTED:
 #endif
-                Debug_printf("fnTcpClient disconnected: res %d, errno %d\n", res, err);
                 _connected = false;
+                Debug_printf("fnTcpClient disconnected: res %d, errno %d\r\n", res, err);
                 break;
             default:
-                Debug_printf("fnTcpClient unexpected: res %d, errno %d\n", res, err);
+                Debug_printf("fnTcpClient unexpected: res %d, errno %d\r\n", res, err);
                 _connected = true;
                 break;
             }

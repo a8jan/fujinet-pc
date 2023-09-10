@@ -59,11 +59,12 @@ private:
     bool scanStarted = false;
     bool hostMounted[MAX_HOSTS];
     bool setSSIDStarted = false;
+    unsigned char active_rotate_slot=0;
 
     uint8_t response[1024];
-    uint16_t response_len;
+    uint16_t response_len = 0;
 
-    systemBus *_adamnet_bus;
+    systemBus *_adamnet_bus = nullptr;
 
     fujiHost _fnHosts[MAX_HOSTS];
 
@@ -71,7 +72,7 @@ private:
 
     int _current_open_directory_slot = -1;
 
-    adamDisk *_bootDisk; // special disk drive just for configuration
+    adamDisk *_bootDisk = nullptr; // special disk drive just for configuration
 
     uint8_t bootMode = 0; // Boot mode 0 = CONFIG, 1 = MINI-BOOT
 
@@ -161,13 +162,13 @@ public:
     adamFuji();
 
     string copySpec;
-    unsigned char sourceSlot;
-    unsigned char destSlot;
+    unsigned char sourceSlot = 0;
+    unsigned char destSlot = 0;
     string sourcePath;
     string destPath;
-    FILE *sourceFile;
-    FILE *destFile;
-    char *dataBuf;
+    FILE *sourceFile = nullptr;
+    FILE *destFile = nullptr;
+    char *dataBuf = nullptr;
     TaskHandle_t copy_task_handle;
 };
 

@@ -86,7 +86,7 @@ void IRAM_ATTR phi_isr_handler(void *arg)
       }
       else if (error == 2) // checksum error
       {
-        Debug_printf("\nISR Cmd Chksum error, calc %02x, pkt %02x", smartport.calc_checksum, smartport.pkt_checksum);
+        Debug_printf("\r\nISR Cmd Chksum error, calc %02x, pkt %02x", smartport.calc_checksum, smartport.pkt_checksum);
       }
       // initial Req timeout (error==1) and checksum (error==2) just fall through here and we try again next time
       smartport.spi_end();
@@ -100,10 +100,10 @@ void IRAM_ATTR phi_isr_handler(void *arg)
       }
       else if (error == 2) // checksum error
       {
-        Debug_printf("\nISR Data Packet Chksum error, calc %02x, pkt %02x command = %02x", smartport.calc_checksum, smartport.pkt_checksum,IWM.command_packet.command & 0x0f);
+        Debug_printf("\r\nISR Data Packet Chksum error, calc %02x, pkt %02x command = %02x", smartport.calc_checksum, smartport.pkt_checksum,IWM.command_packet.command & 0x0f);
         /*We sometimes get garbage data packets with control code 0 commands, accept them as-is and go on*/
         if((IWM.command_packet.command == 0x84) && (IWM.command_packet.data[19] == 0x80)) {
-          Debug_printf("\nIgnoring bad data packet");
+          Debug_printf("\r\nIgnoring bad data packet");
           smartport.iwm_ack_clr();
           sp_command_mode = sp_cmd_state_t::command;
         }
@@ -884,7 +884,7 @@ void iwm_ll::disable_output()
 // fnSystem.delay(2000);
 // Debug_printf ("\nSample transmission complete");
 // //gpio_set_direction(gpio_num_t(PIN_SD_HOST_MOSI),gpio_mode_t::GPIO_MODE_INPUT);
-// Debug_printf("\ngpio set to input");
+// Debug_printf("\r\ngpio set to input");
 // GPIO.func_out_sel_cfg[PIN_SD_HOST_MOSI].oen_sel = 1; // let me control the enable register
 // GPIO.enable_w1tc = ((uint32_t)0x01 << PIN_SD_HOST_MOSI);
 
@@ -898,7 +898,7 @@ void iwm_ll::disable_output()
 // //gpio_set_direction(gpio_num_t(PIN_SD_HOST_MOSI),gpio_mode_t::GPIO_MODE_INPUT_OUTPUT);
 // //fnRMT.rmt_set_pin(RMT_TX_CHANNEL,RMT_MODE_TX, (gpio_num_t)SP_WRDATA );
 // GPIO.enable_w1ts = ((uint32_t)0x01 << PIN_SD_HOST_MOSI);
-// Debug_printf("\ngpio back to out");
+// Debug_printf("\r\ngpio back to out");
 
 // fnSystem.delay(1000);
 // fnRMT.rmt_tx_stop(RMT_TX_CHANNEL);
@@ -906,7 +906,7 @@ void iwm_ll::disable_output()
 // //GPIO.func_out_sel_cfg[PIN_SD_HOST_MOSI].func_sel = 0;
 // esp_rom_gpio_connect_out_signal(PIN_SD_HOST_MOSI, spi_periph_signal[HSPI_HOST].spid_out, false, false);
 
-// Debug_printf("\nconnect to SPI");
+// Debug_printf("\r\nconnect to SPI");
 
 // }
 

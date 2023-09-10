@@ -10,8 +10,18 @@
 
 #include <map>
 
+enum adamnet_message : uint16_t
+{
+    ADAMNETMSG_DISKSWAP  // Rotate disk
+};
 
-#define ADAMNET_BAUD 62500
+struct adamnet_message_t
+{
+    adamnet_message message_id;
+    uint16_t message_arg;
+};
+
+#define ADAMNET_BAUDRATE 62500
 
 #define MN_RESET 0x00   // command.control (reset)
 #define MN_STATUS 0x01  // command.control (status)
@@ -264,6 +274,9 @@ public:
     void changeDeviceId(virtualDevice *pDevice, uint8_t device_id);
     bool deviceEnabled(uint8_t device_id);
     QueueHandle_t qAdamNetMessages = nullptr;
+
+    bool shuttingDown = false;                                  // TRUE if we are in shutdown process
+    bool getShuttingDown() { return shuttingDown; };
 };
 
 extern systemBus AdamNet;

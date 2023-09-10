@@ -89,7 +89,7 @@ int DummyWiFiManager::get_scan_result(uint8_t index, char ssid[32], uint8_t *rss
     if (channel != nullptr)
         *channel = 8;
     if (encryption != nullptr)
-        *encryption = 0; // WIFI_AUTH_OPEN
+        *encryption = WIFI_AUTH_OPEN;
 
     return 0;
 }

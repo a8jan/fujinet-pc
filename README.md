@@ -86,7 +86,13 @@ cmake .. -DOPENSSL_ROOT_DIR=/opt/homebrew/opt/openssl -DOPENSSL_LIBRARIES=/opt/h
 ```
 With the cache cleared and the paths fully specified cmake should have no issues finding the openssl headers and libs on macOS.
 
+#### Python packages
 
+Install Python packages for scripts used in build process.
+
+```sh
+python -m pip install -U Jinja2 pyyaml
+```
 
 ### Build
 

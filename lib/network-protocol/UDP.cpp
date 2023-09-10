@@ -20,36 +20,36 @@
 NetworkProtocolUDP::NetworkProtocolUDP(string *rx_buf, string *tx_buf, string *sp_buf)
     : NetworkProtocol(rx_buf, tx_buf, sp_buf)
 {
-    Debug_printf("NetworkProtocolUDP::ctor\n");
+    Debug_printf("NetworkProtocolUDP::ctor\r\n");
 }
 
 NetworkProtocolUDP::~NetworkProtocolUDP()
 {
-    Debug_printf("NetworkProtocolUDP::dtor\n");
+    Debug_printf("NetworkProtocolUDP::dtor\r\n");
 }
 
 bool NetworkProtocolUDP::open(EdUrlParser *urlParser, cmdFrame_t *cmdFrame)
 {
-    Debug_printf("NetworkProtocolUDP::open(%s:%s)\n", urlParser->hostName.c_str(), urlParser->port.c_str());
+    Debug_printf("NetworkProtocolUDP::open(%s:%s)\r\n", urlParser->hostName.c_str(), urlParser->port.c_str());
 
     dest = urlParser->hostName;
-    Debug_printf("Setting destination hostname to: %s\n", dest.c_str());
+    Debug_printf("Setting destination hostname to: %s\r\n", dest.c_str());
 
     // Port must be set, or we bail.
     if (urlParser->port.empty())
     {
-        Debug_printf("Port is empty, aborting.\n");
+        Debug_printf("Port is empty, aborting.\r\n");
         return true;
     }
     else
     {
         port = atoi(urlParser->port.c_str());
-        Debug_printf("Setting destination port to: %u\n", port);
+        Debug_printf("Setting destination port to: %u\r\n", port);
     }
 
     // Attempt to bind port.
     unsigned short bind_port = dest.empty() ? port : 0;
-    Debug_printf("Binding port %u\n", bind_port);
+    Debug_printf("Binding port %u\r\n", bind_port);
     if (udp.begin(bind_port) == false)
     {
         errno_to_error();
@@ -57,7 +57,7 @@ bool NetworkProtocolUDP::open(EdUrlParser *urlParser, cmdFrame_t *cmdFrame)
     }
     else
     {
-        Debug_printf("After begin: %s:%u\n", dest.c_str(), port);
+        Debug_printf("After begin: %s:%u\r\n", dest.c_str(), port);
     }
 
     // call base class
@@ -82,11 +82,11 @@ bool NetworkProtocolUDP::read(unsigned short len)
     uint8_t *newData = (uint8_t *)malloc(len);
     string newString;
 
-    Debug_printf("NetworkProtocolUDP::read(%u)\n", len);
+    Debug_printf("NetworkProtocolUDP::read(%u)\r\n", len);
 
     if (newData == nullptr)
     {
-        Debug_printf("Could not allocate %u bytes! Aborting!\n", len);
+        Debug_printf("Could not allocate %u bytes! Aborting!\r\n", len);
         return true; // error.
     }
 
@@ -95,6 +95,7 @@ bool NetworkProtocolUDP::read(unsigned short len)
         if (udp.available() == 0)
         {
             errno_to_error();
+            free(newData);
             return true;
         }
 
@@ -104,13 +105,12 @@ bool NetworkProtocolUDP::read(unsigned short len)
         // Add new data to buffer.
         newString = string((char *)newData, len);
         *receiveBuffer += newString;
-
-        free(newData);
     }
 
     // Return success
-    Debug_printf("errno = %u\n", errno);
+    Debug_printf("errno = %u\r\n", errno);
     error = 1;
+    free(newData);
     return NetworkProtocol::read(len);
 }
 
@@ -119,7 +119,7 @@ bool NetworkProtocolUDP::write(unsigned short len)
     // Call base class to do translation.
     len = translate_transmit_buffer();
 
-    Debug_printf("NetworkProtocolUDP::write(%u,%s,%u)\n", len, dest.c_str(), port);
+    Debug_printf("NetworkProtocolUDP::write(%u,%s,%u)\r\n", len, dest.c_str(), port);
 
     // Check for client connection
     if (dest.empty())
@@ -178,7 +178,7 @@ bool NetworkProtocolUDP::status(NetworkStatus *status)
 
 uint8_t NetworkProtocolUDP::special_inquiry(uint8_t cmd)
 {
-    Debug_printf("NetworkProtocolUDP::special_inquiry(%02x)\n", cmd);
+    Debug_printf("NetworkProtocolUDP::special_inquiry(%02x)\r\n", cmd);
 
     switch (cmd)
     {

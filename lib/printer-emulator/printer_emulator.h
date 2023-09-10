@@ -4,7 +4,6 @@
 //#include "../../include/atascii.h"
 
 #include "fnFsSD.h"
-//#include "fnFsSPIFFS.h"
 
 // TODO: Combine html_printer.cpp/h and file_printer.cpp/h
 
@@ -39,7 +38,7 @@ protected:
     bool translate850 = false;  // default to sio printer
     uint8_t _eol = 0x9B; // default to atascii eol
 
-    uint8_t buffer[80];
+    uint8_t buffer[320];
 
     // Called after a new printer output file is created (allows for providing header data)
     virtual void post_new_file()=0;
@@ -54,6 +53,9 @@ protected:
     void restart_output();
     
 public:
+
+    bool is_printing=false;
+    
     // Destructor must be virtual to allow for proper cleanup of derived classes
     virtual ~printer_emu();
 

@@ -474,7 +474,7 @@ bool util_concat_paths(char *dest, const char *parent, const char *child, int de
     // Make sure we have room left after copying the parent
     if (plen >= dest_size - 3) // Allow for a minimum of a slash, one char, and NULL
     {
-        Debug_printf("_concat_paths parent takes up entire destination buffer: \"%s\"\n", parent);
+        Debug_printf("_concat_paths parent takes up entire destination buffer: \"%s\"\r\n", parent);
         return false;
     }
 
@@ -496,7 +496,7 @@ bool util_concat_paths(char *dest, const char *parent, const char *child, int de
         // Verify we were able to copy the whole thing
         if (clen != strlen(child))
         {
-            Debug_printf("_concat_paths parent + child larger than dest buffer: \"%s\", \"%s\"\n", parent, child);
+            Debug_printf("_concat_paths parent + child larger than dest buffer: \"%s\", \"%s\"\r\n", parent, child);
             return false;
         }
     }
@@ -871,6 +871,33 @@ void util_ascii_to_petscii_str(std::string &s)
     std::transform(s.begin(), s.end(), s.begin(),
                    [](unsigned char c)
                    { return util_ascii_to_petscii(c); });
+}
+
+char *util_hexdump(const void *buf, size_t len) {
+  const unsigned char *p = (const unsigned char *) buf;
+  size_t i, idx, n = 0, ofs = 0, dlen = len * 5 + 100;
+  char ascii[17] = "", *dst = (char *) calloc(1, dlen);
+  if (dst == NULL) return dst;
+  for (i = 0; i < len; i++) {
+    idx = i % 16;
+    if (idx == 0) {
+      if (i > 0 && dlen > n)
+        n += (size_t) snprintf(dst + n, dlen - n, "  %s\n", ascii);
+      if (dlen > n)
+        n += (size_t) snprintf(dst + n, dlen - n, "%04x ", (int) (i + ofs));
+    }
+    if (dlen < n) break;
+    n += (size_t) snprintf(dst + n, dlen - n, " %02x", p[i]);
+    ascii[idx] = (char) (p[i] < 0x20 || p[i] > 0x7e ? '.' : p[i]);
+    ascii[idx + 1] = '\0';
+  }
+  while (i++ % 16) {
+    if (n < dlen) n += (size_t) snprintf(dst + n, dlen - n, "%s", "   ");
+  }
+  if (n < dlen) n += (size_t) snprintf(dst + n, dlen - n, "  %s\n", ascii);
+  if (n > dlen - 1) n = dlen - 1;
+  dst[n] = '\0';
+  return dst;
 }
 
 // helper function for Debug_print* macros on fujinet-pc

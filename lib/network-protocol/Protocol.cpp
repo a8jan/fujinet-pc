@@ -72,7 +72,7 @@ NetworkProtocol::NetworkProtocol(string *rx_buf,
                                  string *tx_buf,
                                  string *sp_buf)
 {
-    Debug_printf("NetworkProtocol::ctor()\n");
+    Debug_printf("NetworkProtocol::ctor()\r\n");
 
     receiveBuffer = rx_buf;
     transmitBuffer = tx_buf;
@@ -86,7 +86,7 @@ NetworkProtocol::NetworkProtocol(string *rx_buf,
  */
 NetworkProtocol::~NetworkProtocol()
 {
-    Debug_printf("NetworkProtocol::dtor()\n");
+    Debug_printf("NetworkProtocol::dtor()\r\n");
     receiveBuffer->clear();
     transmitBuffer->clear();
     specialBuffer->clear();
@@ -138,7 +138,7 @@ bool NetworkProtocol::close()
  */
 bool NetworkProtocol::read(unsigned short len)
 {
-    Debug_printf("NetworkProtocol::read(%u)\n", len);
+    Debug_printf("NetworkProtocol::read(%u)\r\n", len);
     translate_receive_buffer();
     error = 1;
     return false;
@@ -202,7 +202,7 @@ void NetworkProtocol::translate_receive_buffer()
     #endif
         break;
     case TRANSLATION_MODE_PETSCII:
-        Debug_printf("!!! PETSCII !!!\n");
+        Debug_printf("!!! PETSCII !!!\r\n");
         mstr::toPETSCII(*receiveBuffer);
         break;
     }
@@ -221,9 +221,9 @@ unsigned short NetworkProtocol::translate_transmit_buffer()
         return transmitBuffer->length();
 
     #ifdef BUILD_ATARI
-    replace(transmitBuffer->begin(), transmitBuffer->end(), ATASCII_BUZZER, ASCII_BELL);
-    replace(transmitBuffer->begin(), transmitBuffer->end(), ATASCII_DEL, ASCII_BACKSPACE);
-    replace(transmitBuffer->begin(), transmitBuffer->end(), ATASCII_TAB, ASCII_TAB);
+    util_replaceAll(*transmitBuffer, STR_ATASCII_BUZZER, STR_ASCII_BELL);
+    util_replaceAll(*transmitBuffer, STR_ATASCII_DEL, STR_ASCII_BACKSPACE);
+    util_replaceAll(*transmitBuffer, STR_ATASCII_TAB, STR_ASCII_TAB);
     #endif
 
     switch (translation_mode)
@@ -307,7 +307,7 @@ void NetworkProtocol::errno_to_error()
         break;
 #endif
     default:
-        Debug_printf("errno_to_error() - Uncaught errno = %u, returning 144.\n", err);
+        Debug_printf("errno_to_error() - Uncaught errno = %u, returning 144.\r\n", err);
         error = NETWORK_ERROR_GENERAL;
         break;
     }

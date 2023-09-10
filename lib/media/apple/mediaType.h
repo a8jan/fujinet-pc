@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "fnFile.h"
+#include <fujiHost.h>
 
 #define INVALID_SECTOR_VALUE 65536
 
@@ -29,11 +30,16 @@ class MediaType
 {
 protected:
     FileHandler *_media_fileh = nullptr;
+    FileHandler *oldFileh = nullptr; /* Temp fileh for high score enabled games */
+    FileHandler *hsFileh = nullptr; /* Temp fileh for high score enabled games */
+
     uint32_t _media_image_size = 0;
     uint32_t _media_num_sectors = 0;
     uint16_t _media_sector_size = DISK_BYTES_PER_SECTOR_SINGLE;
     int32_t _media_last_sector = INVALID_SECTOR_VALUE;
     uint8_t _media_controller_status = DISK_CTRL_STATUS_CLEAR;
+    uint16_t _high_score_block_lb = 0; /* High score block (lower bound) to allow write. 1-65535 */
+    uint16_t _high_score_block_ub = 0; /* High score block (upper bound) to allow write. 1-65535 */
 
 public:
     // struct
@@ -54,6 +60,11 @@ public:
 
     uint32_t num_blocks;
     // FILE* fileptr() {return _media_fileh;}
+
+    char _disk_filename[256];
+    fujiHost *_media_host = nullptr;
+    FileHandler *_media_hsfileh = nullptr;
+    bool high_score_enabled = false;
 
     // uint8_t _media_sectorbuff[DISK_SECTORBUF_SIZE];
 

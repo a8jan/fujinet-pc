@@ -6,9 +6,10 @@
 class MediaTypeXEX : public MediaType
 {
 private:
-    uint8_t *_xex_bootloader = nullptr;
+    uint8_t _xex_bootloader[384];
     int _xex_bootloadersize = 0;
 
+    void _fake_vtoc();
     void _fake_directory_entry();
 
 public:

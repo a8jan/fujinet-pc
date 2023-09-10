@@ -4,16 +4,16 @@
 #include <string>
 
 #include "printer.h"
+#include "../encrypt/crypt.h"
+// #include "debug.h"
 
-#define CONFIG_FILENAME "fnconfig.ini"
-#define SD_CARD_DIR "SD"
-#define WEB_SERVER_LISTEN_URL "http://0.0.0.0:8000"
 
 #define MAX_HOST_SLOTS 8
 #define MAX_MOUNT_SLOTS 8
 #define MAX_PRINTER_SLOTS 4
 #define MAX_TAPE_SLOTS 1
 #define MAX_PB_SLOTS 16
+#define MAX_WIFI_STORED 8
 
 #define BASE_TAPE_SLOT 0x1A
 
@@ -21,7 +21,18 @@
 
 #define HSIO_DISABLED_INDEX -1  // HSIO disabled, use standard speed only
 
+#define CONFIG_FILENAME "fnconfig.ini"
+#define CONFIG_FILEBUFFSIZE 2048
+
+#define SD_CARD_DIR "SD"
+#define WEB_SERVER_LISTEN_URL "http://0.0.0.0:8000"
+
 #define CONFIG_DEFAULT_NETSIO_PORT 9997
+
+#define CONFIG_DEFAULT_SNTPSERVER "pool.ntp.org"
+
+#define PHONEBOOK_CHAR_WIDTH 12 
+
 
 class fnConfig
 {
@@ -98,6 +109,8 @@ public:
     void store_general_fnconfig_spifs(bool fnconfig_spifs);
     bool get_general_status_wait_enabled() { return _general.status_wait_enabled; }
     void store_general_status_wait_enabled(bool status_wait_enabled);
+    void store_general_encrypt_passphrase(bool encrypt_passphrase);
+    bool get_general_encrypt_passphrase();
     std::string get_general_interface_url() { return _general.interface_url; };
     void store_general_interface_url(const char *url);
     std::string get_general_config_path() { return _general.config_file_path; };
@@ -118,19 +131,36 @@ public:
     // WIFI
     bool have_wifi_info() { return _wifi.ssid.empty() == false; };
     std::string get_wifi_ssid() { return _wifi.ssid; };
-    std::string get_wifi_passphrase() { return _wifi.passphrase; };
+    std::string get_wifi_passphrase() {
+        if (_general.encrypt_passphrase) {
+            // crypt is a isomorphic operation, calling it when passphrase is encrypted will decrypt it.
+            std::string cleartext = crypto.crypt(_wifi.passphrase);
+            // Debug_printf("Decrypting passphrase >%s< for ssid >%s< with key >%s<, cleartext: >%s<\r\n", _wifi.passphrase.c_str(), _wifi.ssid.c_str(), crypto.getkey().c_str(), cleartext.c_str());
+            return cleartext;
+        } else {
+            return _wifi.passphrase;
+        }
+    }
     void store_wifi_ssid(const char *ssid_octets, int num_octets);
     void store_wifi_passphrase(const char *passphrase_octets, int num_octets);
     void reset_wifi() { _wifi.ssid.clear(); _wifi.passphrase.clear(); };
     void store_wifi_enabled(bool status);
     bool get_wifi_enabled() { return _wifi.enabled; };
 
+    std::string get_wifi_stored_ssid(int index) { return _wifi_stored[index].ssid; }
+    std::string get_wifi_stored_passphrase(int index) { return _wifi_stored[index].passphrase; }
+    bool get_wifi_stored_enabled(int index) { return _wifi_stored[index].enabled; }
+
+    void store_wifi_stored_ssid(int index, const std::string &ssid); // { _wifi_stored[index].ssid = ssid; }
+    void store_wifi_stored_passphrase(int index, const std::string &passphrase);
+    void store_wifi_stored_enabled(int index, bool enabled); // { _wifi_stored[index].enabled = enabled; }
+
     // BLUETOOTH
     void store_bt_status(bool status);
     bool get_bt_status() { return _bt.bt_status; };
     void store_bt_baud(int baud);
     int get_bt_baud() { return _bt.bt_baud; };
-    void store_bt_devname(std::string devname);
+    void store_bt_devname(const std::string &devname);
     std::string get_bt_devname() { return _bt.bt_devname; };
 
     // HOSTS
@@ -180,7 +210,7 @@ public:
 
     // CPM
     std::string get_ccp_filename(){ return _cpm.ccp; };
-    void store_ccp_filename(std::string filename);
+    void store_ccp_filename(const std::string &filename);
 
     // ENABLE/DISABLE DEVICE SLOTS
     bool get_device_slot_enable_1();
@@ -200,6 +230,8 @@ public:
     void store_device_slot_enable_7(bool enabled);
     void store_device_slot_enable_8(bool enabled);
 
+    bool get_apetime_enabled();
+    void store_apetime_enabled(bool enabled);
 
     // NETSIO (Connection to Atari emulator)
     bool get_netsio_enabled() { return _netsio.netsio_enabled; }
@@ -224,6 +256,7 @@ private:
     void _read_section_general(std::stringstream &ss);
     void _read_section_serial(std::stringstream &ss);
     void _read_section_wifi(std::stringstream &ss);
+    void _read_section_wifi_stored(std::stringstream &ss, int index);
     void _read_section_bt(std::stringstream &ss);
     void _read_section_network(std::stringstream &ss);
     void _read_section_host(std::stringstream &ss, int index);
@@ -241,6 +274,7 @@ private:
     {
         SECTION_GENERAL,
         SECTION_WIFI,
+        SECTION_WIFI_STORED,
         SECTION_BT,
         SECTION_HOST,
         SECTION_MOUNT,
@@ -349,6 +383,7 @@ private:
         int boot_mode = 0;
         bool fnconfig_spifs = true;
         bool status_wait_enabled = true;
+        bool encrypt_passphrase = false;
     #ifdef BUILD_ADAM
         bool printer_enabled = false; // Not by default.
     #else
@@ -401,6 +436,7 @@ private:
         bool device_6_enabled = true;
         bool device_7_enabled = true;
         bool device_8_enabled = true;
+        bool apetime = true;
     };
 
     struct phbook_info
@@ -414,6 +450,7 @@ private:
     mount_info _mount_slots[MAX_MOUNT_SLOTS];
     printer_info _printer_slots[MAX_PRINTER_SLOTS];
     mount_info _tape_slots[MAX_TAPE_SLOTS];
+    wifi_info _wifi_stored[MAX_WIFI_STORED];
 
     wifi_info _wifi;
     bt_info _bt;

@@ -91,7 +91,7 @@ void fujiHost::set_prefix(const char *prefix)
     {
         util_concat_paths(_prefix, _prefix, prefix, sizeof(_prefix));
     }
-    
+
     Debug_printf("fujiHost::set_prefix new prefix = \"%s\"\n", _prefix);
 }
 
@@ -150,7 +150,7 @@ bool fujiHost::dir_open(const char *path, const char *pattern, uint16_t options)
     char realpath[MAX_PATHLEN];
     if( false == util_concat_paths(realpath, _prefix, path, sizeof(realpath)) )
         return false;
-    
+
     Debug_printf("::dir_open actual path = \"%s\"\n", realpath);
 
     int result = false;
@@ -201,7 +201,7 @@ bool fujiHost::file_exists(const char *path)
     char realpath[MAX_PATHLEN];
     if( false == util_concat_paths(realpath, _prefix, path, sizeof(realpath)) )
         return false;
-    
+
     Debug_printf("::file_exists actual path = \"%s\"\n", realpath);
 
     return _fs->exists(realpath);
@@ -240,6 +240,17 @@ FileHandler * fujiHost::filehandler_open(const char *path, char *fullpath, int f
     Debug_printf("fujiHost #%d opening file path \"%s\"\n", slotid, fullpath);
 
     return _fs->filehandler_open(fullpath, mode);
+}
+
+/* Remove a file from the host
+ * Returns true on error, false on success
+*/
+bool fujiHost::file_remove(char *fullpath)
+{
+    if (_type == HOSTTYPE_UNINITIALIZED || _fs == nullptr)
+        return true;
+
+    return _fs->remove(fullpath);
 }
 
 /* Returns pointer to current hostname and, if provided, fills buffer with that string

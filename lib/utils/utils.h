@@ -90,6 +90,9 @@ char util_ascii_to_petscii(char c);
 void util_petscii_to_ascii_str(std::string &s);
 void util_ascii_to_petscii_str(std::string &s);
 
+// generic hex dump for debug output
+char *util_hexdump(const void *buf, size_t len);
+
 // helper function for Debug_print* macros on fujinet-pc
 void util_debug_printf(const char *fmt, ...);
 

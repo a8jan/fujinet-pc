@@ -59,10 +59,14 @@ mediatype_t adamDisk::mount(FILE *f, const char *filename, uint32_t disksize, me
     case MEDIATYPE_DDP:
         device_active = true;
         _media = new MediaTypeDDP();
+        _media->_media_host = host;
+        strcpy(_media->_disk_filename, filename);
         mt = _media->mount(f, disksize);
         break;
     case MEDIATYPE_DSK:
         _media = new MediaTypeDSK();
+        _media->_media_host = host;
+        strcpy(_media->_disk_filename,filename);
         mt = _media->mount(f, disksize);
         device_active = true;
         break;
@@ -94,10 +98,13 @@ bool adamDisk::write_blank(FILE *fileh, uint32_t numBlocks)
 {
     uint8_t buf[256];
 
-    memset(buf, 0xE5, 256);
-
     for (uint32_t b = 0; b < numBlocks; b++)
     {
+        if (b<13)
+            memset(buf, 0x00, 256);
+        else
+            memset(buf, 0xE5, 256);
+
         fwrite(buf, 1, 256, fileh);
         fwrite(buf, 1, 256, fileh);
         fwrite(buf, 1, 256, fileh);

@@ -7,7 +7,7 @@
 #include "fnSystem.h"
 #include "fnFile.h"
 
-#define CASSETTE_BAUD 600
+#define CASSETTE_BAUDRATE 600
 #define BLOCK_LEN 128
 
 #define STARTBIT 0
@@ -39,8 +39,8 @@ class softUART
 {
 protected:
     uint64_t baud_clock;
-    uint16_t baud = CASSETTE_BAUD;             // bps
-    uint32_t period = 1000000 / CASSETTE_BAUD; // microseconds
+    uint16_t baud = CASSETTE_BAUDRATE;             // bps
+    uint32_t period = 1000000 / CASSETTE_BAUDRATE; // microseconds
 
     uint8_t demod_output;
     uint8_t denoise_counter;

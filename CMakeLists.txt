@@ -7,6 +7,8 @@ project(fujinet-pc)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# fujinet.build_board
+set(FUJINET_TARGET fujinet-pc-atari)
 # fujinet.build_platform
 set(FUJINET_BUILD_PLATFORM BUILD_ATARI)
 # fujinet.build_bus
@@ -17,7 +19,7 @@ set(FUJINET_DATA_DIR ${CMAKE_SOURCE_DIR}/data/${FUJINET_BUILD_PLATFORM})
 set(FUJINET_PIN_MAP PINMAP_ATARIV1)
 
 # add -DNO_DEBUG_PRINT to supress Debug_print output in Release build
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D${FUJINET_BUILD_PLATFORM} -D${FUJINET_PIN_MAP} -DSKIP_SERVER_CERT_VERIFY -DSMARTPORT=USB")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D${FUJINET_BUILD_PLATFORM} -D${FUJINET_PIN_MAP} -DSKIP_SERVER_CERT_VERIFY -DSMARTPORT=USB -DFLASH_SPIFFS")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVERBOSE_HTTP -D__PC_BUILD_DEBUG__")
 
 # mongoose.c some compile options: -DMG_ENABLE_LINES=1 -DMG_ENABLE_DIRECTORY_LISTING=1 -DMG_ENABLE_SSI=1
@@ -33,13 +35,31 @@ set(INCLUDE_DIRS include
     lib/FileSystem lib/EdUrlParser
     lib/tcpip lib/ftp lib/TNFSlib lib/telnet lib/fnjson
     lib/mongoose lib/webdav lib/http lib/sam lib/task
-    lib/modem-sniffer lib/printer-emulator lib/network-protocol 
+    lib/modem-sniffer lib/printer-emulator
+    lib/network-protocol 
     lib/fuji lib/bus lib/device lib/media
+    lib/encrypt
     components/cJSON components/libsmb2/include
 )
 
 set(SOURCES src/main.cpp
     lib/config/fnConfig.h lib/config/fnConfig.cpp
+    lib/config/fnc_bt.cpp
+    lib/config/fnc_cassette.cpp
+    lib/config/fnc_cpm.cpp
+    lib/config/fnc_enable.cpp
+    lib/config/fnc_general.cpp
+    lib/config/fnc_hosts.cpp
+    lib/config/fnc_load.cpp
+    lib/config/fnc_modem.cpp
+    lib/config/fnc_mounts.cpp
+    lib/config/fnc_network.cpp
+    lib/config/fnc_phonebook.cpp
+    lib/config/fnc_printer.cpp
+    lib/config/fnc_save.cpp
+    lib/config/fnc_serial.cpp
+    lib/config/fnc_util.cpp
+    lib/config/fnc_wifi.cpp
     lib/utils/utils.h lib/utils/utils.cpp
     lib/utils/cbuf.h lib/utils/cbuf.cpp
     lib/utils/string_utils.h lib/utils/string_utils.cpp
@@ -138,12 +158,12 @@ set(SOURCES src/main.cpp
     lib/device/sio/disk.h lib/device/sio/disk.cpp
     lib/device/sio/printer.h lib/device/sio/printer.cpp
     lib/device/sio/printerlist.h lib/device/sio/printerlist.cpp
-    lib/device/sio/modem.h lib/device/sio/modem.cpp
     lib/device/sio/cassette.h lib/device/sio/cassette.cpp
     lib/device/sio/fuji.h lib/device/sio/fuji.cpp
     lib/device/sio/network.h lib/device/sio/network.cpp
     lib/device/sio/apetime.h lib/device/sio/apetime.cpp
     lib/device/sio/pclink.h lib/device/sio/pclink.cpp
+    lib/modem/modem.h lib/modem/modem.cpp
     lib/media/media.h
     lib/media/apple/mediaType.h lib/media/apple/mediaType.cpp
     lib/media/apple/mediaTypePO.h lib/media/apple/mediaTypePO.cpp
@@ -151,6 +171,7 @@ set(SOURCES src/main.cpp
     lib/media/atari/diskTypeAtr.h lib/media/atari/diskTypeAtr.cpp
     lib/media/atari/diskTypeAtx.h 
     lib/media/atari/diskTypeXex.h lib/media/atari/diskTypeXex.cpp
+    lib/encrypt/crypt.h lib/encrypt/crypt.cpp
     lib/compat/compat_inet.c
     lib/compat/compat_gettimeofday.c
 )
@@ -214,6 +235,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_link_libraries(fujinet ws2_32)
 endif()
 
+# "build_webui" target
+add_custom_command(
+    OUTPUT "${FUJINET_DATA_DIR}"
+    DEPENDS build_webui.py
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E env FUJINET_TARGET=${FUJINET_TARGET} FUJINET_BUILD_PLATFORM=${FUJINET_BUILD_PLATFORM} python build_webui.py
+)
+add_custom_target(build_webui DEPENDS "${FUJINET_DATA_DIR}")
 
 # "dist" target
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -238,6 +267,7 @@ else()
     )
 endif()
 add_dependencies(dist fujinet)
+add_dependencies(dist build_webui)
 
 # include dist cleanup in "clean" target
 set_property(

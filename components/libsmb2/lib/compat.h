@@ -41,6 +41,17 @@ int poll(struct pollfd *fds, unsigned int nfds, int timo);
 #endif /* MinGW */
 
 
+#ifdef PICO_PLATFORM
+
+#include "lwip/netdb.h"
+#include "lwip/sockets.h"
+
+long long int be64toh(long long int x);
+#define getlogin_r(x,y) 1
+#define EAI_AGAIN EAGAIN
+
+#endif /* PICO_PLATFORM */
+
 #ifdef PS2_EE_PLATFORM
 
 #include <errno.h>

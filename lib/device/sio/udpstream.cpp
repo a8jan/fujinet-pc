@@ -69,7 +69,7 @@ void sioUDPStream::sio_handle_udpstream()
     {
         udpStream.read(buf_net, UDPSTREAM_BUFFER_SIZE);
         // Send to Atari UART
-        fnUartSIO.write(buf_net, packetSize);
+        fnUartBUS.write(buf_net, packetSize);
 #ifdef DEBUG_UDPSTREAM
         Debug_print("UDP-IN: ");
         util_dump_bytes(buf_net, packetSize);
@@ -77,7 +77,7 @@ void sioUDPStream::sio_handle_udpstream()
     }
 
     // Read the data until there's a pause in the incoming stream
-    if (fnUartSIO.available() > 0)
+    if (fnUartBUS.available() > 0)
     {
         while (true)
         {
@@ -90,17 +90,17 @@ void sioUDPStream::sio_handle_udpstream()
                 sio_disable_udpstream();
                 return;
             }
-            if (fnUartSIO.available() > 0)
+            if (fnUartBUS.available() > 0)
             {
                 // Collect bytes read in our buffer
-                buf_stream[buf_stream_index] = (char)fnUartSIO.read();
+                buf_stream[buf_stream_index] = (char)fnUartBUS.read();
                 if (buf_stream_index < UDPSTREAM_BUFFER_SIZE - 1)
                     buf_stream_index++;
             }
             else
             {
                 fnSystem.delay_microseconds(UDPSTREAM_PACKET_TIMEOUT);
-                if (fnUartSIO.available() <= 0)
+                if (fnUartBUS.available() <= 0)
                     break;
             }
         }

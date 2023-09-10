@@ -134,9 +134,9 @@ void fnHttpServiceConfigurator::config_hsio(std::string hsioindex)
         return;
     }
 
-    // Store our change in Config and apply
-    Config.store_general_hsioindex(index);
     SIO.setHighSpeedIndex(index);
+    // Store our change in Config
+    Config.store_general_hsioindex(index);
     Config.save();
 #endif /* BUILD_ATARI */
 }
@@ -246,28 +246,38 @@ void fnHttpServiceConfigurator::config_cassette_enabled(std::string cassette_ena
     Config.save();
 }
 
-void fnHttpServiceConfigurator::config_cassette(std::string play_record, std::string resistor, bool rew)
+void fnHttpServiceConfigurator::config_cassette_play(std::string play_record)
 {
 #ifdef BUILD_ATARI
     // call the cassette buttons function passing play_record.c_str()
     // find cassette via thefuji object?
-    Debug_printf("New play/record button value: %s - not implemented\n", play_record.c_str());
-    // if (!play_record.empty())
-    // {
-    //     theFuji.cassette()->set_buttons(util_string_value_is_true(play_record));
-    //     Config.store_cassette_buttons(util_string_value_is_true(play_record));
-    // }
-    // if (!resistor.empty())
-    // {
-    //     theFuji.cassette()->set_pulldown(util_string_value_is_true(resistor));
-    //     Config.store_cassette_pulldown(util_string_value_is_true(resistor));
-    // }
-    // else if (rew == true)
-    // {
-    //     Debug_printf("Rewinding cassette.\n");
-    //     SIO.getCassette()->rewind();
-    // }
-    // Config.save();
+    Debug_printf("New play/record button value: %s\n", play_record.c_str());
+    bool isRecord = util_string_value_is_true(play_record);
+    theFuji.cassette()->set_buttons(isRecord);
+    Config.store_cassette_buttons(isRecord);
+
+    Config.save();
+#endif /* ATARI */
+}
+
+void fnHttpServiceConfigurator::config_cassette_resistor(std::string resistor)
+{
+#ifdef BUILD_ATARI
+    bool isPullDown = util_string_value_is_true(resistor);
+    theFuji.cassette()->set_pulldown(isPullDown);
+    Config.store_cassette_pulldown(isPullDown);
+
+    Config.save();
+#endif /* ATARI */
+}
+
+void fnHttpServiceConfigurator::config_cassette_rewind()
+{
+#ifdef BUILD_ATARI
+    Debug_printf("Rewinding cassette.\n");
+    SIO.getCassette()->rewind();
+
+    Config.save();
 #endif /* ATARI */
 }
 
@@ -317,17 +327,23 @@ void fnHttpServiceConfigurator::config_udpstream(std::string hostname)
     Config.save();
 }
 
-
-void fnHttpServiceConfigurator::config_printer(std::string printernumber, std::string printermodel, std::string printerport)
+int printer_number_from_string(std::string printernumber)
 {
-    Debug_printf("Set Printer: %s,%s,%s\n", printernumber.c_str(), printermodel.c_str(), printerport.c_str());
-
     // Take the last char in the 'printernumber' string and turn it into a digit
     int pn = 1;
     char pc = printernumber[printernumber.length() - 1];
 
     if (pc >= '0' && pc <= '9')
         pn = pc - '0';
+
+    return pn;
+}
+
+void fnHttpServiceConfigurator::config_printer_model(std::string printernumber, std::string printermodel)
+{
+    int pn = printer_number_from_string(printernumber);
+
+    Debug_printf("Set Printer Model: %s,%s\r\n", printernumber.c_str(), printermodel.c_str());
 
     // Only handle 1 printer for now
     if (pn != 1)
@@ -336,50 +352,74 @@ void fnHttpServiceConfigurator::config_printer(std::string printernumber, std::s
         return;
     }
 
-    if (printerport.empty())
+    PRINTER_CLASS::printer_type t = PRINTER_CLASS::match_modelname(printermodel);
+    if (t == PRINTER_CLASS::printer_type::PRINTER_INVALID)
     {
-        PRINTER_CLASS::printer_type t = PRINTER_CLASS::match_modelname(printermodel);
-        if (t == PRINTER_CLASS::printer_type::PRINTER_INVALID)
-        {
-            Debug_printf("Unknown printer type: \"%s\"\n", printermodel.c_str());
-            return;
-        }
-        Debug_printf("config_printer changing printer %d type to %d\n", pn, t);
-        // Store our change in Config
-        Config.store_printer_type(pn - 1, t);
-        // Store our change in the printer list
-        fnPrinters.set_type(0, t);
-        // Tell the printer to change its type
-        fnPrinters.get_ptr(0)->set_printer_type(t);
+        Debug_printf("Unknown printer type: \"%s\"\n", printermodel.c_str());
+        return;
     }
-    else
-    {
-        int port = -1;
-        pc = printerport[0];
-        if (pc >= '0' && pc <= '9')
-            port = pc - '1';
+    Debug_printf("config_printer changing printer %d type to %d\n", pn, t);
+    // Store our change in Config
+    Config.store_printer_type(pn - 1, t);
+    // Store our change in the printer list
+    fnPrinters.set_type(0, t);
+    // Tell the printer to change its type
+    fnPrinters.get_ptr(0)->set_printer_type(t);
 
-        if (port < 0 || port > 3)
-        {
+    Config.save();
+}
+
+void fnHttpServiceConfigurator::config_printer_port(std::string printernumber, std::string printerport)
+{
+    int pn = printer_number_from_string(printernumber);
+
+    Debug_printf("Set Printer Port: %s,%s\r\n", printernumber.c_str(), printerport.c_str());
+
+    // Only handle 1 printer for now
+    if (pn != 1)
+    {
+        Debug_printf("config_printer invalid printer %d\n", pn);
+        return;
+    }
+
+    int port = -1;
+    char pc = printerport[0];
+    if (pc >= '0' && pc <= '9')
+        port = pc - '1'; // change to 0 based index
+
+    if (port < 0 || port > 3)
+    {
 #ifdef DEBUG
-            Debug_printf("Bad printer port number: %d\n", port);
+        Debug_printf("Bad printer port number: %d\n", port);
 #endif
-            return;
-        }
+        return;
+    }
 #ifdef DEBUG
-        Debug_printf("config_printer changing printer %d port to %d\n", pn, port);
+    Debug_printf("config_printer changing printer %d port to %d\n", pn, port);
 #endif
-        // Store our change in Config
-        Config.store_printer_port(pn - 1, port);
-        // Store our change in the printer list
-        fnPrinters.set_port(0, port);
+    // Store our change in Config
+    Config.store_printer_port(pn - 1, port);
+    // Store our change in the printer list
+    fnPrinters.set_port(0, port);
 #ifdef BUILD_ATARI
-        // Tell the SIO daisy chain to change the device ID for this printer
-        SIO.changeDeviceId(fnPrinters.get_ptr(0), SIO_DEVICEID_PRINTER + port);
+    // Tell the SIO daisy chain to change the device ID for this printer
+    SIO.changeDeviceId(fnPrinters.get_ptr(0), SIO_DEVICEID_PRINTER + port);
 #endif
-    }
 
-    // Save change
+    Config.save();
+}
+
+void fnHttpServiceConfigurator::config_encrypt_passphrase_enabled(std::string encrypt_passphrase_enabled)
+{
+    Debug_printf("encrypt_passphrase_enabled Enable Value: %s\n", encrypt_passphrase_enabled.c_str());
+    Config.store_general_encrypt_passphrase(atoi(encrypt_passphrase_enabled.c_str()));
+    Config.save();
+}
+
+void fnHttpServiceConfigurator::config_apetime_enabled(std::string enabled)
+{
+    Debug_printf("New APETIME Enable Value: %s\n", enabled.c_str());
+    Config.store_apetime_enabled(atoi(enabled.c_str()));
     Config.save();
 }
 
@@ -487,15 +527,15 @@ int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t 
     std::string str_netsio_enable;
     std::string str_netsio_host;
 
-    for (std::map<std::string, std::string>::iterator i = postvals.begin(); i != postvals.end(); i++)
+    for (std::map<std::string, std::string>::iterator i = postvals.begin(); i != postvals.end(); ++i)
     {
         if (i->first.compare("printermodel1") == 0)
         {
-            config_printer(i->first, i->second, std::string());
+            config_printer_model(i->first, i->second);
         }
         else if (i->first.compare("printerport1") == 0)
         {
-            config_printer(i->first, std::string(), i->second);
+            config_printer_port(i->first, i->second);
         }
         else if (i->first.compare("hsioindex") == 0)
         {
@@ -515,15 +555,15 @@ int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t 
         }
         else if (i->first.compare("play_record") == 0)
         {
-            config_cassette(i->second, std::string(), false);
+            config_cassette_play(i->second);
         }
         else if (i->first.compare("pulldown") == 0)
         {
-            config_cassette(std::string(), i->second, false);
+            config_cassette_resistor(i->second);
         }
         else if (i->first.compare("rew") == 0)
         {
-            config_cassette(std::string(), std::string(), true);
+            config_cassette_rewind();
         }
         else if (i->first.compare("cassette_enabled") == 0)
         {
@@ -557,15 +597,23 @@ int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t 
         {
             config_modem_sniffer_enabled(i->second);
         }
-        else if (i->first.compare("serialport") == 0)
+        else if (i->first.compare("passphrase_encrypt") == 0)
+        {
+            config_encrypt_passphrase_enabled(i->second);
+        }
+        else if (i->first.compare("apetime_enabled") == 0)
+        {
+            config_apetime_enabled(i->second);
+        }
+        else if (i->first.compare("serial_port") == 0)
         {
             config_serial(i->second, std::string(), std::string());
         }
-        else if (i->first.compare("serialcommand") == 0)
+        else if (i->first.compare("serial_command") == 0)
         {
             config_serial(std::string(), i->second, std::string());
         }
-        else if (i->first.compare("serialproceed") == 0)
+        else if (i->first.compare("serial_proceed") == 0)
         {
             config_serial(std::string(), std::string(), i->second);
         }

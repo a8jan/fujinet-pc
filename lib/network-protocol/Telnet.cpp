@@ -31,30 +31,21 @@ static void _event_handler(telnet_t *telnet, telnet_event_t *ev, void *user_data
 {
     NetworkProtocolTELNET *protocol = (NetworkProtocolTELNET *)user_data;
 
-    string *receiveBuffer = protocol->getReceiveBuffer();
-
     if (protocol == nullptr)
     {
-        Debug_printf("_event_handler() - NULL TELNET Protocol handler!\n");
+        Debug_printf("_event_handler() - NULL TELNET Protocol handler!\r\n");
         return;
     }
 
-    Debug_printf("_event_handler(%d)\n", ev->type);
+    string *receiveBuffer = protocol->getReceiveBuffer();
 
     switch (ev->type)
     {
     case TELNET_EV_DATA: // Received Data
         *receiveBuffer += string(ev->data.buffer, ev->data.size);
         protocol->newRxLen = receiveBuffer->size();
-        Debug_printf("Received TELNET DATA: %s\n", receiveBuffer->c_str());
         break;
     case TELNET_EV_SEND:
-        Debug_printf("Sending: ");
-        for (int i = 0; i < ev->data.size; i++)
-        {
-            Debug_printf("%02x ", ev->data.buffer[i]);
-        }
-        Debug_printf("\n");
         protocol->flush(ev->data.buffer, ev->data.size);
         break;
     case TELNET_EV_WILL:
@@ -84,7 +75,7 @@ static void _event_handler(telnet_t *telnet, telnet_event_t *ev, void *user_data
 NetworkProtocolTELNET::NetworkProtocolTELNET(string *rx_buf, string *tx_buf, string *sp_buf)
     : NetworkProtocolTCP(rx_buf, tx_buf, sp_buf)
 {
-    Debug_printf("NetworkProtocolTELNET::ctor\n");
+    Debug_printf("NetworkProtocolTELNET::ctor\r\n");
     server = nullptr;
     telnet = telnet_init(telopts, _event_handler, 0, this);
     newRxLen = 0;
@@ -95,7 +86,7 @@ NetworkProtocolTELNET::NetworkProtocolTELNET(string *rx_buf, string *tx_buf, str
  */
 NetworkProtocolTELNET::~NetworkProtocolTELNET()
 {
-    Debug_printf("NetworkProtocolTELNET::dtor\n");
+    Debug_printf("NetworkProtocolTELNET::dtor\r\n");
 
     if (telnet != nullptr)
     {
@@ -114,11 +105,11 @@ bool NetworkProtocolTELNET::read(unsigned short len)
 {
     char *newData = (char *)malloc(len);
 
-    Debug_printf("NetworkProtocolTELNET::read(%u)\n", len);
+    Debug_printf("NetworkProtocolTELNET::read(%u)\r\n", len);
 
     if (newData == nullptr)
     {
-        Debug_printf("Could not allocate %u bytes! Aborting!\n", len);
+        Debug_printf("Could not allocate %u bytes! Aborting!\r\n", len);
         return true; // error.
     }
 
@@ -128,6 +119,7 @@ bool NetworkProtocolTELNET::read(unsigned short len)
         if (!client.connected())
         {
             error = NETWORK_ERROR_NOT_CONNECTED;
+            free(newData);
             return true; // error
         }
 
@@ -140,15 +132,16 @@ bool NetworkProtocolTELNET::read(unsigned short len)
         if (errno == ECONNRESET)
         {
             error = NETWORK_ERROR_CONNECTION_RESET;
+            free(newData);
             return true;
         }
-
-        free(newData);
     }
+    free(newData);
+
     // Return success
     error = 1;
 
-    Debug_printf("NetworkProtocolTelnet::read(%d) - %s\n", newRxLen, receiveBuffer->c_str());
+    Debug_printf("NetworkProtocolTelnet::read(%d) - %s\r\n", newRxLen, receiveBuffer->c_str());
 
     return NetworkProtocol::read(newRxLen); // Set by calls into telnet_recv()
 }
@@ -160,7 +153,7 @@ bool NetworkProtocolTELNET::read(unsigned short len)
  */
 bool NetworkProtocolTELNET::write(unsigned short len)
 {
-    Debug_printf("NetworkProtocolTELNET::write(%u)\n", len);
+    Debug_printf("NetworkProtocolTELNET::write(%u)\r\n", len);
 
     // Check for client connection
     if (!client.connected())

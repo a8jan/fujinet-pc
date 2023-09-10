@@ -26,10 +26,10 @@
 
 #include "utils.h"
 
-
-#ifdef CONFIG_IDF_TARGET_ESP32S3
-#define HSPI_HOST SPI3_HOST
-#endif
+// #include <esp_idf_version.h>
+// #if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
+// #define SDSPI_DEFAULT_DMA 1
+// #endif
 
 // Our global SD interface
 FileSystemSDFAT fnSDFAT;
@@ -225,6 +225,7 @@ void FileSystemSDFAT::dir_close()
 {
     // Throw out any existing directory entry data
     _dir_entries.clear();
+    _dir_entries.shrink_to_fit();
     _dir_entry_current = 0;
 }
 
@@ -232,7 +233,7 @@ fsdir_entry * FileSystemSDFAT::dir_read()
 {
     if(_dir_entry_current < _dir_entries.size())
     {
-        //Debug_printf("#%d = \"%s\"\n", _dir_entry_current, _dir_entries[_dir_entry_current].filename);
+        //Debug_printf("#%d = \"%s\"\r\n", _dir_entry_current, _dir_entries[_dir_entry_current].filename);
         return &_dir_entries[_dir_entry_current++];
     }
     else
@@ -261,13 +262,13 @@ bool FileSystemSDFAT::dir_seek(uint16_t pos)
 
 FILE * FileSystemSDFAT::file_open(const char* path, const char* mode)
 {
-    //Debug_printf("sdfileopen1: task hwm %u, %p\n", uxTaskGetStackHighWaterMark(NULL), pxTaskGetStackStart(NULL));
+    //Debug_printf("sdfileopen1: task hwm %u, %p\r\n", uxTaskGetStackHighWaterMark(NULL), pxTaskGetStackStart(NULL));
     char * fpath = _make_fullpath(path);
     FILE * result = fopen(fpath, mode);
     free(fpath);
-    //Debug_printf("sdfileopen2: task hwm %u, %p\n", uxTaskGetStackHighWaterMark(NULL), pxTaskGetStackStart(NULL));
+    //Debug_printf("sdfileopen2: task hwm %u, %p\r\n", uxTaskGetStackHighWaterMark(NULL), pxTaskGetStackStart(NULL));
 #ifdef DEBUG
-    Debug_printf("fopen = %s : %s\n", path, result == nullptr ? "err" : "ok");
+    Debug_printf("fopen = %s : %s\r\n", path, result == nullptr ? "err" : "ok");
 #endif    
     return result;
 }
@@ -287,7 +288,7 @@ bool FileSystemSDFAT::exists(const char* path)
     struct stat st;
     int i = stat(fpath, &st);
 #ifdef DEBUG
-    //Debug_printf("FileSystemSDFAT::exists returned %d on \"%s\" (%s)\n", i, path, fpath);
+    //Debug_printf("sdFileSystem::exists returned %d on \"%s\"\r\n", result, path);
 #endif
     free(fpath);
     return (i == 0);
@@ -298,7 +299,7 @@ bool FileSystemSDFAT::remove(const char* path)
     char * fpath = _make_fullpath(path);
     int i = ::remove(fpath);
 #ifdef DEBUG
-    //Debug_printf("FileSystemSDFAT::remove returned %d on \"%s\" (%s)\n", i, path, fpath);
+    //Debug_printf("sdFileSystem::remove returned %d on \"%s\"\r\n", result, path);
 #endif
     free(fpath);
     return (i == 0);
@@ -352,7 +353,7 @@ bool FileSystemSDFAT::create_path(const char *path)
             // {
             //     Debug_printf("FAILED errno=%d\n", errno);
             // }
-            if(0 != mkdir(segment, S_IRWXU))
+            if(0 != ::mkdir(segment, S_IRWXU))
             {
                 if(errno != EEXIST)
                 {
@@ -504,15 +505,16 @@ bool FileSystemSDFAT::start(const char *sd_path)
         _card_capacity = 0;
     #ifdef DEBUG
         Debug_println("SD mounted.");
+
     /*
-        Debug_printf("  manufacturer: %d, oem: 0x%x \"%c%c\"\n", sdcard_info->cid.mfg_id, sdcard_info->cid.oem_id,
+        Debug_printf("  manufacturer: %d, oem: 0x%x \"%c%c\"\r\n", sdcard_info->cid.mfg_id, sdcard_info->cid.oem_id,
             (char)(sdcard_info->cid.oem_id >> 8 & 0xFF),(char)(sdcard_info->cid.oem_id & 0xFF));
-        Debug_printf("  product: %s\n", sdcard_info->cid.name);
-        Debug_printf("  sector size: %d, sectors: %d, capacity: %llu\n", sdcard_info->csd.sector_size, sdcard_info->csd.capacity, _card_capacity);
-        Debug_printf("  transfer speed: %d\n", sdcard_info->csd.tr_speed);
-        Debug_printf("  max frequency: %ukHz\n", sdcard_info->max_freq_khz);
-        Debug_printf("  partition type: %s\n", partition_type());
-        Debug_printf("  partition size: %llu, used: %llu\n", total_bytes(), used_bytes());
+        Debug_printf("  product: %s\r\n", sdcard_info->cid.name);
+        Debug_printf("  sector size: %d, sectors: %d, capacity: %llu\r\n", sdcard_info->csd.sector_size, sdcard_info->csd.capacity, _card_capacity);
+        Debug_printf("  transfer speed: %d\r\n", sdcard_info->csd.tr_speed);
+        Debug_printf("  max frequency: %ukHz\r\n", sdcard_info->max_freq_khz);
+        Debug_printf("  partition type: %s\r\n", partition_type());
+        Debug_printf("  partition size: %llu, used: %llu\r\n", total_bytes(), used_bytes());
     */
     #endif
     }
