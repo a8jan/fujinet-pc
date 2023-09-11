@@ -133,7 +133,7 @@ jobs:
       if: ${{ startsWith(matrix.target, 'ubuntu') }}
       run: |
         sudo apt-get update
-        sudo apt-get install -y mbedtls-dev
+        sudo apt-get install -y libmbedtls-dev
 
     - name: About ${{ matrix.name }}
       run: |
