@@ -41,7 +41,7 @@ set(INCLUDE_DIRS include
     lib/modem-sniffer lib/printer-emulator
     lib/network-protocol 
     lib/fuji lib/bus lib/device lib/media
-    lib/encrypt
+    lib/encrypt lib/base64
     components/cJSON components/libsmb2/include
 )
 
@@ -174,6 +174,7 @@ set(SOURCES src/main.cpp
     lib/media/atari/diskTypeAtr.h lib/media/atari/diskTypeAtr.cpp
     lib/media/atari/diskTypeAtx.h 
     lib/media/atari/diskTypeXex.h lib/media/atari/diskTypeXex.cpp
+    lib/base64/base64.h lib/base64/base64.c
     lib/encrypt/crypt.h lib/encrypt/crypt.cpp
     lib/compat/compat_inet.c
     lib/compat/compat_gettimeofday.c
