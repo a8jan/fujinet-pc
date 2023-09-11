@@ -4,10 +4,10 @@
 #include <cstdint>
 #include <cstring>
 
-// #include "mbedtls/sha1.h"
-// #include "mbedtls/sha256.h"
-// #include "mbedtls/sha512.h"
-// #include "mbedtls/md5.h"
+#include "mbedtls/sha1.h"
+#include "mbedtls/sha256.h"
+#include "mbedtls/sha512.h"
+#include "mbedtls/md5.h"
 
 #include "bus.h"
 #include "disk.h"
@@ -104,10 +104,10 @@ private:
 
     std::string base64_buffer;
 
-    // mbedtls_md5_context _md5;
-    // mbedtls_sha1_context _sha1;
-    // mbedtls_sha256_context _sha256;
-    // mbedtls_sha512_context _sha512;
+    mbedtls_md5_context _md5;
+    mbedtls_sha1_context _sha1;
+    mbedtls_sha256_context _sha256;
+    mbedtls_sha512_context _sha512;
 
     char hash_mode = 0;
     unsigned char _md5_output[16];

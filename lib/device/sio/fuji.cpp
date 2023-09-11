@@ -21,7 +21,7 @@
 #include "led.h"
 #include "utils.h"
 
-// #include "base64.h"
+#include "base64.h"
 
 sioFuji theFuji; // global fuji device object
 
@@ -1415,7 +1415,7 @@ void sioFuji::sio_read_device_slots()
             {
                 // Just use the basename of the image, no path. The full path+filename is
                 // usually too long for the Atari to show anyway, so the image name is more important.
-                // Note: Basename can modify the input, so use a copy
+                // Note: Basename can modify the input, so use a copy of the filename
                 filename = strdup(_fnDisks[i].filename);
                 strlcpy(diskSlots[i].filename, basename(filename), MAX_DISPLAY_FILENAME_LEN);
                 free(filename);
@@ -1796,8 +1796,7 @@ void sioFuji::sio_base64_encode_compute()
 
     Debug_printf("FUJI: BASE64 ENCODE COMPUTE\n");
 
-    // char *p = base64_encode(base64_buffer.c_str(), base64_buffer.size(), &out_len);
-    char *p = nullptr;
+    char *p = base64_encode(base64_buffer.c_str(), base64_buffer.size(), &out_len);
 
     if (!p)
     {
@@ -1905,8 +1904,7 @@ void sioFuji::sio_base64_decode_compute()
 
     Debug_printf("FUJI: BASE64 DECODE COMPUTE\n");
 
-    // unsigned char *p = base64_decode(base64_buffer.c_str(), base64_buffer.size(), &out_len);
-    char *p = nullptr;
+    unsigned char *p = base64_decode(base64_buffer.c_str(), base64_buffer.size(), &out_len);
 
     if (!p)
     {
@@ -2021,16 +2019,16 @@ void sioFuji::sio_hash_compute()
         // Not implemented
         break;
     case 1: // sha1
-        // mbedtls_sha1_init(&_sha1);
-        // mbedtls_sha1_starts(&_sha1);
+        mbedtls_sha1_init(&_sha1);
+        mbedtls_sha1_starts(&_sha1);
         break;
     case 2: // sha256
-        // mbedtls_sha256_init(&_sha256);
-        // mbedtls_sha256_starts(&_sha256,0);
+        mbedtls_sha256_init(&_sha256);
+        mbedtls_sha256_starts(&_sha256,0);
         break;
     case 3: // sha512
-        // mbedtls_sha512_init(&_sha512);
-        // mbedtls_sha512_starts(&_sha512,0);
+        mbedtls_sha512_init(&_sha512);
+        mbedtls_sha512_starts(&_sha512,0);
         break;
     }
 
@@ -2041,13 +2039,13 @@ void sioFuji::sio_hash_compute()
         // Not implemented
         break;
     case 1: // SHA1
-        // mbedtls_sha1_update(&_sha1, (const unsigned char *)base64_buffer.data(), base64_buffer.size());
+        mbedtls_sha1_update(&_sha1, (const unsigned char *)base64_buffer.data(), base64_buffer.size());
         break;
     case 2: // SHA256
-        // mbedtls_sha256_update(&_sha256, (const unsigned char *)base64_buffer.data(), base64_buffer.size());
+        mbedtls_sha256_update(&_sha256, (const unsigned char *)base64_buffer.data(), base64_buffer.size());
         break;
     case 3: // SHA512
-        // mbedtls_sha512_update(&_sha512, (const unsigned char *)base64_buffer.data(), base64_buffer.size());
+        mbedtls_sha512_update(&_sha512, (const unsigned char *)base64_buffer.data(), base64_buffer.size());
         break;
     }
 
@@ -2058,16 +2056,16 @@ void sioFuji::sio_hash_compute()
         // Not implemented
         break;
     case 1: // SHA1
-        // mbedtls_sha1_finish(&_sha1, _sha1_output);
-        // mbedtls_sha1_free(&_sha1);
+        mbedtls_sha1_finish(&_sha1, _sha1_output);
+        mbedtls_sha1_free(&_sha1);
         break;
     case 2: // SHA256
-        // mbedtls_sha256_finish(&_sha256, _sha256_output);
-        // mbedtls_sha256_free(&_sha256);
+        mbedtls_sha256_finish(&_sha256, _sha256_output);
+        mbedtls_sha256_free(&_sha256);
         break;
     case 3: // SHA512
-        // mbedtls_sha512_finish(&_sha512, _sha512_output);
-        // mbedtls_sha512_free(&_sha512);
+        mbedtls_sha512_finish(&_sha512, _sha512_output);
+        mbedtls_sha512_free(&_sha512);
         break;
     }
 
