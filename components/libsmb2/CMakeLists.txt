@@ -90,15 +90,15 @@ if(NOT ESP_PLATFORM)
     list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 
     # find_package(GSSAPI)
-    find_package(OpenSSL)
+    # find_package(OpenSSL)
 
     # if(GSSAPI_FOUND)
     #   add_definitions(-DHAVE_LIBKRB5)
     # endif()
 
-    if(OPENSSL_FOUND)
-      add_definitions(-DHAVE_OPENSSL_LIBS)
-    endif()
+    # if(OPENSSL_FOUND)
+    #   add_definitions(-DHAVE_OPENSSL_LIBS)
+    # endif()
 
     include(cmake/ConfigureChecks.cmake)
 

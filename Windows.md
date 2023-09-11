@@ -22,9 +22,12 @@ pacman -S --needed base-devel
 # install CLANG64 toolchain (or other toolchain depending on your build env.)
 pacman -S --needed mingw-w64-clang-x86_64-toolchain
 
-# install git, CLANG64 CMake and Ninja build system (again, adjust package names to your build env.)
-pacman -S git mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-ninja
+# install git, CLANG64 CMake (again, adjust package names to your build env.)
+pacman -S git mingw-w64-clang-x86_64-cmake
 
 # install package manager for python (adjust package name to your build env.)
 pacman -S mingw-w64-clang-x86_64-python-pip
+
+# install Mbed-TLS library (adjust package name to your build env.)
+pacman -S mingw-w64-clang-x86_64-mbedtls
 ```

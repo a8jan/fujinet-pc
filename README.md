@@ -44,7 +44,7 @@ If interested into running FujiNet-PC with Altirra take a look at [FujiNet-PC La
 
 ## Build instructions
 
-The build process is controlled with [CMake](https://cmake.org/). Builds should work with GNU Make or Ninja build systems, with GCC or Clang/LLVM C and C++ compilers.
+The build process is controlled with [CMake](https://cmake.org/). Build works with GNU Make ~~or Ninja build systems~~, with GCC or Clang/LLVM C and C++ compilers.
 
 ### Build tools
 
@@ -63,10 +63,17 @@ Install necessary build libraries.
 #### Debian/Ubuntu
 
 ```sh
-sudo apt install libexpat-dev libssl-dev
+sudo apt install libexpat-dev libmbedtls-dev
 ```
 
 #### macOS
+
+```sh
+brew install mbedtls
+```
+
+
+**TODO: skip/remove OpenSSL part**
 
 ```sh
 brew install openssl
@@ -86,9 +93,9 @@ cmake .. -DOPENSSL_ROOT_DIR=/opt/homebrew/opt/openssl -DOPENSSL_LIBRARIES=/opt/h
 ```
 With the cache cleared and the paths fully specified cmake should have no issues finding the openssl headers and libs on macOS.
 
-#### Python packages
+#### Python packages (all platforms)
 
-Install Python packages for scripts used in build process.
+Install Python packages for scripts used for build.
 
 ```sh
 python -m pip install -U Jinja2 pyyaml
@@ -131,9 +138,7 @@ git clone https://github.com/FujiNetWIFI/fujinet-pc.git
 cd fujinet-pc/build
 
 # prepare build
-cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug -G Ninja
-# alternatively, to use Make instead of Ninja
-# cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
+cmake .. -DCMAKE_BUILD_TYPE:STRING=Debug -G "MSYS Makefiles"
 
 # run build
 cmake --build .

@@ -11,13 +11,12 @@
 
 #define MAX_CACHE_MEMFILE_SIZE  204800
 
-// TODO
-#include <openssl/md5.h>
+#include "mbedtls/md5.h"
 void get_md5_string(const unsigned char *buf, size_t size, char *result)
 {
-    unsigned char md5_result[MD5_DIGEST_LENGTH];
-    MD5(buf, size, md5_result);
-    for (int i=0; i < MD5_DIGEST_LENGTH; i++)
+    unsigned char md5_result[16];
+    mbedtls_md5(buf, size, md5_result);
+    for (int i=0; i < 16; i++)
     {
         sprintf(&result[i * 2], "%02x",  md5_result[i]);
     }

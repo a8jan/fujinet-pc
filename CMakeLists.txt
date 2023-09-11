@@ -23,7 +23,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D${FUJINET_BUILD_PLATFORM} -D${FUJINET_
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVERBOSE_HTTP -D__PC_BUILD_DEBUG__")
 
 # mongoose.c some compile options: -DMG_ENABLE_LINES=1 -DMG_ENABLE_DIRECTORY_LISTING=1 -DMG_ENABLE_SSI=1
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${FUJINET_BUILD_PLATFORM} -DMG_ENABLE_OPENSSL=1 -DMG_ENABLE_LOG=0")
+# # use OpenSSL
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${FUJINET_BUILD_PLATFORM} -DMG_ENABLE_OPENSSL=1 -DMG_ENABLE_LOG=0")
+# use MbedTLS
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${FUJINET_BUILD_PLATFORM} -DMG_ENABLE_MBEDTLS=1 -DMG_ENABLE_LOG=0")
 
 # INCLUDE (CheckIncludeFiles)
 # CHECK_INCLUDE_FILES (bsd/string.h HAVE_BSD_STRING_H)
@@ -189,12 +192,28 @@ endif()
 
 add_executable(fujinet ${SOURCES})
 
-# OpenSSL
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
-    set(OPENSSL_USE_STATIC_LIBS TRUE) # set this before adding libsmb2
-endif()
-find_package(OpenSSL REQUIRED)
+# # OpenSSL
+# if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+#     set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
+#     set(OPENSSL_USE_STATIC_LIBS TRUE) # set this before adding libsmb2
+# endif()
+# find_package(OpenSSL REQUIRED)
+
+# Mbed TLS
+# https://github.com/Mbed-TLS/mbedtls
+# - to build from source (failed on Windows/MSYS2)
+# add_subdirectory(components/mbedtls)
+# - to use library package (Ubuntu deb package is old, does not support cmake/find_package)
+# find_package(MbedTLS)
+# - try to find necessary files ...
+find_library(MBEDTLS_STATIC_LIB libmbedtls.a /usr/lib /usr/local/lib /usr/local/opt /clang64/lib /clang32/lib)
+find_library(MBEDX509_STATIC_LIB libmbedx509.a /usr/lib /usr/local/lib /usr/local/opt /clang64/lib /clang32/lib)
+find_library(MBEDCRYPTO_STATIC_LIB libmbedcrypto.a /usr/lib /usr/local/lib /usr/local/opt /clang64/lib /clang32/lib)
+find_path(MBEDTLS_INCLUDE_DIR mbedtls/ssl.h /usr/include /usr/local/include /usr/local/lib /usr/local/opt /clang64/include /clang32/include)
+# message("MBEDTLS_STATIC_LIB=${MBEDTLS_STATIC_LIB}")
+# message("MBEDX509_STATIC_LIB=${MBEDX509_STATIC_LIB}")
+# message("MBEDCRYPTO_STATIC_LIB=${MBEDCRYPTO_STATIC_LIB}")
+# message("MBEDTLS_INCLUDE_DIR=${MBEDTLS_INCLUDE_DIR}")
 
 # cJSON library
 # https://github.com/DaveGamble/cJSON
@@ -228,8 +247,13 @@ add_custom_target(build_version DEPENDS "${CMAKE_BINARY_DIR}/version.h")
 
 add_dependencies(fujinet build_version)
 
-target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
-target_link_libraries(fujinet pthread expat OpenSSL::SSL OpenSSL::Crypto cjson cjson_utils smb2)
+# # use OpenSSL
+# target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+# target_link_libraries(fujinet pthread expat OpenSSL::SSL OpenSSL::Crypto cjson cjson_utils smb2)
+# use MbedTLS
+target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${MBEDTLS_INCLUDE_DIR})
+target_link_libraries(fujinet pthread expat cjson cjson_utils smb2)
+target_link_libraries(fujinet ${MBEDTLS_STATIC_LIB} ${MBEDX509_STATIC_LIB} ${MBEDCRYPTO_STATIC_LIB})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_link_libraries(fujinet ws2_32)
