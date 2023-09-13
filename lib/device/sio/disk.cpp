@@ -201,8 +201,8 @@ void sioDisk::sio_write_percom_block()
 mediatype_t sioDisk::mount(FileHandler *f, const char *filename, uint32_t disksize, mediatype_t disk_type)
 {
     // TAPE or CASSETTE: use this function to send file info to cassette device
-    //  DiskType::discover_disktype(filename) can detect CAS and WAV files
-    Debug_printf("disk MOUNT (%d)\n", disk_type);
+    //  MediaType::discover_disktype(filename) can detect CAS and WAV files
+    Debug_printf("disk MOUNT disk_type=%d\n", disk_type);
 
     // Destroy any existing MediaType
     if (_disk != nullptr)
@@ -219,7 +219,7 @@ mediatype_t sioDisk::mount(FileHandler *f, const char *filename, uint32_t disksi
     switch (disk_type)
     {
     case MEDIATYPE_CAS:
-    // case MEDIATYPE_WAV:
+    case MEDIATYPE_WAV:
         // open the cassette file
         theFuji.cassette()->mount_cassette_file(f, disksize);
         return disk_type;
@@ -264,7 +264,7 @@ void sioDisk::unmount()
 {
     Debug_print("disk UNMOUNT\n");
 
-    if (_disk != nullptr) 
+    if (_disk != nullptr)
     {
         _disk->unmount();
         device_active = false;

@@ -372,8 +372,8 @@ void systemBus::service()
 //         return; // break!
 //     }
 
-    // check if cassette is mounted first
-    if (_fujiDev->cassette()->is_mounted())
+    // check if cassette is mounted and enabled first
+    if (_fujiDev->cassette()->is_mounted() && Config.get_cassette_enabled())
     { // the test which tape activation mode
         if (_fujiDev->cassette()->has_pulldown())
         {                                                    // motor line mode
@@ -485,10 +485,10 @@ void systemBus::addDevice(virtualDevice *pDevice, int device_id)
     // {
     //     _udpDev = (sioUDPStream *)pDevice;
     // }
-    // else if (device_id == SIO_DEVICEID_CASSETTE)
-    // {
-    //     _cassetteDev = (sioCassette *)pDevice;
-    // }
+    else if (device_id == SIO_DEVICEID_CASSETTE)
+    {
+        _cassetteDev = (sioCassette *)pDevice;
+    }
     // else if (device_id == SIO_DEVICEID_CPM)
     // {
     //     _cpmDev = (sioCPM *)pDevice;

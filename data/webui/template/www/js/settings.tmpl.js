@@ -109,7 +109,9 @@ selectListValue("select_hsioindex", current_hsioindex);
 
 {% if components.program_recorder %}
 setInputValue(current_cassette_enabled == 1, "pr-virt-yes", "pr-virt-no");
+{% if not tweaks.fujinet_pc %}
 setInputValue(current_play_record == "0 PLAY", "pr-mode-play", "pr-mode-rec");
+{% endif %}
 setInputValue(current_pulldown == "0 B Button Press", "pr-act-b", "pr-act-pull");
 {% endif %}
 

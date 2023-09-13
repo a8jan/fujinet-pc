@@ -406,17 +406,16 @@ const string fnHttpServiceParser::substitute_tag(const string &tag)
         break;
 #ifdef BUILD_ATARI        
     case FN_PLAY_RECORD:
-    //     if (theFuji.cassette()->get_buttons())
-    //         resultstream << "0 PLAY";
-    //     else
-    //         resultstream << "1 RECORD";
-    //     break;
+        if (theFuji.cassette()->get_buttons())
+            resultstream << "0 PLAY";
+        else
+            resultstream << "1 RECORD";
+        break;
     case FN_PULLDOWN:
-    //     if (theFuji.cassette()->has_pulldown())
-    //         resultstream << "1 Pulldown Resistor";
-    //     else
-    //         resultstream << "0 B Button Press";
-        resultstream << "TBD";
+        if (theFuji.cassette()->has_pulldown())
+            resultstream << "1 Pulldown Resistor";
+        else
+            resultstream << "0 B Button Press";
         break;
     case FN_CASSETTE_ENABLED:
         resultstream << Config.get_cassette_enabled();
