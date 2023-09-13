@@ -110,6 +110,7 @@ public:
     // static esp_err_t get_handler_modem_sniffer(httpd_req_t *req);
     static int get_handler_swap(struct mg_connection *c, struct mg_http_message *hm);
     static int get_handler_mount(struct mg_connection *c, struct mg_http_message *hm);
+    static int get_handler_eject(mg_connection *c, mg_http_message *hm);
 
     // static esp_err_t post_handler_config(httpd_req_t *req);
     static int post_handler_config(struct mg_connection *c, struct mg_http_message *hm);

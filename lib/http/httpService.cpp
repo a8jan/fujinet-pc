@@ -119,20 +119,13 @@ void fnHttpService::set_file_content_type(struct mg_connection *c, const char *f
 */
 void fnHttpService::send_file_parsed(struct mg_connection *c, const char *filename)
 {
-    // Build the full file path
-    string fpath = FNWS_FILE_ROOT;
-    // Trim any '/' prefix before adding it to the base directory
-    while (*filename == '/')
-        filename++;
-    fpath += filename;
-
-    Debug_printf("Opening file for parsing: '%s'\n", fpath.c_str());
+    Debug_printf("Opening file for parsing: '%s'\n", filename);
 
     _fnwserr err = fnwserr_noerrr;
 
     // Retrieve server state
     serverstate *pState = &fnHTTPD.state; // ops TODO
-    FILE *fInput = pState->_FS->file_open(fpath.c_str());
+    FILE *fInput = pState->_FS->file_open(filename);
 
     if (fInput == nullptr)
     {
@@ -158,7 +151,7 @@ void fnHttpService::send_file_parsed(struct mg_connection *c, const char *filena
 
             mg_printf(c, "HTTP/1.1 200 OK\r\n");
             // Set the response content type
-            set_file_content_type(c, fpath.c_str());
+            set_file_content_type(c, filename);
             // Set the expected length of the content
             size_t len = contents.length();
             mg_printf(c, "Content-Length: %lu\r\n\r\n", (unsigned long)len);
@@ -185,6 +178,9 @@ void fnHttpService::send_file(struct mg_connection *c, const char *filename)
         filename++;
     fpath += filename;
 
+    // Handle file differently if it's one of the types we parse
+    if (fnHttpServiceParser::is_parsable(get_extension(filename)))
+        return send_file_parsed(c, fpath.c_str());
 
     // Retrieve server state
     serverstate *pState = &fnHTTPD.state; // ops TODO
@@ -532,6 +528,70 @@ int fnHttpService::get_handler_mount(mg_connection *c, mg_http_message *hm)
     return redirect_or_result(c, hm, 0);
 }
 
+int fnHttpService::get_handler_eject(mg_connection *c, mg_http_message *hm)
+{
+    // get "deviceslot" query variable
+    char slot_str[3] = "", mode_str[3] = "";
+    mg_http_get_var(&hm->query, "deviceslot", slot_str, sizeof(slot_str));
+    unsigned char ds = atoi(slot_str);
+
+    fnHTTPD.clearErrMsg();
+
+    if (ds > MAX_DISK_DEVICES)
+    {
+        fnHTTPD.addToErrMsg("<li>deviceslot should be between 0 and 7</li>");
+    }
+    else
+    {
+#ifdef BUILD_APPLE
+        if(theFuji.get_disks(ds)->disk_dev.device_active) //set disk switched only if device was previosly mounted. 
+            theFuji.get_disks(ds)->disk_dev.switched = true;
+#endif
+        theFuji.get_disks(ds)->disk_dev.unmount();
+#ifdef BUILD_ATARI
+        if (theFuji.get_disks(ds)->disk_type == MEDIATYPE_CAS || theFuji.get_disks(ds)->disk_type == MEDIATYPE_WAV)
+        {
+            theFuji.cassette()->umount_cassette_file();
+            theFuji.cassette()->sio_disable_cassette();
+        }
+#endif
+        theFuji.get_disks(ds)->reset();
+        Config.clear_mount(ds);
+        Config.save();
+        theFuji._populate_slots_from_config(); // otherwise they don't show up in config.
+        theFuji.get_disks(ds)->disk_dev.device_active = false;
+
+        // Finally, scan all device slots, if all empty, and config enabled, enable the config device.
+        if (Config.get_general_config_enabled())
+        {
+            if ((theFuji.get_disks(0)->host_slot == 0xFF) &&
+                (theFuji.get_disks(1)->host_slot == 0xFF) &&
+                (theFuji.get_disks(2)->host_slot == 0xFF) &&
+                (theFuji.get_disks(3)->host_slot == 0xFF) &&
+                (theFuji.get_disks(4)->host_slot == 0xFF) &&
+                (theFuji.get_disks(5)->host_slot == 0xFF) &&
+                (theFuji.get_disks(6)->host_slot == 0xFF) &&
+                (theFuji.get_disks(7)->host_slot == 0xFF))
+            {
+                theFuji.boot_config = true;
+#ifdef BUILD_ATARI
+                theFuji.status_wait_count = 5;
+#endif
+                theFuji.device_active = true;
+            }
+        }
+    }
+    if (!fnHTTPD.errMsgEmpty())
+    {
+        send_file(c, "error_page.html");
+    }
+    else
+    {
+        send_file(c, "redirect_to_index.html");
+    }
+    return 0;
+}
+
 void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
 {
     static const char *s_root_dir = "data/www";
@@ -547,7 +607,7 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
         else if (mg_http_match_uri(hm, "/"))
         {
             // index handler
-            send_file_parsed(c, "index.html");
+            send_file(c, "index.html");
         }
         else if (mg_http_match_uri(hm, "/file"))
         {
@@ -595,6 +655,11 @@ void fnHttpService::cb(struct mg_connection *c, int ev, void *ev_data, void *fn_
         {
             // browse handler
             get_handler_mount(c, hm);
+        }
+        else if (mg_http_match_uri(hm, "/unmount"))
+        {
+            // eject handler
+            get_handler_eject(c, hm);
         }
         else if (mg_http_match_uri(hm, "/restart"))
         {
