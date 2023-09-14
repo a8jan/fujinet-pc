@@ -41,6 +41,11 @@ int DummyWiFiManager::start()
     return 0;
 }
 
+int DummyWiFiManager::test_connect(const char *ssid, const char *password)
+{
+    return 0;
+}
+
 // Attempts to connect using information in Config (if any)
 int DummyWiFiManager::connect()
 {

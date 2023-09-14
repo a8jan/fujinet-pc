@@ -53,6 +53,8 @@ public:
 
     ~DummyWiFiManager();
 
+    int test_connect(const char *ssid, const char *password);
+
     int connect(const char *ssid, const char *password);
     int connect();
 
