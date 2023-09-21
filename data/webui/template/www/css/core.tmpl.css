@@ -201,24 +201,39 @@ hr {
 .settings .settings-footer button {
     border: 1px solid rgba(0, 0, 0, 0.2);
     height: 2rem;
-    line-height: 1.9rem;
+    {# line-height: 1.9rem; #}
     width: 5rem;
     border-radius: 1.5rem;
     background: #999;
     color: #fff;
+    font-weight: bolder;
 }
 
 .settings .settings-content button {
     border: 1px solid rgba(0, 0, 0, 0.2);
     height: 2rem;
+    {# 
     line-height: 1.9rem;
     border-radius: 0.5rem;
     background: #999;
-    color: #fff;
+    color: #fff; 
+    #}
+    border-radius: 2px;
+    background: #ccc;
+    color: rgba(0, 0, 0, 0.8);
+    padding-left: .5rem;
+    padding-right: .5rem;
+    font-family: Futura;
+    font-size: medium;
+    font-weight: normal;
+}
+
+.settings .settings-content button:hover {
+    background: #bbb;
 }
 
 .settings button:hover {
-    background: #444;
+    background: #888;
 }
 
 .settings .set {
