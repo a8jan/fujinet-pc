@@ -19,14 +19,14 @@ set(FUJINET_DATA_DIR ${CMAKE_SOURCE_DIR}/data/${FUJINET_BUILD_PLATFORM})
 set(FUJINET_PIN_MAP PINMAP_ATARIV1)
 
 # add -DNO_DEBUG_PRINT to supress Debug_print output in Release build
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D${FUJINET_BUILD_PLATFORM} -D${FUJINET_PIN_MAP} -DSKIP_SERVER_CERT_VERIFY -DSMARTPORT=USB -DFLASH_SPIFFS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFUJINET_PC -D${FUJINET_BUILD_PLATFORM} -D${FUJINET_PIN_MAP} -DSKIP_SERVER_CERT_VERIFY -DSMARTPORT=USB -DFLASH_SPIFFS")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVERBOSE_HTTP -D__PC_BUILD_DEBUG__")
 
 # mongoose.c some compile options: -DMG_ENABLE_LINES=1 -DMG_ENABLE_DIRECTORY_LISTING=1 -DMG_ENABLE_SSI=1
 # # use OpenSSL
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${FUJINET_BUILD_PLATFORM} -DMG_ENABLE_OPENSSL=1 -DMG_ENABLE_LOG=0")
 # use MbedTLS
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${FUJINET_BUILD_PLATFORM} -DMG_ENABLE_MBEDTLS=1 -DMG_ENABLE_LOG=0")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFUJINET_PC -D${FUJINET_BUILD_PLATFORM} -DMG_ENABLE_MBEDTLS=1 -DMG_ENABLE_LOG=0")
 
 # INCLUDE (CheckIncludeFiles)
 # CHECK_INCLUDE_FILES (bsd/string.h HAVE_BSD_STRING_H)
@@ -42,7 +42,7 @@ set(INCLUDE_DIRS include
     lib/network-protocol 
     lib/fuji lib/bus lib/device lib/media
     lib/encrypt lib/base64
-    components/cJSON components/libsmb2/include
+    components/cJSON components/libsmb2/include components/libssh/include
 )
 
 set(SOURCES src/main.cpp
@@ -193,12 +193,18 @@ endif()
 
 add_executable(fujinet ${SOURCES})
 
+# Libraries
+# build and link static libs
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+
 # # OpenSSL
 # if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 #     set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
 #     set(OPENSSL_USE_STATIC_LIBS TRUE) # set this before adding libsmb2
 # endif()
 # find_package(OpenSSL REQUIRED)
+# set(CRYPTO_LIBS OpenSSL::SSL OpenSSL::Crypto)
+# target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
 
 # Mbed TLS
 # https://github.com/Mbed-TLS/mbedtls
@@ -206,22 +212,24 @@ add_executable(fujinet ${SOURCES})
 # add_subdirectory(components/mbedtls)
 # - to use library package (Ubuntu deb package is old, does not support cmake/find_package)
 # find_package(MbedTLS)
-# - try to find necessary files ...
+# - try to find necessary files in system ...
 find_library(MBEDTLS_STATIC_LIB libmbedtls.a /usr/lib /usr/local/lib /usr/local/opt /clang64/lib /clang32/lib)
 find_library(MBEDX509_STATIC_LIB libmbedx509.a /usr/lib /usr/local/lib /usr/local/opt /clang64/lib /clang32/lib)
 find_library(MBEDCRYPTO_STATIC_LIB libmbedcrypto.a /usr/lib /usr/local/lib /usr/local/opt /clang64/lib /clang32/lib)
 find_path(MBEDTLS_INCLUDE_DIR mbedtls/ssl.h /usr/include /usr/local/include /usr/local/lib /usr/local/opt /clang64/include /clang32/include)
+set(CRYPTO_LIBS ${MBEDTLS_STATIC_LIB} ${MBEDX509_STATIC_LIB} ${MBEDCRYPTO_STATIC_LIB})
 # message("MBEDTLS_STATIC_LIB=${MBEDTLS_STATIC_LIB}")
 # message("MBEDX509_STATIC_LIB=${MBEDX509_STATIC_LIB}")
 # message("MBEDCRYPTO_STATIC_LIB=${MBEDCRYPTO_STATIC_LIB}")
 # message("MBEDTLS_INCLUDE_DIR=${MBEDTLS_INCLUDE_DIR}")
+target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${MBEDTLS_INCLUDE_DIR})
 
 # cJSON library
 # https://github.com/DaveGamble/cJSON
 set(ENABLE_CJSON_UTILS ON CACHE BOOL "Enable building the cJSON_Utils library.")
 set(ENABLE_CJSON_TEST OFF CACHE BOOL "Enable building cJSON test")
-set(CJSON_OVERRIDE_BUILD_SHARED_LIBS ON CACHE BOOL "Override BUILD_SHARED_LIBS with CJSON_BUILD_SHARED_LIBS")
-set(CJSON_BUILD_SHARED_LIBS OFF CACHE BOOL "Overrides BUILD_SHARED_LIBS if CJSON_OVERRIDE_BUILD_SHARED_LIBS is enabled")
+# set(CJSON_OVERRIDE_BUILD_SHARED_LIBS ON CACHE BOOL "Override BUILD_SHARED_LIBS with CJSON_BUILD_SHARED_LIBS")
+# set(CJSON_BUILD_SHARED_LIBS OFF CACHE BOOL "Overrides BUILD_SHARED_LIBS if CJSON_OVERRIDE_BUILD_SHARED_LIBS is enabled")
 add_subdirectory(components/cJSON)
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     #add_link_options("-fstack-protector") # requires newer cmake
@@ -233,6 +241,21 @@ endif()
 # https://github.com/sahlberg/libsmb2
 add_subdirectory(components/libsmb2)
 
+# libssh
+# https://www.libssh.org/
+# - FujiNet (platfomio/ESP32) port
+# add_subdirectory(lib/libssh)
+# - Regular elease
+add_subdirectory(components/libssh)
+
+target_link_libraries(fujinet pthread expat cjson cjson_utils smb2 ssh)
+target_link_libraries(fujinet ${CRYPTO_LIBS})
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_link_libraries(fujinet ws2_32)
+endif()
+
+# Version file
 
 # run build_version.py to update version.h
 add_custom_command(
@@ -245,21 +268,9 @@ add_custom_command(
   VERBATIM
 )
 add_custom_target(build_version DEPENDS "${CMAKE_BINARY_DIR}/version.h")
-
 add_dependencies(fujinet build_version)
 
-# # use OpenSSL
-# target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
-# target_link_libraries(fujinet pthread expat OpenSSL::SSL OpenSSL::Crypto cjson cjson_utils smb2)
-# use MbedTLS
-target_include_directories(fujinet PRIVATE ${INCLUDE_DIRS} ${MBEDTLS_INCLUDE_DIR})
-target_link_libraries(fujinet pthread expat cjson cjson_utils smb2)
-target_link_libraries(fujinet ${MBEDTLS_STATIC_LIB} ${MBEDX509_STATIC_LIB} ${MBEDCRYPTO_STATIC_LIB})
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    target_link_libraries(fujinet ws2_32)
-endif()
-
+# WebUI
 # "build_webui" target
 add_custom_command(
     OUTPUT "${FUJINET_DATA_DIR}"
