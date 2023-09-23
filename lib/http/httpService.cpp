@@ -708,6 +708,7 @@ struct mg_mgr * fnHttpService::start_server(serverstate &srvstate)
 
     Debug_printf("Starting web server %s\n", s_listening_address.c_str());
 
+    // mg_log_set(MG_LL_DEBUG);
     mg_mgr_init(&s_mgr);
 
     if ((c = mg_http_listen(&s_mgr, s_listening_address.c_str(), cb, &s_mgr)) != nullptr)
