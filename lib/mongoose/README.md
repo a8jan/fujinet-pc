@@ -5,33 +5,23 @@
 [![Code Coverage](https://codecov.io/gh/cesanta/mongoose/branch/master/graph/badge.svg)](https://codecov.io/gh/cesanta/mongoose)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/mongoose.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:mongoose)
 
-Mongoose is a network library for C/C++. 
-It implements event-driven
+Mongoose is a networking library for C/C++. It implements event-driven
 non-blocking APIs for TCP, UDP, HTTP, WebSocket, MQTT.  It is designed for
 connecting devices and bringing them online. On the market since 2004, used by
 vast number of open source and commercial products - it even runs on the
 International Space Station!  Mongoose makes embedded network programming fast,
 robust, and easy. Features include:
 
-- Cross-platform:
-  - works on Linux/UNIX, MacOS, Windows, Android
-  - works on STM32, NXP, ESP32, NRF52, TI, Microchip, and other
-  - write code once - and it'll work everywhere
-  - ideal for the unification of the network infrastructure code across company
-- Built-in protocols: plain TCP/UDP, SNTP, HTTP, MQTT, Websocket
+- Cross-platform: works on Linux/UNIX, MacOS, Windows, Android, FreeRTOS, etc.
+- Supported embedded architectures: ESP32, NRF52, STM32, NXP, and more
+- Built-in protocols: plain TCP/UDP, HTTP, MQTT, Websocket
 - SSL/TLS support: mbedTLS, OpenSSL or custom (via API)
 - Asynchronous DNS resolver
 - Tiny static and run-time footprint
 - Source code is both ISO C and ISO C++ compliant
-- Very easy to integrate: just copy `mongoose.c` and `mongoose.h` files to your source tree. See
-  [exact steps](https://mongoose.ws/documentation/#2-minute-integration-guide)
 - Works with any network stack with socket API, like LwIP or FreeRTOS-Plus-TCP
-- Provides a built-in TCP/IP stack with drivers for bare metal or RTOS systems
-   - A complete Web device dashboard
-  [bare metal example on Nucleo-F429ZI](examples/stm32/nucleo-f429zi-baremetal)
-  is only 6 files
-   - For comparison, a CubeIDE generated HTTP example is 400+ files
-- Detailed [user guide, API reference and tons of tutorials](https://mongoose.ws/documentation/) available
+- Very easy to integrate: just copy `mongoose.c` and `mongoose.h` files to your build tree
+- Detailed [documentation](https://cesanta.com/docs/)
 
 
 # Commercial use
@@ -41,11 +31,15 @@ robust, and easy. Features include:
   interface on devices, RESTful API services, telemetry data exchange, remote
   control for a product, remote software updates, remote monitoring, and others
 - Deployed to hundreds of millions devices in production environment worldwide
-- See [Case Studies](https://mongoose.ws/case-studies/) from our respected
-  customers like [Schneider Electric](https://mongoose.ws/case-studies/schneider-electric/) (industrial automation), [Broadcom](https://mongoose.ws/case-studies/broadcom/) (semiconductors), [Pilz](https://mongoose.ws/case-studies/pilz/) (industrial automation), and others
-- See [Testimonials](https://mongoose.ws/testimonials/) from engineers that integrated Mongoose in their commercial products
-- We provide [Evaluation and Commercial licensing](https://mongoose.ws/licensing/), [support](https://mongoose.ws/support/), consultancy and integration
-  assistance - don't hesitate to [contact us](https://mongoose.ws/contact/)
+- See [Case Studies](https://cesanta.com/case-studies.html) from our respected
+  customers like Schneider Electric (industrial automation), Broadcom (semiconductors), Schenck Process
+  (industrial engineering), and others
+- See [Testimonials](https://cesanta.com/testimonials.html) from engineers that
+  integrated Mongoose in their commercial products
+- We provide [commercial licensing](https://cesanta.com/licensing.html),
+  [support](https://cesanta.com/support.html), consultancy and integration
+  assistance - don't hesitate to
+  [contact us](https://www.cesanta.com/contact.html)
 
 
 # Security
@@ -73,6 +67,23 @@ We take security seriously:
   have specific security requirements and run independent security audits,
   of which we get notified and in case of any issue, act similar to (3).
 
+# Supplement software
+
+This software is often used together with Mongoose:
+- [mjson](https://github.com/cesanta/mjson) - a JSON parser. Used to implement
+  RESTful APIs that use JSON, or implement data exchange (e.g. over MQTT
+  or Websocket) that use JSON for data encapsulation
+- [elk](https://github.com/cesanta/elk) - a tiny JavaScript interpreter.
+  Used to implement scripting support for customers
+
+
+# Precompiled web server binary
+
+We have built a ready-to-go, precompiled web server binary for Windows
+and Mac. It is a great tool for sharing your files or website. It has
+a unique feature - an ability to share your local files via a global URL.
+
+Interested? Go to [download](https://mongoose.ws/)
 
 # Contributions
 
