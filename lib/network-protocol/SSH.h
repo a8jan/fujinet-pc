@@ -5,7 +5,9 @@
 #ifndef NETWORKPROTOCOL_SSH
 #define NETWORKPROTOCOL_SSH
 
+#ifndef FUJINET_PC
 #include <lwip/sockets.h>
+#endif // #ifndef FUJINET_PC
 
 #include <string>
 
@@ -13,7 +15,8 @@
 
 #include "fnTcpClient.h"
 #include "libssh/libssh.h"
-#include "libssh/session.h"
+// jk - this is libssh private header
+// #include "libssh/session.h"
 
 using namespace std;
 

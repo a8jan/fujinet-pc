@@ -44,6 +44,7 @@ set(INCLUDE_DIRS include
     lib/fuji lib/bus lib/device lib/media
     lib/encrypt lib/base64
     components/cJSON components/libsmb2/include components/libssh/include
+    ${CMAKE_CURRENT_BINARY_DIR}/components/libssh/include
 )
 
 set(SOURCES src/main.cpp
@@ -132,6 +133,7 @@ set(SOURCES src/main.cpp
     lib/network-protocol/TNFS.h lib/network-protocol/TNFS.cpp
     lib/network-protocol/HTTP.h lib/network-protocol/HTTP.cpp
     lib/network-protocol/SMB.h lib/network-protocol/SMB.cpp
+    lib/network-protocol/SSH.h lib/network-protocol/SSH.cpp
     lib/fuji/fujiHost.h lib/fuji/fujiHost.cpp
     lib/fuji/fujiDisk.h lib/fuji/fujiDisk.cpp
     lib/bus/bus.h
