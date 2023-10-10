@@ -13,7 +13,7 @@
 #include "../../include/debug.h"
 
 #include "fnSystem.h"
-#include "fnDummyWiFi.h"
+#include "fnWiFi.h"
 #include "fnFsSD.h"
 #include "fnUART.h"
 #include "fnTcpServer.h"

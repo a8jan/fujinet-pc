@@ -15,7 +15,7 @@
 #include "../../include/debug.h"
 
 #include "fnSystem.h"
-#include "fnDummyWiFi.h"
+#include "fnWiFi.h"
 
 
 /* alive response timeout in seconds

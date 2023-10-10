@@ -1,6 +1,11 @@
 #ifndef FNWIFI_H
 #define FNWIFI_H
 
+#ifdef FUJINET_PC
+#include "fnDummyWiFi.h"
+#endif
+
+#ifndef FUJINET_PC
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
 #include <esp_netif.h>
@@ -98,4 +103,5 @@ public:
 
 extern WiFiManager fnWiFi;
 
+#endif // #ifndef FUJINET_PC
 #endif // FNWIFI_H

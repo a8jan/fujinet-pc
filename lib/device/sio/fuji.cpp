@@ -16,7 +16,7 @@
 #include "fnConfig.h"
 #include "fsFlash.h"
 #include "fnFsTNFS.h"
-#include "fnDummyWiFi.h"
+#include "fnWiFi.h"
 
 #include "led.h"
 #include "utils.h"

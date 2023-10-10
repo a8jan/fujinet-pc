@@ -37,7 +37,7 @@
 #include "fsFlash.h"
 #include "fnFsSD.h"
 #include "fnFsSPIFFS.h"
-#include "fnDummyWiFi.h"
+#include "fnWiFi.h"
 
 
 #ifdef BUILD_APPLE

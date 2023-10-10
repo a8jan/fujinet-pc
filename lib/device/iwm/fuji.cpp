@@ -4,7 +4,7 @@
 #include "fnSystem.h"
 #include "fnConfig.h"
 #include "led.h"
-#include "fnDummyWiFi.h"
+#include "fnWiFi.h"
 #include "fnFsSPIFFS.h"
 #include "utils.h"
 

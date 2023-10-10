@@ -1,5 +1,5 @@
 #include "fnConfig.h"
-#include "fnDummyWiFi.h"
+#include "fnWiFi.h"
 #include "crypt.h"
 #include "string_utils.h"
 #include <cstring>

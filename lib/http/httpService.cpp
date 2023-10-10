@@ -8,7 +8,7 @@
 
 #include "fnSystem.h"
 #include "fnConfig.h"
-#include "fnDummyWiFi.h"
+#include "fnWiFi.h"
 #include "fsFlash.h"
 #include "modem.h"
 #include "printer.h"

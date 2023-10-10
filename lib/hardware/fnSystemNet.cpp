@@ -16,7 +16,7 @@
 #include "../../include/debug.h"
 
 #include "fnConfig.h"
-#include "fnDummyWiFi.h"
+#include "fnWiFi.h"
 
 std::string SystemManager::_net::get_hostname()
 {

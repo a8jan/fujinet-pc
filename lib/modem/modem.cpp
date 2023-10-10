@@ -6,7 +6,7 @@
 #include "modem-sniffer.h"
 #include "fnSystem.h"
 #include "fnConfig.h"
-#include "fnDummyWiFi.h"
+#include "fnWiFi.h"
 #include "siocpm.h"
 
 #include "utils.h"
