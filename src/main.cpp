@@ -210,7 +210,7 @@ void main_setup(int argc, char *argv[])
 
     // SIO.addDevice(&sioV, SIO_DEVICEID_FN_VOICE); // P3:
 
-    // SIO.addDevice(&sioZ, SIO_DEVICEID_CPM); // (ATR8000 CPM)
+    SIO.addDevice(&sioZ, SIO_DEVICEID_CPM); // (ATR8000 CPM)
 
     // Go setup SIO
     SIO.setup();

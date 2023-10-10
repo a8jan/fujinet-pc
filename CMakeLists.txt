@@ -168,6 +168,7 @@ set(SOURCES src/main.cpp
     lib/device/sio/fuji.h lib/device/sio/fuji.cpp
     lib/device/sio/network.h lib/device/sio/network.cpp
     lib/device/sio/apetime.h lib/device/sio/apetime.cpp
+    lib/device/sio/siocpm.h lib/device/sio/siocpm.cpp
     lib/device/sio/pclink.h lib/device/sio/pclink.cpp
     lib/modem/modem.h lib/modem/modem.cpp
     lib/media/media.h

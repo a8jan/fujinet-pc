@@ -18,10 +18,10 @@
     sioApeTime apeTime;
     // sioVoice sioV;
     // sioUDPStream udpDev;
-    sioPCLink pcLink;
     // sioCassette sioC; // now part of sioFuji theFuji object
     modem *sioR;
-    // sioCPM sioZ;
+    sioCPM sioZ;
+    sioPCLink pcLink;
 #endif
 
 #ifdef BUILD_COCO

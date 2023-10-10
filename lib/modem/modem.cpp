@@ -1490,11 +1490,11 @@ void modem::modemCommand()
         else
             at_cmd_println("OK");
         break;
-    // case AT_CPM:
-    //     modemActive = false;
-    //     SIO.getCPM()->init_cpm(modemBaud);
-    //     SIO.getCPM()->cpmActive = true;
-    //     break;
+    case AT_CPM:
+        modemActive = false;
+        SIO.getCPM()->init_cpm(modemBaud);
+        SIO.getCPM()->cpmActive = true;
+        break;
     case AT_PHONEBOOKLIST:
         at_handle_pblist();
         break;

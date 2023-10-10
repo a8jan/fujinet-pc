@@ -109,7 +109,7 @@ class systemBus;      // declare early so can be friend
 class sioNetwork;  // declare here so can reference it, but define in network.h
 // class sioUDPStream; // declare here so can reference it, but define in udpstream.h
 class sioCassette; // Cassette forward-declaration.
-// class sioCPM;      // CPM device.
+class sioCPM;      // CPM device.
 class sioPrinter;  // Printer device
 
 class virtualDevice
@@ -252,7 +252,7 @@ private:
     sioNetwork *_netDev[8] = {nullptr};
     // sioMIDIMaze *_midiDev = nullptr;
     sioCassette *_cassetteDev = nullptr;
-    // sioCPM *_cpmDev = nullptr;
+    sioCPM *_cpmDev = nullptr;
     sioPrinter *_printerdev = nullptr;
 
     int _sioBaud = SIO_STANDARD_BAUDRATE;
@@ -299,7 +299,7 @@ public:
 
     sioCassette *getCassette() { return _cassetteDev; }
     sioPrinter *getPrinter() { return _printerdev; }
-    // sioCPM *getCPM() { return _cpmDev; }
+    sioCPM *getCPM() { return _cpmDev; }
 
     // I wish this codebase would make up its mind to use camel or snake casing.
     modem *get_modem() { return _modemDev; }

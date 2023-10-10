@@ -371,6 +371,11 @@ void systemBus::service()
 //         _cpmDev->sio_handle_cpm();
 //         return; // break!
 //     }
+    if (_cpmDev != nullptr && _cpmDev->cpmActive)
+    {
+        _cpmDev->sio_handle_cpm();
+        continue;
+    }
 
     // check if cassette is mounted and enabled first
     if (_fujiDev->cassette()->is_mounted() && Config.get_cassette_enabled())
@@ -489,10 +494,10 @@ void systemBus::addDevice(virtualDevice *pDevice, int device_id)
     {
         _cassetteDev = (sioCassette *)pDevice;
     }
-    // else if (device_id == SIO_DEVICEID_CPM)
-    // {
-    //     _cpmDev = (sioCPM *)pDevice;
-    // }
+    else if (device_id == SIO_DEVICEID_CPM)
+    {
+        _cpmDev = (sioCPM *)pDevice;
+    }
     else if (device_id == SIO_DEVICEID_PRINTER)
     {
         _printerdev = (sioPrinter *)pDevice;

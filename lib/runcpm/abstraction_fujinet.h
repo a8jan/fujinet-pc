@@ -6,6 +6,7 @@
 #define ABSTRACTION_FUJINET_H
 
 #include <string.h>
+#include "compat_string.h"
 
 #include "globals.h"
 
@@ -502,14 +503,14 @@ uint8_t _sys_makedisk(uint8_t drive)
 
 int _kbhit(void)
 {
-	return fnUartBUS.available();
+	return fnSioCom.available();
 }
 
 uint8_t _getch(void)
 {
 	if (teeMode == true)
 	{
-		while (fnUartBUS.available() > 0)
+		while (fnSioCom.available() > 0)
 		{
 			if (client.available())
 			{
@@ -518,21 +519,21 @@ uint8_t _getch(void)
 				return ch & 0x7F;
 			}
 		}
-		return fnUartBUS.read() & 0x7F;
+		return fnSioCom.read() & 0x7F;
 	}
 	else
 	{
-		while (fnUartBUS.available() <= 0)
+		while (fnSioCom.available() <= 0)
 		{
 		}
-		return fnUartBUS.read() & 0x7f;
+		return fnSioCom.read() & 0x7f;
 	}
 }
 
 uint8_t _getche(void)
 {
 	uint8_t ch = _getch() & 0x7f;
-	fnUartBUS.write(ch);
+	fnSioCom.write(ch);
 	if (teeMode == true)
 		client.write(ch);
 	return ch;
@@ -540,7 +541,7 @@ uint8_t _getche(void)
 
 void _putch(uint8_t ch)
 {
-	fnUartBUS.write(ch & 0x7f);
+	fnSioCom.write(ch & 0x7f);
 	if (teeMode == true)
 		client.write(ch);
 }
