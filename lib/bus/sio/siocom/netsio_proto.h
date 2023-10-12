@@ -28,6 +28,7 @@
 #define NETSIO_PING_RESPONSE    0xC3
 #define NETSIO_ALIVE_REQUEST    0xC4
 #define NETSIO_ALIVE_RESPONSE   0xC5
+#define NETSIO_CREDIT           0xC6
 
 #define NETSIO_WARM_RESET       0xFE
 #define NETSIO_COLD_RESET       0xFF

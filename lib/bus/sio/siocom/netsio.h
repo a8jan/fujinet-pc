@@ -33,6 +33,8 @@ private:
     uint64_t _resume_time;
     uint64_t _alive_time;
     uint64_t _alive_response;
+    // flow control
+    int _credit;
 
 protected:
     void suspend(int ms=5000);
@@ -44,6 +46,7 @@ protected:
 
     bool wait_sock_readable(uint32_t timeout_ms);
     bool wait_for_data(uint32_t timeout_ms);
+    void wait_for_credit(int needed);
 
     bool wait_sock_writable(uint32_t timeout_ms);
     ssize_t write_sock(const uint8_t *buffer, size_t size, uint32_t timeout_ms=500);

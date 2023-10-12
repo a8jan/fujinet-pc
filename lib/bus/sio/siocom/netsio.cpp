@@ -43,7 +43,8 @@ NetSioPort::NetSioPort() :
     _rxfull(false),
     _sync_request_num(-1),
     _sync_write_size(-1),
-    _errcount(0)
+    _errcount(0),
+    _credit(0)
 {}
 
 NetSioPort::~NetSioPort()
@@ -398,6 +399,10 @@ int NetSioPort::handle_netsio()
                 }
                 break;
 
+            case NETSIO_CREDIT:
+                _credit = rxbuf[1];
+                break;
+
             case NETSIO_COLD_RESET:
                 // emulator cold reset, do fujinet restart
                 fnSystem.reboot();
@@ -542,6 +547,38 @@ bool NetSioPort::wait_for_data(uint32_t timeout_ms)
     return true;
 }
 
+void NetSioPort::wait_for_credit(int needed)
+{
+    uint8_t txbuf[2];
+    txbuf[0] = NETSIO_CREDIT;
+    txbuf[1] = (uint8_t)_credit;
+
+    if (needed > _credit)
+    {
+        // inform HUB we need more credit
+        send(_fd, (char *)txbuf, sizeof(txbuf), 0);
+    }
+    while (needed > _credit)
+    {
+        if (!wait_sock_readable(500))
+        {
+            // remind HUB we need more credit
+            send(_fd, (char *)txbuf, sizeof(txbuf), 0);
+            keep_alive();
+        }
+        else
+        {
+            // process incomming message
+            handle_netsio();
+        }
+    }
+    if (needed <= _credit)
+    {
+        _credit -= needed;
+        return;
+    }
+}
+
 /* Discards anything in the input buffer
 */
 void NetSioPort::flush_input()
@@ -621,6 +658,7 @@ void NetSioPort::set_proceed(bool level)
     Debug_print(level ? "+" : "-");
     last_level = new_level;
 
+    wait_for_credit(1);
     uint8_t cmd = level ? NETSIO_PROCEED_ON : NETSIO_PROCEED_OFF;
     write_sock(&cmd, 1);
 }
@@ -638,6 +676,7 @@ void NetSioPort::set_interrupt(bool level)
     Debug_print(level ? "\\" : "/");
     last_level = new_level;
 
+    wait_for_credit(1);
     uint8_t cmd = level ? NETSIO_INTERRUPT_ON : NETSIO_INTERRUPT_OFF;
     write_sock(&cmd, 1);
 }
@@ -731,18 +770,19 @@ ssize_t NetSioPort::write(uint8_t c)
         }
     }
 
+
     // DATA BYTE
     // send byte as usually
+    wait_for_credit(1);
     txbuf[0] = NETSIO_DATA_BYTE; // byte command
     txbuf[1] = c;                // value
-
     ssize_t result = write_sock(txbuf, sizeof(txbuf));
 
     if (result > 0)
     {
-        // slow down / TODO flow control
-        uint32_t tt = 10000000 / _baud + 1;
-        fnSystem.delay_microseconds(tt);
+        // // slow down / TODO flow control
+        // uint32_t tt = 10000000 / _baud + 1;
+        // fnSystem.delay_microseconds(tt);
         // keep netsio running
         handle_netsio();
     }
@@ -766,6 +806,7 @@ ssize_t NetSioPort::write(const uint8_t *buffer, size_t size)
         to_send = ((size-txbytes) > sizeof(txbuf)-1) ? sizeof(txbuf)-1 : (size-txbytes);
         txbuf[0] = NETSIO_DATA_BLOCK;
         memcpy(txbuf+1, buffer+txbytes, to_send);
+        wait_for_credit(1); // TODO calculate credit based on to_send
         result = write_sock(txbuf, to_send+1);
         if (result > 0) 
         {
@@ -774,8 +815,8 @@ ssize_t NetSioPort::write(const uint8_t *buffer, size_t size)
             uint32_t tt = result * 10000000 / _baud + 1;
             while (tt)
             {
-                // but keep netsio running (100ms ticks)
-                fnSystem.delay_microseconds(tt > 100000 ? 100000 : tt);
+                // // but keep netsio running (100ms ticks)
+                // fnSystem.delay_microseconds(tt > 100000 ? 100000 : tt);
                 tt -= (tt > 100000 ? 100000 : tt);
                 handle_netsio();
             }
@@ -832,6 +873,7 @@ ssize_t NetSioPort::send_sync_response(uint8_t response_type, uint8_t ack_byte, 
     _sync_request_num = -1;
     _sync_write_size = -1;
 
+    wait_for_credit(1);
     ssize_t result = write_sock(txbuf, sizeof(txbuf));
     return (result > 0 && response_type != NETSIO_EMPTY_SYNC) ? 1 : 0; // amount of data bytes written
 }
