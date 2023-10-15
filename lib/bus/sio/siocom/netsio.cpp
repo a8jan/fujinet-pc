@@ -24,8 +24,8 @@
  *  the connection to the HUB is considered as expired/broken and new connection attempt will
  *  be made
  */
-#define ALIVE_RATE_MS       2000
-#define ALIVE_TIMEOUT_MS   15000
+#define ALIVE_RATE_MS       1000
+#define ALIVE_TIMEOUT_MS    5000
 
 // Constructor
 NetSioPort::NetSioPort() :
@@ -44,7 +44,7 @@ NetSioPort::NetSioPort() :
     _sync_request_num(-1),
     _sync_write_size(-1),
     _errcount(0),
-    _credit(0)
+    _credit(3)
 {}
 
 NetSioPort::~NetSioPort()
@@ -136,8 +136,7 @@ void NetSioPort::begin(int baud)
     uint8_t connect = NETSIO_DEVICE_CONNECT;
     send(_fd, (char *)&connect, 1, 0);
 
-    _alive_time = fnSystem.millis();
-    _alive_response = _alive_time;
+    _alive_request = _alive_time = fnSystem.millis();
 
     Debug_printf("### NetSIO initialized ###\n");
     // Set initialized.
@@ -290,18 +289,44 @@ bool NetSioPort::resume_test()
 
 bool NetSioPort::keep_alive()
 {
+    ssize_t result;
     uint64_t ms = fnSystem.millis();
-    // send keep alive messages at rate ALIVE_RATE_MS
-    if (ms - _alive_time >= ALIVE_RATE_MS)
+
+    // if ALIVE_RATE_MS time passed since last alive request was sent
+    if (ms - _alive_request >= ALIVE_RATE_MS)
     {
-        _alive_time = ms;
-        uint8_t alive = NETSIO_ALIVE_REQUEST;
-        send(_fd, (char *)&alive, 1, 0);
+        // if alive request was send but we did not received any response then we lost connection
+        if (ms - _alive_request < ALIVE_TIMEOUT_MS && ms - _alive_time >= ALIVE_TIMEOUT_MS)
+        {
+            Debug_println("NetSIO connection lost");
+            Debug_printf("> %lu %lu %lu  %lu %lu\n", ms, _alive_request, _alive_time, ms-_alive_request, ms-_alive_time);
+            // ping hub
+            if (ping(2, 1000, 2000) < 0)
+            {
+                // no ping response
+                suspend(5000);
+                return false;
+            }
+            // reconnect on ping response
+            end();
+            begin(_baud);
+        }
+        // if nothing received for longer than ALIVE_RATE_MS, keep sending alive requests at ALIVE_RATE_MS rate
+        else if (ms - _alive_time >= ALIVE_RATE_MS)
+        {
+            _alive_request = ms;
+            uint8_t alive = NETSIO_ALIVE_REQUEST;
+            result = send(_fd, (char *)&alive, 1, 0);
+            Debug_printf("Alive %lu %ld\n", ms, result);
+        }
     }
-    // check for keep alive response
-    if (ms - _alive_response >= ALIVE_TIMEOUT_MS)
+
+
+    // if alive request was send but we did not received any response then we lost connection
+    if (ms - _alive_request >= ALIVE_RATE_MS && ms - _alive_request < ALIVE_TIMEOUT_MS && ms - _alive_time >= ALIVE_TIMEOUT_MS)
     {
         Debug_println("NetSIO connection lost");
+        Debug_printf("> %lu %lu %lu  %lu %lu\n", ms, _alive_request, _alive_time, ms-_alive_request, ms-_alive_time);
         // ping hub
         if (ping(2, 1000, 2000) < 0)
         {
@@ -312,6 +337,14 @@ bool NetSioPort::keep_alive()
         // reconnect on ping response
         end();
         begin(_baud);
+    }
+    // if nothing received for longer than ALIVE_RATE_MS, keep sending alive requests at ALIVE_RATE_MS rate
+    else if (ms - _alive_time >= ALIVE_RATE_MS && ms - _alive_request >= ALIVE_RATE_MS)
+    {
+        _alive_request = ms;
+        uint8_t alive = NETSIO_ALIVE_REQUEST;
+        result = send(_fd, (char *)&alive, 1, 0);
+        Debug_printf("Alive %lu %ld\n", ms, result);
     }
     return _initialized;
 }
@@ -335,7 +368,7 @@ int NetSioPort::handle_netsio()
             Debug_printf("%02x ", rxbuf[i]);
         Debug_print("\n");
 #endif
-        _alive_response = fnSystem.millis();
+        _alive_time = fnSystem.millis(); // update last received
         switch (rxbuf[0])
         {
             case NETSIO_DATA_BYTE_SYNC:
@@ -399,7 +432,7 @@ int NetSioPort::handle_netsio()
                 }
                 break;
 
-            case NETSIO_CREDIT:
+            case NETSIO_CREDIT_UPDATE:
                 _credit = rxbuf[1];
                 break;
 
@@ -547,36 +580,27 @@ bool NetSioPort::wait_for_data(uint32_t timeout_ms)
     return true;
 }
 
-void NetSioPort::wait_for_credit(int needed)
+bool NetSioPort::wait_for_credit(int needed)
 {
     uint8_t txbuf[2];
-    txbuf[0] = NETSIO_CREDIT;
+    txbuf[0] = NETSIO_CREDIT_STATUS;
     txbuf[1] = (uint8_t)_credit;
 
-    if (needed > _credit)
-    {
-        // inform HUB we need more credit
-        send(_fd, (char *)txbuf, sizeof(txbuf), 0);
-    }
+    // wait for credit
     while (needed > _credit)
     {
-        if (!wait_sock_readable(500))
-        {
-            // remind HUB we need more credit
-            send(_fd, (char *)txbuf, sizeof(txbuf), 0);
-            keep_alive();
-        }
-        else
-        {
-            // process incomming message
-            handle_netsio();
-        }
+        if (!_initialized) 
+            return false; // disconnected
+        // inform HUB we need more credit
+        send(_fd, (char *)txbuf, sizeof(txbuf), 0);
+        Debug_printf("Waiting Credit %d\n", _credit);
+        wait_sock_readable(500);
+        handle_netsio();
     }
-    if (needed <= _credit)
-    {
-        _credit -= needed;
-        return;
-    }
+    // consume credit
+    _credit -= needed;
+    Debug_printf("Credit %d\n", _credit);
+    return true;
 }
 
 /* Discards anything in the input buffer
@@ -772,20 +796,14 @@ ssize_t NetSioPort::write(uint8_t c)
 
 
     // DATA BYTE
+
+    if (!wait_for_credit(1))
+        return 0;
+
     // send byte as usually
-    wait_for_credit(1);
     txbuf[0] = NETSIO_DATA_BYTE; // byte command
     txbuf[1] = c;                // value
     ssize_t result = write_sock(txbuf, sizeof(txbuf));
-
-    if (result > 0)
-    {
-        // // slow down / TODO flow control
-        // uint32_t tt = 10000000 / _baud + 1;
-        // fnSystem.delay_microseconds(tt);
-        // keep netsio running
-        handle_netsio();
-    }
 
     return (result > 0) ? 1 : 0; // amount of data bytes written
 }
@@ -806,25 +824,14 @@ ssize_t NetSioPort::write(const uint8_t *buffer, size_t size)
         to_send = ((size-txbytes) > sizeof(txbuf)-1) ? sizeof(txbuf)-1 : (size-txbytes);
         txbuf[0] = NETSIO_DATA_BLOCK;
         memcpy(txbuf+1, buffer+txbytes, to_send);
-        wait_for_credit(1); // TODO calculate credit based on to_send
-        result = write_sock(txbuf, to_send+1);
-        if (result > 0) 
-        {
-            txbytes += result-1;
-            // slow down / TODO flow control
-            uint32_t tt = result * 10000000 / _baud + 1;
-            while (tt)
-            {
-                // // but keep netsio running (100ms ticks)
-                // fnSystem.delay_microseconds(tt > 100000 ? 100000 : tt);
-                tt -= (tt > 100000 ? 100000 : tt);
-                handle_netsio();
-            }
-        }
-        else if (result < 1) 
-        {
+        // ? calculate credit based on amount of data ?
+        if (!wait_for_credit(1))
             break;
-        }
+        result = write_sock(txbuf, to_send+1);
+        if (result > 0)
+            txbytes += result-1;
+        else if (result < 0)
+            break;
     }
     return txbytes;
 }
