@@ -39,7 +39,7 @@
 
 // sioFuji theFuji; // moved to fuji.h/.cpp
 
-volatile sig_atomic_t fn_running = 0;
+volatile sig_atomic_t fn_shutdown = 0;
 
 void main_shutdown_handler()
 {
@@ -51,7 +51,9 @@ void main_shutdown_handler()
 
 void sighandler(int signum)
 {
-    fn_running = 0;
+    fn_shutdown = 1 + fn_shutdown;
+    if (fn_shutdown >= 3)
+        _exit(EXIT_FAILURE); // emergency exit
 }
 
 void print_version()
@@ -373,7 +375,7 @@ void main_setup(int argc, char *argv[])
     CX16.setup();
 #endif
 
-    fn_running = 1;
+    fn_shutdown = 0;
 
 #ifdef DEBUG
     unsigned long endms = fnSystem.millis();
@@ -392,7 +394,7 @@ void main_setup(int argc, char *argv[])
 // Main high-priority service loop
 void fn_service_loop(void *param)
 {
-    while (fn_running)
+    while (!fn_shutdown)
     {
         // We don't have any delays in this loop, so IDLE threads will be starved
         // Shouldn't be a problem, but something to keep in mind...
