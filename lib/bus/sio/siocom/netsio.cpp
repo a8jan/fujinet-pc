@@ -317,7 +317,9 @@ bool NetSioPort::keep_alive()
             _alive_request = ms;
             uint8_t alive = NETSIO_ALIVE_REQUEST;
             result = send(_fd, (char *)&alive, 1, 0);
+#ifdef ALIVE_DEBUG
             Debug_printf("Alive %lu %ld\n", ms, result);
+#endif
         }
     }
 
@@ -344,7 +346,9 @@ bool NetSioPort::keep_alive()
         _alive_request = ms;
         uint8_t alive = NETSIO_ALIVE_REQUEST;
         result = send(_fd, (char *)&alive, 1, 0);
+#ifdef ALIVE_DEBUG
         Debug_printf("Alive %lu %ld\n", ms, result);
+#endif
     }
     return _initialized;
 }

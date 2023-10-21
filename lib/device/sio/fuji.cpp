@@ -1103,7 +1103,7 @@ void sioFuji::sio_read_directory_block()
             }
 
             int filelen = util_ellipsize(f->filename, filenamedest, bufsize);
-            additional_size = filelen + is_extended ? ADDITIONAL_DETAILS_BYTES : 0;
+            additional_size = filelen + (is_extended ? ADDITIONAL_DETAILS_BYTES : 0);
 
             // Add a slash at the end of directory entries
             if (f->isDir && filelen < (bufsize - 2))

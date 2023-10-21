@@ -322,6 +322,21 @@ void mgHttpClient::_httpevent_handler(struct mg_connection *c, int ev, void *ev_
                 mg_send(c, client->_post_data, client->_post_datalen);
                 break;
             }
+            case HTTP_DELETE:
+            {
+                mg_printf(c, "DELETE %s HTTP/1.0\r\n"
+                                "Host: %.*s\r\n",
+                                mg_url_uri(url), (int)host.len, host.ptr);
+                // send auth header
+                if (!client->_username.empty())
+                    mg_http_bauth(c, client->_username.c_str(), client->_password.c_str());
+                // send request headers
+                for (const auto& rh: client->_request_headers)
+                    mg_printf(c, "%s: %s\r\n", rh.first.c_str(), rh.second.c_str());
+                mg_printf(c, "\r\n");
+                break;
+
+            }
             default:
             {
 #ifdef VERBOSE_HTTP
