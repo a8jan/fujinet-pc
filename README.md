@@ -72,6 +72,11 @@ sudo apt install libexpat-dev libmbedtls-dev
 brew install mbedtls
 ```
 
+#### Windows MSYS2 CLANG64
+
+```sh
+pacman -S clang64/mingw-w64-clang-x86_64-mbedtls
+```
 
 **TODO: skip/remove OpenSSL part**
 
