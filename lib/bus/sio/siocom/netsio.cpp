@@ -299,7 +299,7 @@ bool NetSioPort::keep_alive()
         if (ms - _alive_request < ALIVE_TIMEOUT_MS && ms - _alive_time >= ALIVE_TIMEOUT_MS)
         {
             Debug_println("NetSIO connection lost");
-            Debug_printf("> %lu %lu %lu  %lu %lu\n", ms, _alive_request, _alive_time, ms-_alive_request, ms-_alive_time);
+            // Debug_printf("> %lu %lu %lu  %lu %lu\n", ms, _alive_request, _alive_time, ms-_alive_request, ms-_alive_time);
             // ping hub
             if (ping(2, 1000, 2000) < 0)
             {
@@ -317,38 +317,8 @@ bool NetSioPort::keep_alive()
             _alive_request = ms;
             uint8_t alive = NETSIO_ALIVE_REQUEST;
             result = send(_fd, (char *)&alive, 1, 0);
-#ifdef ALIVE_DEBUG
-            Debug_printf("Alive %lu %ld\n", ms, result);
-#endif
+            // Debug_printf("Alive %lu %ld\n", ms, result);
         }
-    }
-
-
-    // if alive request was send but we did not received any response then we lost connection
-    if (ms - _alive_request >= ALIVE_RATE_MS && ms - _alive_request < ALIVE_TIMEOUT_MS && ms - _alive_time >= ALIVE_TIMEOUT_MS)
-    {
-        Debug_println("NetSIO connection lost");
-        Debug_printf("> %lu %lu %lu  %lu %lu\n", ms, _alive_request, _alive_time, ms-_alive_request, ms-_alive_time);
-        // ping hub
-        if (ping(2, 1000, 2000) < 0)
-        {
-            // no ping response
-            suspend(5000);
-            return false;
-        }
-        // reconnect on ping response
-        end();
-        begin(_baud);
-    }
-    // if nothing received for longer than ALIVE_RATE_MS, keep sending alive requests at ALIVE_RATE_MS rate
-    else if (ms - _alive_time >= ALIVE_RATE_MS && ms - _alive_request >= ALIVE_RATE_MS)
-    {
-        _alive_request = ms;
-        uint8_t alive = NETSIO_ALIVE_REQUEST;
-        result = send(_fd, (char *)&alive, 1, 0);
-#ifdef ALIVE_DEBUG
-        Debug_printf("Alive %lu %ld\n", ms, result);
-#endif
     }
     return _initialized;
 }
@@ -597,13 +567,13 @@ bool NetSioPort::wait_for_credit(int needed)
             return false; // disconnected
         // inform HUB we need more credit
         send(_fd, (char *)txbuf, sizeof(txbuf), 0);
-        Debug_printf("Waiting Credit %d\n", _credit);
+        //Debug_printf("waiting for credit %d\n", _credit);
         wait_sock_readable(500);
         handle_netsio();
     }
     // consume credit
     _credit -= needed;
-    Debug_printf("Credit %d\n", _credit);
+    //Debug_printf("credit %d\n", _credit);
     return true;
 }
 
