@@ -75,7 +75,7 @@ brew install mbedtls
 #### Windows MSYS2 CLANG64
 
 ```sh
-pacman -S clang64/mingw-w64-clang-x86_64-mbedtls
+pacman -S clang64/mingw-w64-clang-x86_64-mbedtls clang64/mingw-w64-clang-x86_64-python-jinja clang64/mingw-w64-clang-x86_64-python-yaml
 ```
 
 **TODO: skip/remove OpenSSL part**
