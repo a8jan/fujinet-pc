@@ -93,6 +93,12 @@ void util_ascii_to_petscii_str(std::string &s);
 // generic hex dump for debug output
 char *util_hexdump(const void *buf, size_t len);
 
+// check if a double is very close to an integer
+bool isApproximatelyInteger(double value, double tolerance = 1e-6);
+
+// ensure string starts with a "/"
+std::string prependSlash(const std::string& str);
+
 // helper function for Debug_print* macros on fujinet-pc
 void util_debug_printf(const char *fmt, ...);
 

@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "fnFile.h"
-#include <fujiHost.h>
+#include "../../FileSystem/fnFile.h"
+#include"../../fuji/fujiHost.h"
 
 #define INVALID_SECTOR_VALUE 65536
 

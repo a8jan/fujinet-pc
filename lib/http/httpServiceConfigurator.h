@@ -30,6 +30,8 @@ class fnHttpServiceConfigurator
     static void config_modem_sniffer_enabled(std::string modem_sniffer_enabled);
     static void config_encrypt_passphrase_enabled(std::string encrypt_passphrase_enabled);
     static void config_apetime_enabled(std::string apetime_enabled);
+    static void config_cpm_enabled(std::string cpm_enabled);
+    static void config_cpm_ccp(std::string cpm_ccp);
 
     static void config_serial(std::string port, std::string command, std::string proceed);
     static void config_netsio(std::string enable_netsio, std::string netsio_host_port);

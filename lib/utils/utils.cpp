@@ -5,6 +5,7 @@
 #include <cstring>
 #include <sstream>
 #include <stack>
+#include <cmath>
 #include <cstdarg>
 #include "compat_string.h"
 #include "compat_gettimeofday.h"
@@ -898,6 +899,17 @@ char *util_hexdump(const void *buf, size_t len) {
   if (n > dlen - 1) n = dlen - 1;
   dst[n] = '\0';
   return dst;
+}
+
+bool isApproximatelyInteger(double value, double tolerance) {
+    return std::abs(value - std::floor(value)) < tolerance;
+}
+
+std::string prependSlash(const std::string& str) {
+    if (str.empty() || str[0] != '/') {
+        return "/" + str;
+    }
+    return str;
 }
 
 // helper function for Debug_print* macros on fujinet-pc

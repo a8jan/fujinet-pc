@@ -589,30 +589,34 @@ void adamFuji::image_rotate()
         // Save the device ID of the disk in the last slot
         int last_id = count;
 
-        for (int n = count; n > 0; n--)
+        for (int n = 0; n < count; n++)
         {
-            _fnDisks[n].access_mode = accessmode_save[n - 1];
-            _fnDisks[n].disk_size = disksize_save[n - 1];
-            _fnDisks[n].disk_type = disktype_save[n - 1];
-            _fnDisks[n].fileh = fileh_save[n - 1];
-            strcpy(_fnDisks[n].filename, filename_save[n - 1].c_str());
-            _fnDisks[n].host = fujiHost_save[n - 1];
-            _fnDisks[n].host_slot = hostslot_save[n - 1];
-            _fnDisks[n].disk_dev.set_media(media_save[n-1]);
+            _fnDisks[n].access_mode = accessmode_save[n + 1];
+            _fnDisks[n].disk_size = disksize_save[n + 1];
+            _fnDisks[n].disk_type = disktype_save[n + 1];
+            _fnDisks[n].fileh = fileh_save[n + 1];
+            strcpy(_fnDisks[n].filename, filename_save[n + 1].c_str());
+            _fnDisks[n].host = fujiHost_save[n + 1];
+            _fnDisks[n].host_slot = hostslot_save[n + 1];
+            _fnDisks[n].disk_dev.set_media(media_save[n + 1]);
         }
 
         // The first slot gets the device ID of the last slot
-        Debug_printf("setting slot %d to ID %hx\n", 0, last_id);
-        _fnDisks[0].access_mode = accessmode_save[last_id];
-        _fnDisks[0].disk_size = disksize_save[last_id];
-        _fnDisks[0].disk_type = disktype_save[last_id];
-        _fnDisks[0].fileh = fileh_save[last_id];
-        strcpy(_fnDisks[0].filename, filename_save[last_id].c_str());
-        _fnDisks[0].host = fujiHost_save[last_id];
-        _fnDisks[0].host_slot = hostslot_save[last_id];
-        _fnDisks[0].disk_dev.set_media(media_save[last_id]);
+        _fnDisks[count].access_mode = accessmode_save[0];
+        _fnDisks[count].disk_size = disksize_save[0];
+        _fnDisks[count].disk_type = disktype_save[0];
+        _fnDisks[count].fileh = fileh_save[0];
+        strcpy(_fnDisks[count].filename, filename_save[0].c_str());
+        _fnDisks[count].host = fujiHost_save[0];
+        _fnDisks[count].host_slot = hostslot_save[0];
+        _fnDisks[count].disk_dev.set_media(media_save[0]);
 
         _populate_config_from_slots();
+    }
+
+    for (unsigned char n=0;n<4;n++)
+    {
+        Debug_printf("%u: %s\n",n,_fnDisks[n].filename);
     }
 }
 
@@ -915,12 +919,14 @@ void adamFuji::adamnet_new_disk()
     fujiDisk &disk = _fnDisks[ds];
     fujiHost &host = _fnHosts[hs];
 
-    if (host.file_exists((const char *)p))
+    if (new_disk_completed)
     {
+        new_disk_completed = false;
         AdamNet.start_time = esp_timer_get_time();
         adamnet_response_ack();
         return;
     }
+
     disk.host_slot = hs;
     disk.access_mode = DISK_ACCESS_MODE_WRITE;
     strlcpy(disk.filename, (const char *)p, 256);
@@ -931,10 +937,9 @@ void adamFuji::adamnet_new_disk()
 
     disk.disk_dev.write_blank(disk.fileh, numBlocks);
 
-    AdamNet.start_time = esp_timer_get_time();
-    adamnet_response_ack();
-
     fclose(disk.fileh);
+
+    new_disk_completed = true;
 }
 
 // Send host slot data to computer

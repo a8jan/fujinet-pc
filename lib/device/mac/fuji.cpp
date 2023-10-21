@@ -27,14 +27,14 @@ macFuji::macFuji()
   
 }
 
-void macFuji::startup_hack()
-{
-  Debug_printf("\n Fuji startup hack");
-  for (int i = 0; i < MAX_DISK_DEVICES; i++)
-  {
-    _fnDisks[i].disk_dev.set_disk_number(i);
-  }
-}
+// void macFuji::startup_hack()
+// {
+//   Debug_printf("\n Fuji startup hack");
+//   for (int i = 0; i < MAX_DISK_DEVICES; i++)
+//   {
+//     _fnDisks[i].disk_dev.set_disk_number(i);
+//   }
+// }
 
 macFloppy *macFuji::bootdisk()
 {
@@ -65,20 +65,27 @@ void macFuji::setup(macBus *macbus)
   //   _iwm_bus->addDevice(theCPM, iwm_fujinet_type_t::CPM);
 
   //  27-aug-23 use something similar for Mac floppy/dcd disks
-  //  for (int i = MAX_DISK_DEVICES - MAX_DISK2_DEVICES -1; i >= 0; i--)
-  //  {
-  //    _fnDisks[i].disk_dev.set_disk_number('0' + i);
-  //    _iwm_bus->addDevice(&_fnDisks[i].disk_dev, iwm_fujinet_type_t::BlockDisk);
-  //  }
+   for (int i = MAX_DISK_DEVICES - MAX_FLOPPY_DEVICES -1; i >= 0; i--)
+   {
+     _fnDisks[i].disk_dev.set_disk_number('0' + i);
+    //  _mac_bus->addDevice(&_fnDisks[i].disk_dev, mac_fujinet_type_t::HardDisk);
+   }
+   for (int i = MAX_DISK_DEVICES - 1; i >= MAX_DISK_DEVICES - MAX_FLOPPY_DEVICES; i--)
+   {
+     _fnDisks[MAX_DISK_DEVICES - 1].disk_dev.set_disk_number('0' + i);
+    //  _mac_bus->addDevice(&_fnDisks[i].disk_dev, mac_fujinet_type_t::Floppy);
+   }
 
+
+  // to do AUTORUN
   //   Debug_printf("\nConfig General Boot Mode: %u\n",Config.get_general_boot_mode());
   //   if (Config.get_general_boot_mode() == 0)
   //   {
-        FILE *f = fsFlash.file_open("/autorun.moof");
-        if (f!=nullptr)
-          _fnDisks[0].disk_dev.mount(f, "/autorun.moof", MEDIATYPE_MOOF);
-        else
-          Debug_printf("\nCould not open 'autorun.moof'"); 
+        // FILE *f = fsFlash.file_open("/autorun.moof");
+        // if (f!=nullptr)
+        //   _fnDisks[MAX_DISK_DEVICES - MAX_FLOPPY_DEVICES].disk_dev.mount(f, "/autorun.moof", MEDIATYPE_MOOF);
+        // else
+        //   Debug_printf("\nCould not open 'autorun.moof'"); 
   //   }
   //   else
   //   {
@@ -202,7 +209,11 @@ bool macFuji::mount_all()
 
             // And now mount it
             disk.disk_type = disk.disk_dev.mount(disk.fileh, disk.filename, disk.disk_size);
-            if(disk.access_mode == DISK_ACCESS_MODE_WRITE) {disk.disk_dev.readonly = false;}
+            disk.disk_dev.readonly = true;
+            if (disk.access_mode == DISK_ACCESS_MODE_WRITE)
+            {
+              disk.disk_dev.readonly = false;
+            }
         }
     }
 
@@ -502,8 +513,8 @@ void iwmFuji::iwm_ctrl_copy_file()
     unsigned char sourceSlot;
     unsigned char destSlot;
 
-    sourceSlot = data_buffer[0]; // adamnet_recv();
-    destSlot = data_buffer[0]; //adamnet_recv();
+    sourceSlot = data_buffer[0];
+    destSlot = data_buffer[1];
     copySpec = std::string((char *)&data_buffer[2]);
     Debug_printf("copySpec: %s\n", copySpec.c_str());
 

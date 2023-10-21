@@ -46,6 +46,10 @@ protected:
     int old_pos;
     int head_dir;
 
+    uint32_t _disk_size_in_blocks;
+
+    void dcd_status(uint8_t* buffer);
+
 public:
     bool readonly;
     
@@ -53,8 +57,8 @@ public:
     ~macFloppy() {};
 
     // void init();
-    mediatype_t mount(FILE *f, const char *filename, mediatype_t disk_type = MEDIATYPE_UNKNOWN);
-    mediatype_t mount(FILE *f, const char *filename, uint32_t disksize, mediatype_t disk_type = MEDIATYPE_UNKNOWN) { return mount(f, filename, disk_type); };
+    //mediatype_t mount(FILE *f, const char *filename, mediatype_t disk_type = MEDIATYPE_UNKNOWN);
+    mediatype_t mount(FILE *f, const char *filename, uint32_t disksize , mediatype_t disk_type = MEDIATYPE_UNKNOWN);// { return mount(f, filename, disk_type); };
     void unmount();
     bool write_blank(FILE *f, uint16_t sectorSize, uint16_t numSectors) { return false; };
     int get_track_pos() { return track_pos; };
@@ -68,7 +72,7 @@ public:
     mediatype_t disktype() { return _disk == nullptr ? MEDIATYPE_UNKNOWN : _disk->_mediatype; };
 
     void shutdown() override {};
-    void process(mac_cmd_t cmd) override {};
+    void process(mac_cmd_t cmd) override;
 };
 
 #endif // guard

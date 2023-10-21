@@ -46,6 +46,7 @@ constexpr const char * const sioPrinter::printer_model_str[PRINTER_INVALID];
 sioPrinter::~sioPrinter()
 {
     delete _pptr;
+    _pptr = nullptr;
 }
 
 // write for W commands
@@ -168,7 +169,10 @@ void sioPrinter::sio_status()
 void sioPrinter::set_printer_type(sioPrinter::printer_type printer_type)
 {
     // Destroy any current printer emu object
-    delete _pptr;
+    if (_pptr != nullptr)
+    {
+        delete _pptr;
+    }
 
     _ptype = printer_type;
     switch (printer_type)

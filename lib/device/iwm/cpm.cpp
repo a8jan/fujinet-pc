@@ -9,6 +9,7 @@
 #include "fuji.h"
 #include "fnFS.h"
 #include "fnFsSD.h"
+#include "fnConfig.h"
 #include "compat_string.h"
 
 #include "../hardware/led.h"
@@ -117,13 +118,21 @@ void iwmCPM::sio_status()
 void iwmCPM::iwm_open(iwm_decoded_cmd_t cmd)
 {
     uint8_t err_result = SP_ERR_NOERROR;
-    
-    Debug_printf("\nCP/M: Open\n");
-    //OS if (cpmTaskHandle == NULL)
-    //OS {
-    //OS     Debug_printf("!!! STARTING CP/M TASK!!!\n");
-    //OS     xTaskCreatePinnedToCore(cpmTask, "cpmtask", 32768, NULL, CPM_TASK_PRIORITY, &cpmTaskHandle, 1);
-    //OS }
+
+    Debug_printf("\r\nCP/M: Open\n");
+    // if (!fnSystem.spifix())
+    // {
+    //     err_result = SP_ERR_OFFLINE;
+    //     Debug_printf("FujiApple SPI Fix Missing, not starting CP/M\n");
+    // }
+    // else
+    // {
+    //     if (cpmTaskHandle == NULL)
+    //     {
+    //         Debug_printf("!!! STARTING CP/M TASK!!!\n");
+    //         xTaskCreatePinnedToCore(cpmTask, "cpmtask", 32768, NULL, CPM_TASK_PRIORITY, &cpmTaskHandle, 1);
+    //     }
+    // }
 
     send_reply_packet(err_result);
 }
@@ -190,8 +199,8 @@ void iwmCPM::iwm_read(iwm_decoded_cmd_t cmd)
     {
         if (mw < numbytes) //if there are less than requested, just send what we have
         {
-            numbytes = mw;  
-        }       
+            numbytes = mw;
+        }
 
         data_len = 0;
         for (int i = 0; i < numbytes; i++)
@@ -272,6 +281,13 @@ void iwmCPM::iwm_ctrl(iwm_decoded_cmd_t cmd)
 
 void iwmCPM::process(iwm_decoded_cmd_t cmd)
 {
+    // Respond with device offline if cp/m is disabled
+    if ( !Config.get_cpm_enabled() )
+    {
+        iwm_return_device_offline(cmd);
+        return;
+    }
+
     switch (cmd.command)
     {
     case 0x00: // status

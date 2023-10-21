@@ -23,7 +23,10 @@ adamDisk::adamDisk()
 adamDisk::~adamDisk()
 {
     if (_media != nullptr)
+    {
         delete _media;
+        _media = nullptr;
+    }
 }
 
 void adamDisk::reset()
@@ -100,10 +103,7 @@ bool adamDisk::write_blank(FILE *fileh, uint32_t numBlocks)
 
     for (uint32_t b = 0; b < numBlocks; b++)
     {
-        if (b<13)
-            memset(buf, 0x00, 256);
-        else
-            memset(buf, 0xE5, 256);
+        memset(buf, 0xE5, 256);
 
         fwrite(buf, 1, 256, fileh);
         fwrite(buf, 1, 256, fileh);

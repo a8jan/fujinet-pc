@@ -256,7 +256,10 @@ mediatype_t sioDisk::mount(FileHandler *f, const char *filename, uint32_t disksi
 sioDisk::~sioDisk()
 {
     if (_disk != nullptr)
+    {
         delete _disk;
+        _disk = nullptr;
+    }
 }
 
 // Unmount disk file

@@ -423,6 +423,29 @@ void fnHttpServiceConfigurator::config_apetime_enabled(std::string enabled)
     Config.save();
 }
 
+void fnHttpServiceConfigurator::config_cpm_enabled(std::string cpm_enabled)
+{
+    Debug_printf("New CP/M Enable Value: %s\n", cpm_enabled.c_str());
+    Config.store_cpm_enabled(atoi(cpm_enabled.c_str()));
+    Config.save();
+}
+
+void fnHttpServiceConfigurator::config_cpm_ccp(std::string cpm_ccp)
+{
+    // Use $ as a flag to reset to default CCP since empty field never gets to here
+    if ( !strcmp(cpm_ccp.c_str(), "$") )
+    {
+        Debug_printf("Set CP/M CCP File to DEFAULT\n");
+        Config.store_ccp_filename("");
+    }
+    else
+    {
+        Debug_printf("Set CP/M CCP File: %s\n", cpm_ccp.c_str());
+        Config.store_ccp_filename(cpm_ccp.c_str());
+    }
+    Config.save();
+}
+
 void fnHttpServiceConfigurator::config_serial(std::string port, std::string command, std::string proceed)
 {
     Debug_printf("Set Serial: %s,%s,%s\n", port.c_str(), command.c_str(), proceed.c_str());
@@ -604,6 +627,14 @@ int fnHttpServiceConfigurator::process_config_post(const char *postdata, size_t 
         else if (i->first.compare("apetime_enabled") == 0)
         {
             config_apetime_enabled(i->second);
+        }
+        else if (i->first.compare("cpm_enabled") == 0)
+        {
+            config_cpm_enabled(i->second);
+        }
+        else if (i->first.compare("cpm_ccp") == 0)
+        {
+            config_cpm_ccp(i->second);
         }
         else if (i->first.compare("serial_port") == 0)
         {
