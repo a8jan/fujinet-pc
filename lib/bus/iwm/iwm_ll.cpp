@@ -1,6 +1,6 @@
 #ifdef BUILD_APPLE
 
-#if SMARTPORT != USB
+#if SMARTPORT != SLIP
 
 #include <string.h>
 

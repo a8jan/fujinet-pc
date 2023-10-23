@@ -6,8 +6,8 @@
 
 #include "bus.h"
 
-#if SMARTPORT == USB
-#include "iwm_usb.h"
+#if SMARTPORT == SLIP
+#include "iwm_slip.h"
 #else
 #include "iwm_ll.h"
 #endif

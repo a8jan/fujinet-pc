@@ -1,6 +1,6 @@
 #ifdef BUILD_APPLE
-#ifndef IWM_USB_H
-#define IWM_USB_H
+#ifndef IWM_SLIP_H
+#define IWM_SLIP_H
 
 #include <stdint.h>
 
@@ -62,7 +62,7 @@ public:
   uint8_t last_checksum;
 };
 
-extern iwm_usb smartport;
+extern iwm_slip smartport;
 
-#endif // IWM_USB_H
+#endif // IWM_SLIP_H
 #endif // BUILD_APPLE
