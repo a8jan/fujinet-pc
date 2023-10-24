@@ -1,10 +1,10 @@
 #ifdef BUILD_APPLE
 
-#if SMARTPORT == USB
+#if SMARTPORT == SLIP
 
 #include <string.h>
 
-#include "iwm_usb.h"
+#include "iwm_slip.h"
 #include "iwm.h"
 
 uint8_t _phases;
@@ -62,7 +62,7 @@ size_t iwm_usb::decode_data_packet(uint8_t* input_data, uint8_t* output_data)
   return 0;
 }
 
-iwm_usb smartport;
+iwm_slip smartport;
 
 #endif
 
