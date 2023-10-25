@@ -139,7 +139,7 @@ set(SOURCES src/main.cpp
     lib/fuji/fujiDisk.h lib/fuji/fujiDisk.cpp
     lib/bus/bus.h
     lib/bus/iwm/iwm.h lib/bus/iwm/iwm.cpp
-    lib/bus/iwm/iwm_usb.h lib/bus/iwm/iwm_usb.cpp
+    lib/bus/iwm/iwm_slip.h lib/bus/iwm/iwm_slip.cpp
     lib/bus/sio/sio.h lib/bus/sio/sio.cpp
     lib/bus/sio/siocom/sioport.h lib/bus/sio/siocom/sioport.cpp
     lib/bus/sio/siocom/serialsio.h lib/bus/sio/siocom/serialsio.cpp
