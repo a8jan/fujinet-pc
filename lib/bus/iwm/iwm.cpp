@@ -4,6 +4,7 @@
 #if SMARTPORT != SLIP
 #include "fnHardwareTimer.h"
 #endif
+
 // #include "fnFsTNFS.h" // do i need this?
 #include <string.h>
 // #include "driver/timer.h" // contains the hardware timer register data structure
@@ -16,6 +17,8 @@
 #include "../device/iwm/fuji.h"
 #include "../device/iwm/cpm.h"
 #include "../device/iwm/clock.h"
+
+#include "compat_esp.h" // empty IRAM_ATTR macro for FujiNet-PC
 
 /******************************************************************************
 Based on:
@@ -517,7 +520,9 @@ void IRAM_ATTR iwmBus::service()
     if (_old_enable_state != iwm_enable_state_t::off)
     {
       _old_enable_state = iwm_enable_state_t::off;
+#if SMARTPORT != SLIP
       diskii_xface.stop();
+#endif /* !SLIP */
     }
 
     if (sp_command_mode != sp_cmd_state_t::command)

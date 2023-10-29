@@ -30,9 +30,9 @@ protected:
 public:
     iwmDisk2();
     void init();
-    mediatype_t mount(FILE *f, mediatype_t disk_type = MEDIATYPE_UNKNOWN);
+    mediatype_t mount(FileHandler *f, mediatype_t disk_type = MEDIATYPE_UNKNOWN);
     void unmount();
-    bool write_blank(FILE *f, uint16_t sectorSize, uint16_t numSectors);
+    bool write_blank(FileHandler *f, uint16_t sectorSize, uint16_t numSectors);
     int get_track_pos() { return track_pos; };
     bool phases_valid(uint8_t phases);
     bool move_head();

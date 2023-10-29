@@ -1008,20 +1008,31 @@ void iwmFuji::insert_boot_device(uint8_t d)
 {
     const char *config_atr = "/autorun.po";
     const char *mount_all_atr = "/mount-and-boot.po";
+    const char *boot_img;
     FileHandler *fBoot;
 
     switch (d)
     {
     case 0:
-        fBoot = fnSPIFFS.filehandler_open(config_atr);
-        _fnDisks[0].disk_dev.mount(fBoot, config_atr, 143360, MEDIATYPE_PO);        
+        boot_img = config_atr;
+        fBoot = fsFlash.filehandler_open(boot_img);
         break;
     case 1:
-
-        fBoot = fnSPIFFS.filehandler_open(mount_all_atr);
-        _fnDisks[0].disk_dev.mount(fBoot, mount_all_atr, 143360, MEDIATYPE_PO);        
+        boot_img = mount_all_atr;
+        fBoot = fsFlash.filehandler_open(boot_img);
         break;
+    default:
+        Debug_printf("Invalid boot mode: %d\n", d);
+        return;
     }
+
+    if (fBoot == nullptr)
+    {
+        Debug_printf("Failed to open boot disk image: %s\n", boot_img);
+        return;
+    }
+
+    _fnDisks[0].disk_dev.mount(fBoot, boot_img, 143360, MEDIATYPE_PO);
 
     _fnDisks[0].disk_dev.is_config_device = true;
     _fnDisks[0].disk_dev.device_active = true;
@@ -1078,16 +1089,7 @@ void iwmFuji::setup(iwmBus *iwmbus)
    }
 
     Debug_printf("\nConfig General Boot Mode: %u\n",Config.get_general_boot_mode());
-    if (Config.get_general_boot_mode() == 0)
-    {
-        FileHandler *f = fnSPIFFS.filehandler_open("/autorun.po");
-         _fnDisks[0].disk_dev.mount(f, "/autorun.po", 512*256, MEDIATYPE_PO);
-    }
-    else
-    {
-        FileHandler *f = fnSPIFFS.filehandler_open("/mount-and-boot.po");
-         _fnDisks[0].disk_dev.mount(f, "/mount-and-boot.po", 512*256, MEDIATYPE_PO);      
-    }
+    insert_boot_device(Config.get_general_boot_mode());
 
     // theNetwork = new adamNetwork();
     // theSerial = new adamSerial();

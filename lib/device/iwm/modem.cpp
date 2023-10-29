@@ -157,7 +157,8 @@ unsigned short iwmModem::modem_print(int i)
 {
     char out[80];
 
-    itoa(i, out, 10);
+    // itoa(i, out, 10);
+    sprintf(out, "%d", i);
 
     return modem_print(out);
 }

@@ -3,7 +3,8 @@
 
 #include "fnSystem.h"
 #include "fuji.h"
-#include "fnHardwareTimer.h"
+// #include "fnHardwareTimer.h"
+#include "compat_esp.h" // empty IRAM_ATTR macro for FujiNet-PC
 
 #define NS_PER_BIT_TIME 125
 #define BLANK_TRACK_LEN 6400
@@ -36,7 +37,7 @@ void iwmDisk2::init()
   device_active = false;
 }
 
-mediatype_t iwmDisk2::mount(FILE *f, mediatype_t disk_type)//, const char *filename), uint32_t disksize, mediatype_t disk_type)
+mediatype_t iwmDisk2::mount(FileHandler *f, mediatype_t disk_type)//, const char *filename), uint32_t disksize, mediatype_t disk_type)
 {
 
   mediatype_t mt = MEDIATYPE_UNKNOWN;
@@ -60,10 +61,12 @@ mediatype_t iwmDisk2::mount(FILE *f, mediatype_t disk_type)//, const char *filen
         mt = ((MediaTypeWOZ *)_disk)->mount(f);
         change_track(0); // initialize spi buffer
         break;
-    case MEDIATYPE_DSK:
+    case MEDIATYPE_DO:
+    case MEDIATYPE_PO:
         Debug_printf("\nMounting Media Type DSK");
         device_active = true;
         _disk = new MediaTypeDSK();
+        _disk->_mediatype = disk_type;
         mt = ((MediaTypeDSK *)_disk)->mount(f);
         change_track(0); // initialize spi buffer
         break;
@@ -81,7 +84,7 @@ void iwmDisk2::unmount()
 
 }
 
-bool iwmDisk2::write_blank(FILE *f, uint16_t sectorSize, uint16_t numSectors)
+bool iwmDisk2::write_blank(FileHandler *f, uint16_t sectorSize, uint16_t numSectors)
 {
   return false;
 }
@@ -128,6 +131,7 @@ void IRAM_ATTR iwmDisk2::change_track(int indicator)
   if ((((MediaTypeWOZ *)_disk)->trackmap(old_pos) == ((MediaTypeWOZ *)_disk)->trackmap(track_pos)) && indicator)
     return;
 
+#if SMARTPORT != SLIP
   // need to tell diskii_xface the number of bits in the track
   // and where the track data is located so it can convert it
   if (((MediaTypeWOZ *)_disk)->trackmap(track_pos) != 255)
@@ -145,6 +149,7 @@ void IRAM_ATTR iwmDisk2::change_track(int indicator)
         BLANK_TRACK_LEN, 
         BLANK_TRACK_LEN * 8, 
         NS_PER_BIT_TIME * ((MediaTypeWOZ *)_disk)->optimal_bit_timing);
+#endif // SMARTPORT != SLIP
   // Since the empty track has no data, and therefore no length, using a fake length of 51,200 bits (6400 bytes) works very well.
 }
 

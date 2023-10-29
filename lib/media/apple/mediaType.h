@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "../../FileSystem/fnFile.h"
-#include"../../fuji/fujiHost.h"
+#include "fnFile.h"
+#include "fujiHost.h"
 
 #define INVALID_SECTOR_VALUE 65536
 
@@ -20,9 +20,10 @@
 enum mediatype_t 
 {
     MEDIATYPE_UNKNOWN = 0,
+    MEDIATYPE_DO,
+    MEDIATYPE_DSK,
     MEDIATYPE_PO,
     MEDIATYPE_WOZ,
-    MEDIATYPE_DSK,
     MEDIATYPE_COUNT
 };
 
@@ -88,6 +89,7 @@ public:
     virtual bool status() = 0;
 
     static mediatype_t discover_mediatype(const char *filename);
+    static mediatype_t discover_dsk_mediatype(FileHandler* f, uint32_t disksize);
 
     // void dump_percom_block();
     // void derive_percom_block(uint16_t numSectors);

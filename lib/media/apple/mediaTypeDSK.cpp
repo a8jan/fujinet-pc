@@ -17,18 +17,23 @@
 // forward reference
 static void serialise_track(uint8_t *dest, const uint8_t *src, uint8_t track_number, bool is_prodos);
 
-mediatype_t MediaTypeDSK::mount(FILE *f, uint32_t disksize)
+mediatype_t MediaTypeDSK::mount(FileHandler *f, uint32_t disksize)
 {
     _media_fileh = f;
     diskiiemulation = true;
 
     // allocated SPRAM
     const size_t dsk_image_size = 35 * 16 * 256;
+#ifdef FUJINET_PC
+	uint8_t *dsk = (uint8_t*)malloc(dsk_image_size);
+#else
     uint8_t *dsk = (uint8_t*)heap_caps_malloc(dsk_image_size, MALLOC_CAP_SPIRAM);
-    size_t bytes_read = fread(dsk, 1, dsk_image_size, f);
+#endif
+    if (f->seek(0, SEEK_SET) != 0)
+        return MEDIATYPE_UNKNOWN;
+    size_t bytes_read = f->read(dsk, 1, dsk_image_size);
     if (bytes_read != dsk_image_size)
         return MEDIATYPE_UNKNOWN;
-    const bool is_prodos = false;
 
     dsk2woz_info();
     dsk2woz_tmap();
@@ -87,6 +92,7 @@ bool MediaTypeDSK::dsk2woz_tracks(uint8_t *dsk)
 
     // Debug_printf("\nStart Block, Block Count, Bit Count");
     
+	Debug_printf("\nMediaTypeDSK is_prodos: %s", _mediatype == MEDIATYPE_PO ? "Y" : "N");
 
 	// TODO: adapt this to that
 	// Write out all 35 tracks.
@@ -94,12 +100,16 @@ bool MediaTypeDSK::dsk2woz_tracks(uint8_t *dsk)
 	{
 		uint16_t bytes_used;
 		uint16_t bit_count;
+#ifdef FUJINET_PC
+		uint8_t* temp_ptr = (uint8_t *)malloc(WOZ1_NUM_BLKS * 512);
+#else
 		uint8_t* temp_ptr = (uint8_t *)heap_caps_malloc(WOZ1_NUM_BLKS * 512, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
+#endif
 		if (temp_ptr != nullptr)
 		{
 			trk_ptrs[c] = temp_ptr;
 			memset(trk_ptrs[c], 0, WOZ1_NUM_BLKS * 512);
-			serialise_track(trk_ptrs[c], &dsk[c * 16 * 256], c, false);
+			serialise_track(trk_ptrs[c], &dsk[c * 16 * 256], c, _mediatype == MEDIATYPE_PO);
 			temp_ptr += WOZ1_TRACK_LEN;
 			bytes_used = temp_ptr[0] + (temp_ptr[1] << 8);
 			temp_ptr += sizeof(uint16_t);

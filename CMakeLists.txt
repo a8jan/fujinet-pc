@@ -7,19 +7,33 @@ project(fujinet-pc)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# fujinet.build_board
-set(FUJINET_TARGET fujinet-pc-atari)
+#######################################
+# Atari
+#######################################
+# # fujinet.build_platform
+# set(FUJINET_BUILD_PLATFORM BUILD_ATARI)
+# # fujinet.build_board
+# set(FUJINET_TARGET fujinet-pc-atari)
+# # fujinet.build_bus
+# set(FUJINET_BUILD_BUS SIO)
+
+#######################################
+# Apple
+#######################################
 # fujinet.build_platform
-set(FUJINET_BUILD_PLATFORM BUILD_ATARI)
+set(FUJINET_BUILD_PLATFORM BUILD_APPLE)
+# fujinet.build_board
+set(FUJINET_TARGET fujinet-pc-apple)
 # fujinet.build_bus
-set(FUJINET_BUILD_BUS SIO)
+set(FUJINET_BUILD_BUS IWM)
+
+
 # platformio.data_dir
 set(FUJINET_DATA_DIR ${CMAKE_SOURCE_DIR}/data/${FUJINET_BUILD_PLATFORM})
 # ESP32 PIN map (not used by FujiNet-PC)
-set(FUJINET_PIN_MAP PINMAP_ATARIV1)
+set(FUJINET_PIN_MAP PINMAP_NONE)
 
 # add -DNO_DEBUG_PRINT to supress Debug_print output in Release build
-# add -DALIVE_DEBUG to print Alive messages
 # -DSKIP_SERVER_CERT_VERIFY does not work with MbedTLS
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFUJINET_PC -D${FUJINET_BUILD_PLATFORM} -D${FUJINET_PIN_MAP} -DSMARTPORT=SLIP -DFLASH_SPIFFS")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVERBOSE_HTTP -D__PC_BUILD_DEBUG__")
@@ -70,6 +84,7 @@ set(SOURCES src/main.cpp
     lib/utils/cbuf.h lib/utils/cbuf.cpp
     lib/utils/string_utils.h lib/utils/string_utils.cpp
     lib/hardware/fnWiFi.h lib/hardware/fnDummyWiFi.h lib/hardware/fnDummyWiFi.cpp
+    lib/hardware/led.h lib/hardware/led.cpp
     lib/hardware/fnUART.h lib/hardware/fnUART.cpp
     lib/hardware/fnSystem.h lib/hardware/fnSystem.cpp lib/hardware/fnSystemNet.cpp
     lib/FileSystem/fnDirCache.h lib/FileSystem/fnDirCache.cpp
@@ -155,6 +170,7 @@ set(SOURCES src/main.cpp
     lib/device/udpstream.h
     lib/device/siocpm.h
     lib/device/iwm/disk.h lib/device/iwm/disk.cpp
+    lib/device/iwm/disk2.h lib/device/iwm/disk2.cpp
     lib/device/iwm/printer.h lib/device/iwm/printer.cpp
     lib/device/iwm/printerlist.h lib/device/iwm/printerlist.cpp
     lib/device/iwm/modem.h lib/device/iwm/modem.cpp
@@ -174,7 +190,10 @@ set(SOURCES src/main.cpp
     lib/modem/modem.h lib/modem/modem.cpp
     lib/media/media.h
     lib/media/apple/mediaType.h lib/media/apple/mediaType.cpp
+    lib/media/apple/mediaTypeDO.h lib/media/apple/mediaTypeDO.cpp
+    lib/media/apple/mediaTypeDSK.h lib/media/apple/mediaTypeDSK.cpp
     lib/media/apple/mediaTypePO.h lib/media/apple/mediaTypePO.cpp
+    lib/media/apple/mediaTypeWOZ.h lib/media/apple/mediaTypeWOZ.cpp
     lib/media/atari/diskType.h lib/media/atari/diskType.cpp
     lib/media/atari/diskTypeAtr.h lib/media/atari/diskTypeAtr.cpp
     lib/media/atari/diskTypeAtx.h 

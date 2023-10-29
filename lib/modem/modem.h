@@ -1,3 +1,4 @@
+#ifdef BUILD_ATARI
 #ifndef MODEM_H
 #define MODEM_H
 
@@ -6,13 +7,8 @@
 #include "bus.h"
 #include "fnTcpClient.h"
 #include "fnTcpServer.h"
-#ifdef BUILD_ATARI
 // fnSioCom.h is included from bus.h
 #define MODEM_UART SioCom
-#else
-#include "fnUART.h"
-#define MODEM_UART UARTManager
-#endif
 #include "modem-sniffer.h"
 #include "libtelnet.h"
 
@@ -251,4 +247,5 @@ public:
 
 };
 
-#endif
+#endif // #ifndef MODEM_H
+#endif // #ifdef BUILD_ATARI

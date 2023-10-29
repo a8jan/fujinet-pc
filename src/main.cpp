@@ -60,12 +60,39 @@ void print_version()
 {
     printf("FujiNet-PC " FN_VERSION_FULL "\n");
     printf(FN_VERSION_DATE "\n");
+
 #if defined(_WIN32)
     printf("Windows\n");
 #elif defined(__linux__)
     printf("Linux\n");
 #elif defined(__APPLE__)
     printf("macOS\n");
+#endif
+
+#if defined(BUILD_ATARI)
+    printf("Atari\n");
+#elif defined(BUILD_ADAM)
+    printf("Adam\n");
+#elif defined(BUILD_APPLE)
+    printf("Apple\n");
+#elif defined(BUILD_MAC)
+    printf("Mac\n");
+#elif defined(BUILD_IEC)
+    printf("Commodore\n");
+#elif defined(BUILD_LYNX)
+    printf("Lynx\n");
+#elif defined(BUILD_S100)
+    printf("S100\n");
+#elif defined(BUILD_RS232)
+    printf("RS232\n");
+#elif defined(BUILD_CX16)
+    printf("CX16\n");
+#elif defined(BUILD_RC2014)
+    printf("RC2014\n");
+#elif defined(BUILD_H89)
+    printf("H89\n");
+#elif defined(BUILD_COCO)
+    printf("TRS-80\n");
 #endif
 }
 

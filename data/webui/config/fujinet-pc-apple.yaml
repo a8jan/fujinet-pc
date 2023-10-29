@@ -1,5 +1,4 @@
 paths:
-  # fonts in the root dir because of file name length issues
   font_path: /file?
   css_path: /file?css
   js_path: /file?js
@@ -10,14 +9,13 @@ components:
   mount_list: true
   printer_settings: true
   modem_settings: true
-  hsio_settings: true
-  timezone: true
-  apetime: true
+  hsio_settings: false
+  timezone: false
+  apetime: false
   udp_stream: true
-  program_recorder: true
-  disk_swap: false
+  program_recorder: false
+  disk_swap: true
   boot_settings: true
-  serial_port: true
-  emulator_settings: true
+  cpm_settings: true
 tweaks:
   fujinet_pc: true

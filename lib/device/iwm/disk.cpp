@@ -246,10 +246,10 @@ void iwmDisk::send_extended_status_dib_reply_packet() //XXX! currently unused
     data[1] = (_disk->num_blocks) & 0xff;         // block size 1
     data[2] = (_disk->num_blocks >> 8) & 0xff;  // block size 2
     data[3] = (_disk->num_blocks >> 16) & 0xff; // block size 3
-    Debug_printf("\nDIB number of blocks %d", _disk->num_blocks);
-    //Debug_printf("\n%02x %02x %02x %02x", data[0], data[1], data[2], data[3]);
+    Debug_printf("\r\nDIB number of blocks %d", _disk->num_blocks);
+    //Debug_printf("\r\n%02x %02x %02x %02x", data[0], data[1], data[2], data[3]);
   }
-  Debug_printf("\n%02x %02x %02x %02x", data[0], data[1], data[2], data[3]); // this debug is required to make it work
+  Debug_printf("\r\n%02x %02x %02x %02x", data[0], data[1], data[2], data[3]); // this debug is required to make it work
   // ALERT!!!!!! The above debug is somehow required to make the assignment of data[0..3] above stick.
   // otherwise, data[0..3]=0. Have no idea why!?!?!?!?!??!?!?!?!?!?!?!?!??!
   data[4] = 0x0E; // ID string length - 14 chars
@@ -430,7 +430,7 @@ void iwmDisk::iwm_writeblock(iwm_decoded_cmd_t cmd)
   data_len = BLOCK_DATA_LEN;
   if (IWM.iwm_decode_data_packet((unsigned char *)data_buffer, data_len))
   {
-    Debug_printf("\nTIMEOUT in read packet!");
+    Debug_printf("\r\nTIMEOUT in read packet!");
     return;
   }
   // partition number indicates which 32mb block we access
@@ -467,7 +467,7 @@ void iwmDisk::iwm_writeblock(iwm_decoded_cmd_t cmd)
       
       if (sdstato != BLOCK_DATA_LEN)
       {
-        Debug_printf("\nFile Write err: %d bytes", sdstato);
+        Debug_printf("\r\nFile Write err: %d bytes", sdstato);
         if (sdstato == 0)
           status = 0x2B; // write protected todo: we should probably have a read-only flag that gets set and tested up top
         else
@@ -515,17 +515,33 @@ mediatype_t iwmDisk::mount(FileHandler *f, const char *filename, uint32_t disksi
   }
 
   // Determine MediaType based on filename extension
-  if (disk_type == MEDIATYPE_UNKNOWN && filename != nullptr)
+  if (disk_type == MEDIATYPE_UNKNOWN && filename != nullptr) {
     disk_type = MediaType::discover_mediatype(filename);
+    if (disk_type == MEDIATYPE_DSK) {
+        // determine DO or PO based on file contents
+        disk_type = MediaType::discover_dsk_mediatype(f, disksize);
+    }
+  }
 
   if (deviceSlot < 4) // SP drive
   {    
     switch (disk_type)
     {
+    case MEDIATYPE_DO:
+        Debug_printf("\r\nMedia Type DO");
+        _disk = new MediaTypeDO();
+        _disk->_media_host = host;
+        _disk->_mediatype = disk_type;
+        strcpy(_disk->_disk_filename, filename);
+        mt = _disk->mount(f, disksize);
+
+        device_active = true; //change status only after we are mounted
+        break;
     case MEDIATYPE_PO:
         Debug_printf("\r\nMedia Type PO");
         _disk = new MediaTypePO();
         _disk->_media_host = host;
+        _disk->_mediatype = disk_type;
         strcpy(_disk->_disk_filename, filename);
         mt = _disk->mount(f, disksize);
 
@@ -535,8 +551,6 @@ mediatype_t iwmDisk::mount(FileHandler *f, const char *filename, uint32_t disksi
           readonly = false;
 
         device_active = true; //change status only after we are mounted
-        //_disk->fileptr() = f;
-        // mt = MEDIATYPE_PO;
         break;
     default:
         Debug_printf("\r\nMedia Type UNKNOWN for SP Drive - no mount in disk.cpp");
@@ -548,7 +562,8 @@ mediatype_t iwmDisk::mount(FileHandler *f, const char *filename, uint32_t disksi
   {
     switch (disk_type)
     {
-      case MEDIATYPE_DSK:
+      case MEDIATYPE_DO:
+      case MEDIATYPE_PO:
       case MEDIATYPE_WOZ:
           theFuji._fnDisk2s[deviceSlot - 4].init();
           theFuji._fnDisk2s[deviceSlot - 4].mount(f, disk_type); // modulo to ensure device 0 or 1
@@ -635,7 +650,7 @@ bool iwmDisk::write_blank(FileHandler *f, uint16_t numBlocks)
 
 /* void iwmDisk::startup_hack()
 {
-  // Debug_printf("\n Disk startup hack");
+  // Debug_printf("\r\n Disk startup hack");
   // init();
 }
  */

@@ -30,7 +30,7 @@ enum class sp_cmd_state_t
 };
 extern sp_cmd_state_t sp_command_mode;
 
-class iwm_usb
+class iwm_slip
 {
 public:
 

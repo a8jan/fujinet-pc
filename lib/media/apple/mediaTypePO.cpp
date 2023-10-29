@@ -35,7 +35,7 @@ bool MediaTypePO::write(uint32_t blockNum, uint16_t *count, uint8_t* buffer)
     {
         Debug_printf("high score: Swapping file handles\r\n");
         oldFileh = _media_fileh;
-        hsFileh = _media_host->file_open(_disk_filename, _disk_filename, strlen(_disk_filename) +1, "r+");
+        hsFileh = _media_host->filehandler_open(_disk_filename, _disk_filename, strlen(_disk_filename) +1, "rb+");
         _media_fileh = hsFileh;
     }
 
@@ -59,7 +59,7 @@ bool MediaTypePO::write(uint32_t blockNum, uint16_t *count, uint8_t* buffer)
     {
         Debug_printf("high score: Reverting file handles.\r\n");
         if (hsFileh != nullptr)
-            fclose(hsFileh);
+            hsFileh->close();
 
         _media_fileh = oldFileh;
         last_block_num = INVALID_SECTOR_VALUE; // Invalidate cache

@@ -1,7 +1,9 @@
 #ifndef LED_H
 #define LED_H
 
+#ifndef FUJINET_PC
 #include "../../include/pinmap.h"
+#endif
 
 enum eLed
 {
