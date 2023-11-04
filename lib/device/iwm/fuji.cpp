@@ -1107,7 +1107,7 @@ void iwmFuji::setup(iwmBus *iwmbus)
 
 int iwmFuji::get_disk_id(int drive_slot)
 {
-    return -1;
+    return 0;
 }
 std::string iwmFuji::get_host_prefix(int host_slot)
 {
