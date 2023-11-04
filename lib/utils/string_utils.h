@@ -1,6 +1,7 @@
 #ifndef STRING_UTILS_H
 #define STRING_UTILS_H
 
+#include <cstdint>
 #include <string>
 #include <string_view>
 
