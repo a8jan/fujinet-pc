@@ -1,8 +1,12 @@
 #ifndef COMPAT_ESP_H
 #define COMPAT_ESP_H
 
-#ifdef FUJINET_PC
-#define IRAM_ATTR
-#endif // #ifdef FUJINET_PC
+#ifndef ESP_PLATFORM
 
-#endif // #ifndef COMPAT_ESP_H
+#ifndef IRAM_ATTR
+#define IRAM_ATTR
+#endif
+
+#endif /* !ESP_PLATFORM */
+
+#endif /* COMPAT_ESP_H */

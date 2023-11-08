@@ -14,7 +14,7 @@
 #include "compat_string.h"
 
 #include "../../include/debug.h"
-// #include "../../include/pinmap.h"
+#include "../../include/pinmap.h"
 
 #include "fnFileLocal.h"
 

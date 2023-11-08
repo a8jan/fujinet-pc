@@ -162,10 +162,10 @@ bool MediaTypeWOZ::woz1_read_tracks()
 
     Debug_printf("\nStart Block, Block Count, Bit Count");
     
-#ifdef FUJINET_PC
-    uint8_t *temp_ptr = (uint8_t *)malloc(WOZ1_NUM_BLKS * 512);
-#else
+#ifdef ESP_PLATFORM
     uint8_t *temp_ptr = (uint8_t *)heap_caps_malloc(WOZ1_NUM_BLKS * 512, MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
+#else
+    uint8_t *temp_ptr = (uint8_t *)malloc(WOZ1_NUM_BLKS * 512);
 #endif
     uint16_t bytes_used;
     uint16_t bit_count;
@@ -183,10 +183,10 @@ bool MediaTypeWOZ::woz1_read_tracks()
         if (bit_count > 0)
         {
             size_t s = trks[i].block_count * 512;
-#ifdef FUJINET_PC
-            trk_ptrs[i] = (uint8_t *)malloc(s);
-#else
+#ifdef ESP_PLATFORM
             trk_ptrs[i] = (uint8_t *)heap_caps_malloc(s, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
+#else
+            trk_ptrs[i] = (uint8_t *)malloc(s);
 #endif
             if (trk_ptrs[i] != nullptr)
             {
@@ -227,10 +227,10 @@ bool MediaTypeWOZ::woz2_read_tracks()
         size_t s = trks[i].block_count * 512;
         if (s != 0)
         {
-#ifdef FUJINET_PC
-            trk_ptrs[i] = (uint8_t *)malloc(s);
-#else
+#ifdef ESP_PLATFORM
             trk_ptrs[i] = (uint8_t *)heap_caps_malloc(s, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
+#else
+            trk_ptrs[i] = (uint8_t *)malloc(s);
 #endif
             if (trk_ptrs[i] != nullptr)
             {

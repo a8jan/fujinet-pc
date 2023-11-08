@@ -5,9 +5,9 @@
 #ifndef NETWORKPROTOCOL_SSH
 #define NETWORKPROTOCOL_SSH
 
-#ifndef FUJINET_PC
+#ifdef ESP_PLATFORM
 #include <lwip/sockets.h>
-#endif // #ifndef FUJINET_PC
+#endif
 
 #include <string>
 

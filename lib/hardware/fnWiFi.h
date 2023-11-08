@@ -1,11 +1,12 @@
 #ifndef FNWIFI_H
 #define FNWIFI_H
 
-#ifdef FUJINET_PC
+#ifndef ESP_PLATFORM
+// dummy wifi module
 #include "fnDummyWiFi.h"
-#endif
+#endif // !ESP_PLATFORM
 
-#ifndef FUJINET_PC
+#ifdef ESP_PLATFORM
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
 #include <esp_netif.h>
@@ -103,5 +104,5 @@ public:
 
 extern WiFiManager fnWiFi;
 
-#endif // #ifndef FUJINET_PC
+#endif // ESP_PLATFORM
 #endif // FNWIFI_H

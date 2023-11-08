@@ -11,7 +11,7 @@ LedManager fnLedManager;
 
 LedManager::LedManager()
 {
-#ifndef FUJINET_PC
+#ifdef ESP_PLATFORM
     mLedPin[eLed::LED_BUS] = PIN_LED_BUS;
     mLedPin[eLed::LED_BT] = PIN_LED_BT;
     mLedPin[eLed::LED_WIFI] = PIN_LED_WIFI;
@@ -21,7 +21,7 @@ LedManager::LedManager()
 // Sets required pins to OUTPUT mode and makes sure they're initially off
 void LedManager::setup()
 {
-#ifndef FUJINET_PC
+#ifdef ESP_PLATFORM
 #if defined(PINMAP_A2_REV0) || defined(PINMAP_FUJIAPPLE_IEC) || defined(PINMAP_MAC_REV0)
     fnSystem.set_pin_mode(PIN_LED_BUS, gpio_mode_t::GPIO_MODE_OUTPUT);
     fnSystem.digital_write(PIN_LED_BUS, DIGI_LOW);
@@ -44,12 +44,12 @@ void LedManager::setup()
     fnSystem.set_pin_mode(PIN_LED_WIFI, gpio_mode_t::GPIO_MODE_OUTPUT);
     fnSystem.digital_write(PIN_LED_WIFI, DIGI_HIGH);
 #endif
-#endif // !FUJINET_PC
+#endif // ESP_PLATFORM
 }
 
 void LedManager::set(eLed led, bool on)
 {
-#ifndef FUJINET_PC
+#ifdef ESP_PLATFORM
     if(fnSystem.ledstrip())
     {
         switch (led)
@@ -80,12 +80,12 @@ void LedManager::set(eLed led, bool on)
         fnSystem.digital_write(mLedPin[led], (on ? DIGI_LOW : DIGI_HIGH));
 #endif
     }
-#endif // !FUJINET_PC
+#endif // ESP_PLATFORM
 }
 
 void LedManager::toggle(eLed led)
 {
-#ifndef FUJINET_PC
+#ifdef ESP_PLATFORM
     if(fnSystem.ledstrip())
     {
         switch (led)
@@ -107,12 +107,12 @@ void LedManager::toggle(eLed led)
     {
         set(led, !mLedState[led]);
     }
-#endif // !FUJINET_PC
+#endif // ESP_PLATFORM
 }
 
 void LedManager::blink(eLed led, int count)
 {
-#ifndef FUJINET_PC
+#ifdef ESP_PLATFORM
     if(fnSystem.ledstrip())
     {
         switch (led)
@@ -141,5 +141,5 @@ void LedManager::blink(eLed led, int count)
                 fnSystem.delay(BLINKING_TIME);
         }
     }
-#endif // !FUJINET_PC
+#endif // ESP_PLATFORM
 }

@@ -15,21 +15,21 @@ NetworkProtocolSSH::NetworkProtocolSSH(string *rx_buf, string *tx_buf, string *s
     : NetworkProtocol(rx_buf, tx_buf, sp_buf)
 {
     Debug_printf("NetworkProtocolSSH::NetworkProtocolSSH(%p,%p,%p)\r\n", rx_buf, tx_buf, sp_buf);
-#ifdef FUJINET_PC
-    rxbuf = (char *)malloc(RXBUF_SIZE);
-#else // #ifdef FUJINET_PC
+#ifdef ESP_PLATFORM
     rxbuf = (char *)heap_caps_malloc(RXBUF_SIZE, MALLOC_CAP_SPIRAM);
-#endif // #ifdef FUJINET_PC
+#else
+    rxbuf = (char *)malloc(RXBUF_SIZE);
+#endif
 }
 
 NetworkProtocolSSH::~NetworkProtocolSSH()
 {
     Debug_printf("NetworkProtocolSSH::~NetworkProtocolSSH()\r\n");
-#ifdef FUJINET_PC
-    free(rxbuf);
-#else // #ifdef FUJINET_PC
+#ifdef ESP_PLATFORM
     heap_caps_free(rxbuf);
-#endif // #ifdef FUJINET_PC
+#else
+    free(rxbuf);
+#endif
 }
 
 bool NetworkProtocolSSH::open(EdUrlParser *urlParser, cmdFrame_t *cmdFrame)

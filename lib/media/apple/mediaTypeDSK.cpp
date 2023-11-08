@@ -37,10 +37,10 @@ mediatype_t MediaTypeDSK::mount(FileHandler *f, uint32_t disksize)
 
     // allocated SPRAM
     const size_t dsk_image_size = num_tracks * BYTES_PER_TRACK;
-#ifdef FUJINET_PC
-	uint8_t *dsk = (uint8_t*)malloc(dsk_image_size);
-#else
+#ifdef ESP_PLATFORM
     uint8_t *dsk = (uint8_t*)heap_caps_malloc(dsk_image_size, MALLOC_CAP_SPIRAM);
+#else
+	uint8_t *dsk = (uint8_t*)malloc(dsk_image_size);
 #endif
     if (f->seek(0, SEEK_SET) != 0)
         return MEDIATYPE_UNKNOWN;
@@ -113,10 +113,10 @@ bool MediaTypeDSK::dsk2woz_tracks(uint8_t *dsk)
 	{
 		uint16_t bytes_used;
 		uint16_t bit_count;
-#ifdef FUJINET_PC
-		uint8_t* temp_ptr = (uint8_t *)malloc(WOZ1_NUM_BLKS * 512);
-#else
+#ifdef ESP_PLATFORM
 		uint8_t* temp_ptr = (uint8_t *)heap_caps_malloc(WOZ1_NUM_BLKS * 512, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
+#else
+		uint8_t* temp_ptr = (uint8_t *)malloc(WOZ1_NUM_BLKS * 512);
 #endif
 		if (temp_ptr != nullptr)
 		{
