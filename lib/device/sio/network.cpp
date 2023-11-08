@@ -64,22 +64,23 @@ sioNetwork::sioNetwork()
  */
 sioNetwork::~sioNetwork()
 {
+    timer_stop();
+
+    // delete protocol instance first
+    if (protocol != nullptr)
+        delete protocol;
+    protocol = nullptr;
+
+    // then delete all buffers
     receiveBuffer->clear();
     transmitBuffer->clear();
     specialBuffer->clear();
-
     delete receiveBuffer;
     delete transmitBuffer;
     delete specialBuffer;
     receiveBuffer = nullptr;
     transmitBuffer = nullptr;
     specialBuffer = nullptr;
-
-    if (protocol != nullptr)
-        delete protocol;
-
-    protocol = nullptr;
-    timer_stop();
 }
 
 /** SIO COMMANDS ***************************************************************/
