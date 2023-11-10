@@ -6,10 +6,16 @@
 #include <cstdint>
 
 
+#if defined(__clang__) && (__clang_major__ < 14)
+#define __BEGIN_IGNORE_UNUSEDVARS _Pragma("GCC diagnostic push")    \
+    _Pragma("GCC diagnostic ignored \"-Wunused-variable\"")
+#define __END_IGNORE_UNUSEDVARS _Pragma("GCC diagnostic pop")
+#else
 #define __BEGIN_IGNORE_UNUSEDVARS _Pragma("GCC diagnostic push")    \
     _Pragma("GCC diagnostic ignored \"-Wunused-but-set-variable\"") \
         _Pragma("GCC diagnostic ignored \"-Wunused-variable\"")
 #define __END_IGNORE_UNUSEDVARS _Pragma("GCC diagnostic pop")
+#endif
 
 #define __BEGIN_IGNORE_TYPELIMITS _Pragma("GCC diagnostic push")    \
     _Pragma("GCC diagnostic ignored \"-Wtype-limits\"")
