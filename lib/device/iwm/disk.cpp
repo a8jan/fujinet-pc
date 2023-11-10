@@ -558,6 +558,7 @@ mediatype_t iwmDisk::mount(FileHandler *f, const char *filename, uint32_t disksi
         device_active = true; //change status only after we are mounted
     }
   }
+#if SMARTPORT != SLIP
   else // DiskII drive
   {
     switch (mt)
@@ -574,6 +575,7 @@ mediatype_t iwmDisk::mount(FileHandler *f, const char *filename, uint32_t disksi
         break;
     }
   }
+#endif /* !SLIP */
 
   if (mt == MEDIATYPE_UNKNOWN) {
       Debug_printf("\r\nMedia Type UNKNOWN - no mount in disk.cpp");
