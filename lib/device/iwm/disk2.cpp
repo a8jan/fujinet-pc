@@ -1,4 +1,6 @@
 #ifdef BUILD_APPLE
+#if SMARTPORT != SLIP
+
 #include "disk2.h"
 
 #include "fnSystem.h"
@@ -156,4 +158,5 @@ void IRAM_ATTR iwmDisk2::change_track(int indicator)
   // Since the empty track has no data, and therefore no length, using a fake length of 51,200 bits (6400 bytes) works very well.
 }
 
+#endif /* !SLIP */
 #endif /* BUILD_APPLE */

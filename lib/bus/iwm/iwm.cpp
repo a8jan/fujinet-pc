@@ -90,6 +90,10 @@ void print_packet(uint8_t *data, int bytes)
 void print_packet(uint8_t *data)
 {
   Debug_printf("\n");
+#if SMARTPORT == SLIP
+  for (int i = 0; i < COMMAND_LEN; i++)
+    Debug_printf("%02x ", data[i]);
+#else
   for (int i = 0; i < 40; i++)
   {
     if (data[i] != 0 || i == 0)
@@ -97,6 +101,7 @@ void print_packet(uint8_t *data)
     else
       break;
   }
+#endif
   // Debug_printf("\n");
 }
 
@@ -156,6 +161,7 @@ void iwmBus::iwm_ack_assert()
   smartport.spi_end();
 }
 
+#ifdef VERBOSE_IWM
 bool iwmBus::iwm_phase_val(uint8_t p)
 {
   uint8_t phases = _phases; // smartport.iwm_phase_vector();
@@ -164,6 +170,7 @@ bool iwmBus::iwm_phase_val(uint8_t p)
   Debug_printf("\nphase number out of range");
   return false;
 }
+#endif
 
 iwmBus::iwm_phases_t iwmBus::iwm_phases()
 {
@@ -531,7 +538,7 @@ void IRAM_ATTR iwmBus::service()
       return;
     }
 
-    if (command_packet.command == 0x85)
+    if ((command_packet.command & 0x7f) == 0x05)
     {
       // wait for REQ to go low
       if (iwm_req_deassert_timeout(50000))
