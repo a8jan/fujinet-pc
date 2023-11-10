@@ -101,7 +101,7 @@ void EdUrlParser::toHex(char* desthex, char c) {
 }
 
 // #prgamas are to ignore warnings about variables being set and not used
-// __BEGIN_IGNORE_UNUSEDVARS
+__BEGIN_IGNORE_UNUSEDVARS
 int EdUrlParser::parsePath(std::vector<string>* folders, string pathstr) {
 	int _url_errorno = 0;
 	int path_pos = 0;
@@ -120,9 +120,9 @@ int EdUrlParser::parsePath(std::vector<string>* folders, string pathstr) {
 	}
 	__PARSE_END: return folders->size();
 }
-// __END_IGNORE_UNUSEDVARS
+__END_IGNORE_UNUSEDVARS
 
-// __BEGIN_IGNORE_UNUSEDVARS
+__BEGIN_IGNORE_UNUSEDVARS
 void EdUrlParser::parse() {
 	int _url_errorno = 0;
 	const char *str = mRawUrl.c_str();
@@ -187,7 +187,7 @@ void EdUrlParser::parse() {
 	fragment = mRawUrl.substr(tag_pos, len - tag_pos);
 	__PARSE_END: return;
 }
-// __END_IGNORE_UNUSEDVARS
+__END_IGNORE_UNUSEDVARS
 
 EdUrlParser* EdUrlParser::parseUrl(const string &urlstr) {
 	EdUrlParser *url = new EdUrlParser;

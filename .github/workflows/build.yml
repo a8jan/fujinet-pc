@@ -85,6 +85,14 @@ jobs:
             target: macos-11
             runner: macos-11
             default-shell: bash
+          - name: macOS 12
+            target: macos-12
+            runner: macos-12
+            default-shell: bash
+          - name: macOS 13
+            target: macos-13
+            runner: macos-13
+            default-shell: bash
           - name: Windows
             target: windows-x64
             runner: windows-latest

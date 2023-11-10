@@ -7,25 +7,25 @@ project(fujinet-pc)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-#######################################
-# Atari
-#######################################
-# fujinet.build_platform
-set(FUJINET_BUILD_PLATFORM BUILD_ATARI)
-# fujinet.build_board
-set(FUJINET_TARGET fujinet-pc-atari)
-# fujinet.build_bus
-set(FUJINET_BUILD_BUS SIO)
+# #######################################
+# # Atari
+# #######################################
+# # fujinet.build_platform
+# set(FUJINET_BUILD_PLATFORM BUILD_ATARI)
+# # fujinet.build_board
+# set(FUJINET_TARGET fujinet-pc-atari)
+# # fujinet.build_bus
+# set(FUJINET_BUILD_BUS SIO)
 
 #######################################
 # Apple
 #######################################
-# # fujinet.build_platform
-# set(FUJINET_BUILD_PLATFORM BUILD_APPLE)
-# # fujinet.build_board
-# set(FUJINET_TARGET fujinet-pc-apple)
-# # fujinet.build_bus
-# set(FUJINET_BUILD_BUS IWM)
+# fujinet.build_platform
+set(FUJINET_BUILD_PLATFORM BUILD_APPLE)
+# fujinet.build_board
+set(FUJINET_TARGET fujinet-pc-apple)
+# fujinet.build_bus
+set(FUJINET_BUILD_BUS IWM)
 
 
 # platformio.data_dir
