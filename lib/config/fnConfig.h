@@ -28,6 +28,7 @@
 #define WEB_SERVER_LISTEN_URL "http://0.0.0.0:8000"
 
 #define CONFIG_DEFAULT_NETSIO_PORT 9997
+#define CONFIG_DEFAULT_BOIP_PORT 1985
 
 #define CONFIG_DEFAULT_SNTPSERVER "pool.ntp.org"
 
@@ -239,6 +240,14 @@ public:
     void store_netsio_host(const char *host);
     void store_netsio_port(int port);
 
+    // BUS over IP
+    bool get_boip_enabled() { return _boip.boip_enabled; }
+    std::string get_boip_host() { return _boip.host; }
+    int get_boip_port() { return _boip.port; }
+    void store_boip_enabled(bool enabled);
+    void store_boip_host(const char *host);
+    void store_boip_port(int port);
+
     void load();
     void save();
 
@@ -267,6 +276,7 @@ private:
     void _read_section_cpm(std::stringstream &ss);
     void _read_section_device_enable(std::stringstream &ss);
     void _read_section_netsio(std::stringstream &ss);
+    void _read_section_boip(std::stringstream &ss);
 
     enum section_match
     {
@@ -286,6 +296,7 @@ private:
         SECTION_DEVICE_ENABLE,
         SECTION_SERIAL,
         SECTION_NETSIO,
+        SECTION_BOIP,
         SECTION_UNKNOWN
     };
     section_match _find_section_in_line(std::string &line, int &index);
@@ -408,6 +419,13 @@ private:
         int port = CONFIG_DEFAULT_NETSIO_PORT;
     };
 
+    struct boip_info
+    {
+        bool boip_enabled = false;
+        std::string host = "";
+        int port = CONFIG_DEFAULT_BOIP_PORT;
+    };
+
     struct modem_info
     {
         bool modem_enabled = true;
@@ -461,6 +479,7 @@ private:
     cassette_info _cassette;
     serial_info _serial;
     netsio_info _netsio;
+    boip_info _boip;
     cpm_info _cpm;
     device_enable_info _denable;
     phbook_info _phonebook_slots[MAX_PB_SLOTS];

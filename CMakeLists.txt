@@ -7,26 +7,31 @@ project(fujinet-pc)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-#######################################
-# Atari
-#######################################
-# fujinet.build_platform
-set(FUJINET_BUILD_PLATFORM BUILD_ATARI)
-# fujinet.build_board
-set(FUJINET_TARGET fujinet-pc-atari)
-# fujinet.build_bus
-set(FUJINET_BUILD_BUS SIO)
+# default to ATARI if no TARGET is set
+# Set using:
+#    cmake -DTARGET=APPLE ..
 
-# #######################################
-# # Apple
-# #######################################
-# # fujinet.build_platform
-# set(FUJINET_BUILD_PLATFORM BUILD_APPLE)
-# # fujinet.build_board
-# set(FUJINET_TARGET fujinet-pc-apple)
-# # fujinet.build_bus
-# set(FUJINET_BUILD_BUS IWM)
+set(TARGET "ATARI" CACHE STRING "Choose the target platform")
 
+if(${TARGET} STREQUAL "ATARI")
+    # fujinet.build_platform
+    set(FUJINET_BUILD_PLATFORM BUILD_ATARI)
+    # fujinet.build_board
+    set(FUJINET_TARGET fujinet-pc-atari)
+    # fujinet.build_bus
+    set(FUJINET_BUILD_BUS SIO)
+elseif(${TARGET} STREQUAL "APPLE")
+    # fujinet.build_platform
+    set(FUJINET_BUILD_PLATFORM BUILD_APPLE)
+    # fujinet.build_board
+    set(FUJINET_TARGET fujinet-pc-apple)
+    # fujinet.build_bus
+    set(FUJINET_BUILD_BUS IWM)
+else()
+    message(FATAL_ERROR "Invalid target platform! Please choose from 'ATARI' or 'APPLE'.")
+endif()
+
+message(STATUS "Building with target ${TARGET}")
 
 # platformio.data_dir
 set(FUJINET_DATA_DIR ${CMAKE_SOURCE_DIR}/data/${FUJINET_BUILD_PLATFORM})
@@ -42,7 +47,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVERBOSE_HTTP -D__PC_BUILD_
 # # use OpenSSL
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${FUJINET_BUILD_PLATFORM} -DMG_ENABLE_OPENSSL=1 -DMG_ENABLE_LOG=0")
 # use MbedTLS
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${FUJINET_BUILD_PLATFORM} -DMG_ENABLE_MBEDTLS=1 -DMG_ENABLE_LOG=0")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${FUJINET_BUILD_PLATFORM} -DMG_ENABLE_MBEDTLS=1 -DMG_ENABLE_LOG=0 -DSMARTPORT=SLIP")
 
 # INCLUDE (CheckIncludeFiles)
 # CHECK_INCLUDE_FILES (bsd/string.h HAVE_BSD_STRING_H)
@@ -58,6 +63,7 @@ set(INCLUDE_DIRS include
     lib/network-protocol 
     lib/fuji lib/bus lib/device lib/media
     lib/encrypt lib/base64
+    lib/slip
     components/cJSON components/libsmb2/include components/libssh/include
     ${CMAKE_CURRENT_BINARY_DIR}/components/libssh/include
 )
@@ -202,7 +208,37 @@ set(SOURCES src/main.cpp
     lib/encrypt/crypt.h lib/encrypt/crypt.cpp
     lib/compat/compat_inet.c
     lib/compat/compat_gettimeofday.c
-)
+    lib/bus/iwm/Connection.h lib/bus/iwm/Connection.cpp
+    lib/bus/iwm/TCPConnection.h lib/bus/iwm/TCPConnection.cpp
+    lib/slip/SPoSLIP.h
+    lib/slip/Packet.h
+    lib/slip/SmartPortCodes.h
+    lib/slip/Response.h lib/slip/Response.cpp
+    lib/slip/Request.h lib/slip/Request.cpp
+    lib/slip/SLIP.h lib/slip/SLIP.cpp
+    lib/slip/CloseRequest.h lib/slip/CloseRequest.cpp
+    lib/slip/CloseResponse.h lib/slip/CloseResponse.cpp
+    lib/slip/ControlRequest.h lib/slip/ControlRequest.cpp
+    lib/slip/ControlResponse.h lib/slip/ControlResponse.cpp
+    lib/slip/FormatRequest.h lib/slip/FormatRequest.cpp
+    lib/slip/FormatResponse.h lib/slip/FormatResponse.cpp
+    lib/slip/InitRequest.h lib/slip/InitRequest.cpp
+    lib/slip/InitResponse.h lib/slip/InitResponse.cpp
+    lib/slip/OpenRequest.h lib/slip/OpenRequest.cpp
+    lib/slip/OpenResponse.h lib/slip/OpenResponse.cpp
+    lib/slip/ReadBlockRequest.h lib/slip/ReadBlockRequest.cpp
+    lib/slip/ReadBlockResponse.h lib/slip/ReadBlockResponse.cpp
+    lib/slip/ReadRequest.h lib/slip/ReadRequest.cpp
+    lib/slip/ReadResponse.h lib/slip/ReadResponse.cpp
+    lib/slip/ResetRequest.h lib/slip/ResetRequest.cpp
+    lib/slip/ResetResponse.h lib/slip/ResetResponse.cpp
+    lib/slip/StatusRequest.h lib/slip/StatusRequest.cpp
+    lib/slip/StatusResponse.h lib/slip/StatusResponse.cpp
+    lib/slip/WriteBlockRequest.h lib/slip/WriteBlockRequest.cpp
+    lib/slip/WriteBlockResponse.h lib/slip/WriteBlockResponse.cpp
+    lib/slip/WriteRequest.h lib/slip/WriteRequest.cpp
+    lib/slip/WriteResponse.h lib/slip/WriteResponse.cpp
+    )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(SOURCES ${SOURCES} lib/compat/win32_uname.c)

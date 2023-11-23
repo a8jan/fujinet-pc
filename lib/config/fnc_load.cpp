@@ -112,6 +112,9 @@ void fnConfig::load()
         case SECTION_NETSIO:
             _read_section_netsio(ss);
             break;
+        case SECTION_BOIP:
+            _read_section_boip(ss);
+            break;
         case SECTION_UNKNOWN:
             break;
         }

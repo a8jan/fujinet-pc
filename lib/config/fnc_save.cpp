@@ -170,6 +170,12 @@ void fnConfig::save()
     ss << "host=" << _netsio.host << LINETERM;
     ss << "port=" << _netsio.port << LINETERM;
 
+    // Bus Over IP
+    ss << LINETERM << "[BOIP]" << LINETERM;
+    ss << "enabled=" << _boip.boip_enabled << LINETERM;
+    ss << "host=" << _boip.host << LINETERM;
+    ss << "port=" << _boip.port << LINETERM;
+
     // Write the results out
     FILE *fout = fopen(_general.config_file_path.c_str(), FILE_WRITE);
     if (fout == nullptr)
