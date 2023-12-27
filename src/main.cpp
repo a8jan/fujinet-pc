@@ -59,41 +59,49 @@ void sighandler(int signum)
 void print_version()
 {
     printf("FujiNet-PC " FN_VERSION_FULL "\n");
-    printf(FN_VERSION_DATE "\n");
+    printf("Version date: " FN_VERSION_DATE "\n");
 
+    printf("Build: ");
 #if defined(_WIN32)
-    printf("Windows\n");
+    printf("Windows");
 #elif defined(__linux__)
-    printf("Linux\n");
+    printf("Linux");
 #elif defined(__APPLE__)
-    printf("macOS\n");
+    printf("macOS");
+#else
+    printf("unknown");
 #endif
+    printf("\n");
 
+    printf("Platform: ");
 #if defined(BUILD_ATARI)
-    printf("Atari\n");
+    printf("Atari");
 #elif defined(BUILD_ADAM)
-    printf("Adam\n");
+    printf("Adam");
 #elif defined(BUILD_APPLE)
-    printf("Apple\n");
+    printf("Apple");
 #elif defined(BUILD_MAC)
-    printf("Mac\n");
+    printf("Mac");
 #elif defined(BUILD_IEC)
-    printf("Commodore\n");
+    printf("Commodore");
 #elif defined(BUILD_LYNX)
-    printf("Lynx\n");
+    printf("Lynx");
 #elif defined(BUILD_S100)
-    printf("S100\n");
+    printf("S100");
 #elif defined(BUILD_RS232)
-    printf("RS232\n");
+    printf("RS232");
 #elif defined(BUILD_CX16)
-    printf("CX16\n");
+    printf("CX16");
 #elif defined(BUILD_RC2014)
-    printf("RC2014\n");
+    printf("RC2014");
 #elif defined(BUILD_H89)
-    printf("H89\n");
+    printf("H89");
 #elif defined(BUILD_COCO)
-    printf("TRS-80\n");
+    printf("TRS-80");
+#else
+    printf("unknown");
 #endif
+    printf("\n");
 }
 
 // Initial setup
