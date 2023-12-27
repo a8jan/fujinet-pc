@@ -90,11 +90,12 @@ jobs:
             runner: windows-latest
             sys: clang64
             default-shell: msys2 {0}
-          - name: Windows x86
-            target: windows-x86
-            runner: windows-latest
-            sys: clang32
-            default-shell: msys2 {0}
+          ## mbedtls not available anymore for clang32 :-(
+          # - name: Windows x86
+          #   target: windows-x86
+          #   runner: windows-latest
+          #   sys: clang32
+          #   default-shell: msys2 {0}
     # continue-on-error: true
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
