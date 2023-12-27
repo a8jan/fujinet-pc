@@ -15,8 +15,10 @@
 
 #include "fnTcpClient.h"
 #include "libssh/libssh.h"
-// jk - this is libssh private header
-// #include "libssh/session.h"
+#ifdef ESP_PLATFORM
+// apc: this is libssh private header!
+#include "libssh/session.h"
+#endif
 
 using namespace std;
 

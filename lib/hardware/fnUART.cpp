@@ -1022,8 +1022,6 @@ size_t UARTManager::write(const uint8_t *buffer, size_t size)
 
 size_t UARTManager::write(const char *str)
 {
-    // int z = uart_write_bytes(_uart_num, str, strlen(str));
-    // return z;
     return write((const uint8_t *)str, strlen(str));
 }
 
