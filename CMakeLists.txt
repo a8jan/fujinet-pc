@@ -276,7 +276,7 @@ target_link_libraries(fujinet pthread expat cjson cjson_utils smb2 ssh)
 target_link_libraries(fujinet ${CRYPTO_LIBS})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    target_link_libraries(fujinet ws2_32)
+    target_link_libraries(fujinet ws2_32 bcrypt)
 endif()
 
 # Version file
