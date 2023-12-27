@@ -558,7 +558,7 @@ int SystemManager::get_sio_voltage()
 /*
  Create temporary file using provided FileSystem.
  Filename will be 8 characters long. If provided, generated filename will be placed in result_filename
- File opened in "w+" mode.
+ File opened in "wb+" mode.
 */
 FILE *SystemManager::make_tempfile(FileSystem *fs, char *result_filename)
 {
@@ -576,7 +576,7 @@ FILE *SystemManager::make_tempfile(FileSystem *fs, char *result_filename)
         fname = buff;
 
     sprintf(fname, "%08u", (unsigned)ms);
-    return fs->file_open(fname, "w+");
+    return fs->file_open(fname, "wb+");
 }
 
 void SystemManager::delete_tempfile(FileSystem *fs, const char *filename)
@@ -602,7 +602,7 @@ void SystemManager::delete_tempfile(const char *filename)
 /*
  Create temporary file. fnSDFAT will be used if available, otherwise fsFlash.
  Filename will be 8 characters long. If provided, generated filename will be placed in result_filename
- File opened in "w+" mode.
+ File opened in "wb+" mode.
 */
 FILE *SystemManager::make_tempfile(char *result_filename)
 {
