@@ -319,8 +319,8 @@ bool FileSystemSDFAT::create_path(const char *path)
 {
     char segment[64];
 
-    char *fpath = _make_fullpath(path);
-    const char *end = fpath;
+    char *fullpath = _make_fullpath(path);
+    const char *end = fullpath;
     bool done = false;
 
     while (!done)
@@ -331,12 +331,12 @@ bool FileSystemSDFAT::create_path(const char *path)
         {
             done = true;
             // Only indicate we found a segment if we're not still pointing to the start
-            if(end != fpath)
+            if(end != fullpath)
                 found = true;
         } else if(*end == '/')
         {
             // Only indicate we found a segment if this isn't a starting '/'
-            if(end != fpath)
+            if(end != fullpath)
                 found = true;
         }
 
@@ -347,7 +347,7 @@ bool FileSystemSDFAT::create_path(const char *path)
                If we're done (at the end of fullpath), we assume there's no  trailing '/' so the length
                is (end - fullpath) + 2
             */
-            strlcpy(segment, fpath, end - fpath + (done ? 2 : 1));
+            strlcpy(segment, fullpath, end - fullpath + (done ? 2 : 1));
             Debug_printf("Checking/creating directory: \"%s\"\n", segment);
             // if(0 != f_mkdir(segment))
             // {
@@ -358,7 +358,7 @@ bool FileSystemSDFAT::create_path(const char *path)
                 if(errno != EEXIST)
                 {
                     Debug_printf("FAILED errno=%d\n", errno);
-                    free(fpath);
+                    free(fullpath);
                     return false;
                 }
             }
@@ -366,7 +366,7 @@ bool FileSystemSDFAT::create_path(const char *path)
 
         end++;
     }
-    free(fpath);
+    free(fullpath);
 
     return true;
 }
