@@ -22,14 +22,13 @@ Work in progress [FujiNet firmware](https://github.com/FujiNetWIFI/fujinet-platf
 - TNFS File System to access image files over network
 - Web interface to control program's settings, browse TNFS hosts and mount disk images
 - FujiNet network device (N:) with support for various network protocols:
-  TCP, UDP, TNFS, HTTP, SMB, FTP, Telnet
+  TCP, UDP, TNFS, HTTP, SMB, FTP, Telnet, SSH
+- CP/M emulation
 - Compiles and runs on Linux, macOS and Windows
 - Binary packages for selected platforms
 
 ### Not (yet) working
 
-- CP/M emulation
-- SSH protocol
 - SAM voice synthesizer
 - MIDIMaze support
 - Program recorder (tape) emulation
@@ -78,26 +77,6 @@ brew install mbedtls
 pacman -S clang64/mingw-w64-clang-x86_64-mbedtls clang64/mingw-w64-clang-x86_64-python-jinja clang64/mingw-w64-clang-x86_64-python-yaml
 ```
 
-**TODO: skip/remove OpenSSL part**
-
-```sh
-brew install openssl
-brew --prefix openssl
-```
-Get the prefix for openssl in your system and set this in the env:
-
-```
-export OPENSSL_ROOT_DIR=/opt/homebrew/opt/openssl
-```
-Note: your path might be different- use the output from brew --prefix openssl!
-
-If there are issues make sure to clear the cmake cache so that the new path is picked up. Also you can use the full path on the cmake prep command (below) to specify the paths:
-```
-rm CMakeCache.txt 
-cmake .. -DOPENSSL_ROOT_DIR=/opt/homebrew/opt/openssl -DOPENSSL_LIBRARIES=/opt/homebrew/opt/openssl/lib -DCMAKE_BUILD_TYPE:STRING=Debug
-```
-With the cache cleared and the paths fully specified cmake should have no issues finding the openssl headers and libs on macOS.
-
 #### Python packages (all platforms)
 
 Install Python packages for scripts used for build.
@@ -132,8 +111,6 @@ cmake --build . --target dist
 #### Windows
 
 To build on Windows use MSYS2/CLANG64 environment. Start **CLANG64** shell (clang64.exe).
-
-Note: It seems build does not work on mapped disk (network drive with drive letter assigned) due to UNC paths not supported by `cmd.exe`. As a workaround the build can be run within build directory on local disk from source code on mapped disk.
 
 ```sh
 # get the source code
