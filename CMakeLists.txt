@@ -34,7 +34,9 @@ endif()
 message(STATUS "Building with target ${TARGET}")
 
 # platformio.data_dir
-set(FUJINET_DATA_DIR ${CMAKE_SOURCE_DIR}/data/${FUJINET_BUILD_PLATFORM})
+#set(FUJINET_DATA_DIR ${CMAKE_SOURCE_DIR}/data/${FUJINET_BUILD_PLATFORM})
+# build output data directory
+set(BUILD_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/data)
 # # ESP32 PIN map (not used by FujiNet-PC)
 # set(FUJINET_PIN_MAP PINMAP_NONE)
 
@@ -333,12 +335,16 @@ add_dependencies(fujinet build_version)
 # WebUI
 # "build_webui" target
 add_custom_command(
-    OUTPUT "${FUJINET_DATA_DIR}"
+    OUTPUT "${BUILD_DATA_DIR}"
     DEPENDS build_webui.py
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND ${CMAKE_COMMAND} -E env FUJINET_TARGET=${FUJINET_TARGET} FUJINET_BUILD_PLATFORM=${FUJINET_BUILD_PLATFORM} python build_webui.py
+    COMMAND ${CMAKE_COMMAND} -E env
+      FUJINET_TARGET=${FUJINET_TARGET}
+      FUJINET_BUILD_PLATFORM=${FUJINET_BUILD_PLATFORM}
+      BUILD_DATA_DIR=${BUILD_DATA_DIR}
+      python build_webui.py
 )
-add_custom_target(build_webui DEPENDS "${FUJINET_DATA_DIR}")
+add_custom_target(build_webui DEPENDS "${BUILD_DATA_DIR}")
 
 # "dist" target
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -347,7 +353,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
         COMMAND ${CMAKE_COMMAND} -E make_directory dist
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/distfiles dist
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fujinet> dist
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${FUJINET_DATA_DIR} dist/data
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${BUILD_DATA_DIR} dist/data
         # DLL's TODO how to make this using cmake?
         COMMAND ldd $<TARGET_FILE:fujinet> | grep -v -i '/windows' 
         | awk '{print $$3}' | xargs -I {} cp -p {} dist
@@ -358,7 +364,7 @@ else()
         COMMAND ${CMAKE_COMMAND} -E make_directory dist
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/distfiles dist
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fujinet> dist
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${FUJINET_DATA_DIR} dist/data
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${BUILD_DATA_DIR} dist/data
         COMMAND ${CMAKE_COMMAND} -E remove dist/run-fujinet.bat
     )
 endif()
