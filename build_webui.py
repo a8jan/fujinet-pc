@@ -67,7 +67,10 @@ else:
 if not build_platform.startswith('BUILD_'):
     raise Exception(f"build_platform does not match BUILD_*, aborting")
 
-data_build_platform_path = os.path.join("data", build_platform)
+if build_data_dir is None:
+    data_build_platform_path = os.path.join("data", build_platform)
+else:
+    data_build_platform_path = build_data_dir
 if (os.path.isdir(data_build_platform_path)):
     shutil.rmtree(data_build_platform_path)
 
