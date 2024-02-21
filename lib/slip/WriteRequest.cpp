@@ -4,6 +4,7 @@
 
 #include "WriteResponse.h"
 #include "SmartPortCodes.h"
+#include <algorithm>
 
 
 WriteRequest::WriteRequest(const uint8_t request_sequence_number, const uint8_t sp_unit)

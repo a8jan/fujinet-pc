@@ -2,6 +2,7 @@
 
 #include "ReadResponse.h"
 #include "SmartPortCodes.h"
+#include <algorithm>
 
 
 ReadRequest::ReadRequest(const uint8_t request_sequence_number, const uint8_t sp_unit)

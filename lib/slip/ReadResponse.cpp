@@ -14,7 +14,7 @@ std::vector<uint8_t> ReadResponse::serialize() const
 
 void ReadResponse::set_data(const std::vector<uint8_t>::const_iterator& begin, const std::vector<uint8_t>::const_iterator& end)
 {
-	const size_t new_size = std::distance(begin, end);
+	const std::size_t new_size = std::distance(begin, end);
 	data_.resize(new_size);
 	std::copy(begin, end, data_.begin()); // NOLINT(performance-unnecessary-value-param)
 }
