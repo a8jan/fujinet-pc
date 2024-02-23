@@ -141,16 +141,16 @@ build.sh -p ATARI # or -p APPLE
 
 ```
 
-The result of successful is in **`build/dist`** directory.
+The result of successful build is in **`build/dist`** directory.
 
 ## SD Card
 
-FujiNet-PC uses SD folder, not real SD Card. Visit [FujiNet SD Card](https://github.com/FujiNetWIFI/fujinet-sd-card) to get some useful utilities which can be placed into SD folder.
+FujiNet-PC uses SD folder, not real SD Card. Visit [FujiNet SD Card](https://github.com/FujiNetWIFI/fujinet-sd-card) repository to get some useful utilities which can be placed into SD folder.
 
 
 ## Run it
 
-`dist` directory (build/dist) contains files needed to run FujiNet-PC. You can run fujinet directly inside `dist` or copy/move/rename the `dist` directory to the place of your preference and run fujinet from there.
+Directory `build/dist` contains files needed to run FujiNet-PC. You can run FujiNet-PC directly inside `dist` or copy/move/rename the `dist` directory to the place of your preference and run it from there.
 
 ```sh
 # enter dist directory (or copied/moved/renamed directory, if you copied/moved/...), must be inside
@@ -159,7 +159,7 @@ cd build/dist
 # optionally, put some additional disk image(s) to SD sub-directory
 cp /your/dir/some/image.atr SD
 
-# start fujinet with "runner" script
+# start fujinet with "runner" helper script
 ./run-fujinet  # or run-fujinet.bat or run-fujinet.ps1 on Windows
 ```
 
